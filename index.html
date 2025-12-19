@@ -15,26 +15,24 @@
     <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Global Error Handler for Debugging -->
+    <!-- Global Error Handler -->
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
         console.error("Error global:", error);
         const root = document.getElementById('root');
-        // Solo mostrar error en pantalla si el root está vacío (pantalla blanca)
-        if (root && root.innerHTML.trim() === '') {
+        if (root && (!root.innerHTML || root.innerHTML.trim() === '')) {
             document.body.innerHTML = `
                 <div style="padding: 20px; font-family: sans-serif; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; margin: 20px; border-radius: 5px;">
                     <h2 style="margin-top:0">Error de Carga</h2>
-                    <p>La aplicación no pudo iniciarse.</p>
-                    <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; overflow: auto; font-size: 12px;">${message}</pre>
-                    <button onclick="window.location.reload()" style="padding: 8px 16px; cursor: pointer; margin-top: 10px;">Recargar Página</button>
+                    <p>La aplicación no pudo iniciarse correctamente.</p>
+                    <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; overflow: auto; font-size: 12px; color: #333;">${message}</pre>
+                    <button onclick="window.location.reload()" style="background: #b32032; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">Recargar</button>
                 </div>
             `;
         }
       };
     </script>
 
-    <!-- Tailwind Config -->
     <script>
       tailwind.config = {
         theme: {
@@ -54,7 +52,7 @@
       }
     </script>
     
-    <!-- Import Map: CLEAN REACT 18 CONFIGURATION -->
+    <!-- Import Map LIMPIO: Solo React 18 -->
     <script type="importmap">
 {
   "imports": {
@@ -71,7 +69,7 @@
   <body class="bg-gray-50 text-gray-900 antialiased">
     <div id="root"></div>
     
-    <!-- MAIN SCRIPT -->
+    <!-- MAIN APPLICATION -->
     <script type="text/babel" data-type="module" src="./main.js"></script>
   <script type="module" src="/index.tsx"></script>
 </body>
