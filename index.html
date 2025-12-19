@@ -12,26 +12,8 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Babel Standalone -->
+    <!-- Babel para JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- Global Error Handler -->
-    <script>
-      window.onerror = function(message, source, lineno, colno, error) {
-        console.error("Error global:", error);
-        const root = document.getElementById('root');
-        if (root && (!root.innerHTML || root.innerHTML.trim() === '')) {
-            document.body.innerHTML = `
-                <div style="padding: 20px; font-family: sans-serif; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; margin: 20px; border-radius: 5px;">
-                    <h2 style="margin-top:0">Error de Carga</h2>
-                    <p>La aplicación no pudo iniciarse correctamente.</p>
-                    <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; overflow: auto; font-size: 12px; color: #333;">${message}</pre>
-                    <button onclick="window.location.reload()" style="background: #b32032; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px;">Recargar</button>
-                </div>
-            `;
-        }
-      };
-    </script>
 
     <script>
       tailwind.config = {
@@ -52,11 +34,10 @@
       }
     </script>
     
-    <!-- Import Map LIMPIO: Solo React 18 -->
+    <!-- IMPORT MAP: Solo React 18. Sin conflictos de versión. -->
     <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@0.1.1",
     "react": "https://esm.sh/react@18.2.0",
     "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
     "lucide-react": "https://esm.sh/lucide-react@0.303.0",
@@ -69,7 +50,7 @@
   <body class="bg-gray-50 text-gray-900 antialiased">
     <div id="root"></div>
     
-    <!-- MAIN APPLICATION -->
+    <!-- Carga de la aplicación principal -->
     <script type="text/babel" data-type="module" src="./main.js"></script>
   <script type="module" src="/index.tsx"></script>
 </body>
