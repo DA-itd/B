@@ -12,21 +12,22 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Babel Standalone (Compila React en el navegador) -->
+    <!-- Babel Standalone -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- Global Error Handler (Para diagnosticar pantalla blanca) -->
+    <!-- Global Error Handler for Debugging -->
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
         console.error("Error global:", error);
         const root = document.getElementById('root');
-        if (root && root.innerHTML === '') {
+        // Solo mostrar error en pantalla si el root está vacío (pantalla blanca)
+        if (root && root.innerHTML.trim() === '') {
             document.body.innerHTML = `
-                <div style="padding: 20px; font-family: sans-serif; color: #721c24; bg-color: #f8d7da; border: 1px solid #f5c6cb; margin: 20px; border-radius: 5px;">
+                <div style="padding: 20px; font-family: sans-serif; color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; margin: 20px; border-radius: 5px;">
                     <h2 style="margin-top:0">Error de Carga</h2>
-                    <p>La aplicación no pudo iniciarse correctamente.</p>
-                    <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; overflow: auto;">${message}\nEn: ${source}:${lineno}</pre>
-                    <button onclick="window.location.reload()" style="padding: 10px 20px; cursor: pointer;">Recargar Página</button>
+                    <p>La aplicación no pudo iniciarse.</p>
+                    <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; overflow: auto; font-size: 12px;">${message}</pre>
+                    <button onclick="window.location.reload()" style="padding: 8px 16px; cursor: pointer; margin-top: 10px;">Recargar Página</button>
                 </div>
             `;
         }
@@ -53,7 +54,7 @@
       }
     </script>
     
-    <!-- Import Map: STRICTLY REACT 18.2.0 -->
+    <!-- Import Map: CLEAN REACT 18 CONFIGURATION -->
     <script type="importmap">
 {
   "imports": {
