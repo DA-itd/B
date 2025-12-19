@@ -12,8 +12,26 @@
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Babel Standalone -->
+    <!-- Babel Standalone (Compila React en el navegador) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Global Error Handler (Para diagnosticar pantalla blanca) -->
+    <script>
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error("Error global:", error);
+        const root = document.getElementById('root');
+        if (root && root.innerHTML === '') {
+            document.body.innerHTML = `
+                <div style="padding: 20px; font-family: sans-serif; color: #721c24; bg-color: #f8d7da; border: 1px solid #f5c6cb; margin: 20px; border-radius: 5px;">
+                    <h2 style="margin-top:0">Error de Carga</h2>
+                    <p>La aplicación no pudo iniciarse correctamente.</p>
+                    <pre style="background: #fff; padding: 10px; border: 1px solid #ddd; overflow: auto;">${message}\nEn: ${source}:${lineno}</pre>
+                    <button onclick="window.location.reload()" style="padding: 10px 20px; cursor: pointer;">Recargar Página</button>
+                </div>
+            `;
+        }
+      };
+    </script>
 
     <!-- Tailwind Config -->
     <script>
@@ -35,7 +53,7 @@
       }
     </script>
     
-    <!-- Import Map: FIXED VERSIONS -->
+    <!-- Import Map: STRICTLY REACT 18.2.0 -->
     <script type="importmap">
 {
   "imports": {
@@ -47,11 +65,13 @@
   }
 }
 </script>
-  </head>
+  <link rel="stylesheet" href="/index.css">
+</head>
   <body class="bg-gray-50 text-gray-900 antialiased">
     <div id="root"></div>
     
     <!-- MAIN SCRIPT -->
     <script type="text/babel" data-type="module" src="./main.js"></script>
-  </body>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>
