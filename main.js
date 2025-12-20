@@ -1,23 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
-import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle } from 'lucide-react';
+import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database } from 'lucide-react';
 
 // ==========================================
-// CONFIGURACIÓN
+// CONFIGURACIÓN LOCAL (GITHUB)
 // ==========================================
 
-const SPREADSHEET_ID = "1IXvv_gc9yER_LzM5JkxeIoxEO2dRU86jSyIgPZI1PJ8";
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
-const SHEET_CONFIGS = {
-  '2025': { gid: '0', label: '2025 (Actual)' },
-  '2024': { gid: '123456789', label: '2024' },
-  '2026': { gid: '987654321', label: '2026' } 
+// CONFIGURACIÓN DE ARCHIVOS
+// El sistema buscará estos nombres exactos en tu repositorio de GitHub.
+// Asegúrate de subir los archivos con estos nombres exactos.
+const DATA_SOURCES = {
+  '2026': './db_2026.csv',
+  '2025': './db_2025.csv', 
+  '2024': './db_2024.csv',
+  '2023': './db_2023.csv'
 };
 
 const ADMIN_EMAILS = [
     'alejandro.calderon@itdurango.edu.mx',
-    'coord_actualizaciondocente@itdurango.edu.mx'
+    'coord_actualizaciondocente@itdurango.edu.mx',
+    'usuario@itdurango.edu.mx' 
 ];
 
 // ==========================================
@@ -46,72 +50,75 @@ const parseCSV = (text) => {
 
 const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
-const fetchSheetData = async (year) => {
-  const config = SHEET_CONFIGS[year];
-  if (!config) return { data: [], error: null, headersFound: [] };
+const fetchLocalData = async (year) => {
+  const fileUrl = DATA_SOURCES[year];
   
-  // CAMBIO IMPORTANTE: Usamos 'gviz' en lugar de 'export'.
-  // 'gviz' es mucho más amigable con CORS y no redirige a páginas de login tan agresivamente.
-  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${config.gid}`;
-
+  if (!fileUrl) return { data: [], error: null, headersFound: [] };
+  
   try {
-    const response = await fetch(url);
+    // Fetch al archivo local
+    const response = await fetch(fileUrl);
     
     if (!response.ok) {
-         throw new Error(`Error de conexión (${response.status})`);
+         if (response.status === 404) throw new Error(`El archivo "db_${year}.csv" no se encuentra en el repositorio. Asegúrate de subirlo.`);
+         throw new Error(`Error al cargar el archivo local (${response.status})`);
     }
 
     const text = await response.text();
     
-    // Verificación de seguridad: Si devuelve HTML, es probable que sea la página de login
-    if (text.trim().startsWith("<!DOCTYPE") || text.includes("google.com/accounts")) {
-        throw new Error("ACCESO DENEGADO: Google no permite leer la hoja. Asegúrate de que esté configurada como 'Cualquier persona con el enlace' o ve a 'Archivo > Compartir > Publicar en la web'.");
+    // Verificación básica de contenido
+    if (!text || text.trim().length === 0) {
+        throw new Error("El archivo CSV está vacío.");
     }
 
     const rows = parseCSV(text);
-    if (rows.length < 2) return { data: [], error: "La hoja parece vacía o no se pudo leer.", headersFound: [] };
+    if (rows.length < 2) return { data: [], error: "El archivo CSV no tiene datos o encabezados.", headersFound: [] };
 
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
     
+    // Mapeo flexible de columnas
     const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(normalize(k))));
 
     const idx = {
         nombre: findCol(['nombre', 'participante', 'docente', 'alumno']),
         correo: findCol(['correo', 'email', 'mail']),
-        curso: findCol(['curso', 'taller', 'reconocimiento', 'concepto']),
-        fecha: findCol(['fecha', 'periodo']),
+        curso: findCol(['curso', 'taller', 'reconocimiento', 'concepto', 'actividad']),
+        fecha: findCol(['fecha', 'periodo', 'año']),
         status: findCol(['status', 'estatus', 'estado']),
-        link: findCol(['link', 'url', 'pdf', 'descarga', 'archivo'])
+        link: findCol(['link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
     };
 
     if (idx.correo === -1) {
         return { 
             data: [], 
-            error: "No se encontró la columna 'Correo'. Verifica los encabezados.",
+            error: "No se encontró la columna 'Correo' en el archivo CSV. Verifica la primera fila.",
             headersFound: rawHeaders
         };
     }
 
     const cleanData = rows.slice(1).map((r, i) => {
+        // Validación para evitar filas vacías al final del archivo
+        if (r.length <= 1 && !r[0]) return null;
+
         const statusRaw = idx.status !== -1 ? (r[idx.status] || 'PENDIENTE') : 'ENVIADO';
         
         return {
             id: i,
-            nombre: idx.nombre !== -1 ? r[idx.nombre] : 'Usuario',
+            nombre: idx.nombre !== -1 ? r[idx.nombre] : 'Usuario ITD',
             correo: (r[idx.correo] || '').trim().toLowerCase(),
-            curso: idx.curso !== -1 ? r[idx.curso] : 'Documento ITD',
+            curso: idx.curso !== -1 ? r[idx.curso] : 'Documento General',
             fecha: idx.fecha !== -1 ? r[idx.fecha] : year,
             status: statusRaw.toUpperCase().trim(),
             link: idx.link !== -1 ? r[idx.link] : '',
             year: year
         };
-    }).filter(item => item.correo && item.correo.includes('@'));
+    }).filter(item => item && item.correo && item.correo.includes('@')); // Filtra nulos y correos inválidos
 
     return { data: cleanData, error: null, headersFound: rawHeaders };
 
   } catch (error) {
-    console.error("Error Fetch:", error);
+    console.error("Error Fetch Local:", error);
     return { data: [], error: error.message, headersFound: [] };
   }
 };
@@ -144,7 +151,7 @@ const Login = ({ onLogin }) => {
         const isAdmin = ADMIN_EMAILS.includes(mail);
         onLogin({ email: mail, isAdmin });
         setLoading(false);
-    }, 500);
+    }, 400); // Login más rápido al ser local
   };
 
   return (
@@ -172,7 +179,7 @@ const Login = ({ onLogin }) => {
                         <ArrowRight className="h-3 w-3 rotate-180 mr-1"/> Regresar
                     </button>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Correo Institucional</label>
                         <input
                             type="email"
                             value={email}
@@ -204,9 +211,13 @@ const Dashboard = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!DATA_SOURCES[year]) {
+        setAllData([]);
+        return;
+    }
     setLoading(true);
     setErrorStr(null);
-    fetchSheetData(year)
+    fetchLocalData(year)
       .then(res => {
         setAllData(res.data);
         setHeaders(res.headersFound);
@@ -259,7 +270,9 @@ const Dashboard = ({ user, onLogout }) => {
                     <div className="h-8 w-px bg-gray-300 hidden sm:block mx-1"></div>
                     <div className="flex flex-col">
                         <span className="text-lg font-bold text-itd-blue leading-none">Portal ITD</span>
-                        <span className="text-xs text-gray-500">Constancias Digitales</span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                             <Database className="w-3 h-3"/> Base de datos estática
+                        </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -275,9 +288,9 @@ const Dashboard = ({ user, onLogout }) => {
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="flex gap-4 w-full md:w-auto items-center">
-                <span className="text-sm font-bold text-gray-500 uppercase">Periodo:</span>
+                <span className="text-sm font-bold text-gray-500 uppercase">Año:</span>
                 <select value={year} onChange={(e) => setYear(e.target.value)} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full md:w-48 p-2.5">
-                    {Object.entries(SHEET_CONFIGS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                    {Object.keys(DATA_SOURCES).map(k => <option key={k} value={k}>{k}</option>)}
                 </select>
             </div>
             <div className="relative w-full md:w-96">
@@ -296,21 +309,11 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="flex items-start">
                     <AlertTriangle className="w-8 h-8 text-red-600 mr-4 mt-1 flex-shrink-0" />
                     <div>
-                        <h3 className="text-lg font-bold text-red-800 mb-2">Atención: Error de Permisos</h3>
+                        <h3 className="text-lg font-bold text-red-800 mb-2">Archivo no encontrado</h3>
                         <p className="text-red-700 font-medium mb-3">{errorStr}</p>
-                        {headers.length > 0 && user.isAdmin && (
-                            <div className="mt-2 text-xs text-gray-600 font-mono bg-white p-2 rounded border border-red-200">
-                                Columnas leídas: {headers.join(', ')}
-                            </div>
-                        )}
                         <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
-                            <strong>Intenta esto:</strong>
-                            <ol className="list-decimal pl-5 mt-1">
-                                <li>Ve a tu Google Sheet.</li>
-                                <li>Clic en <strong>Archivo</strong> {'>'} <strong>Compartir</strong> {'>'} <strong>Publicar en la web</strong>.</li>
-                                <li>Dale clic al botón verde "Publicar".</li>
-                                <li>Recarga esta página.</li>
-                            </ol>
+                            <strong>Nota:</strong>
+                            <p className="mt-1">Si seleccionaste el año {year}, debes asegurarte de subir el archivo <code>db_{year}.csv</code> a tu GitHub.</p>
                         </div>
                     </div>
                 </div>
@@ -320,7 +323,7 @@ const Dashboard = ({ user, onLogout }) => {
         {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-itd-blue border-t-transparent mb-4"></div>
-                <p className="text-gray-500 font-medium">Conectando con Google Sheets...</p>
+                <p className="text-gray-500 font-medium">Cargando registros del {year}...</p>
             </div>
         ) : filteredData.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -351,7 +354,7 @@ const Dashboard = ({ user, onLogout }) => {
                             </div>
                         </div>
                         <div className="bg-gray-50 px-5 py-4 border-t border-gray-100">
-                            {item.link ? (
+                            {item.link && item.link !== '#' ? (
                                 <a href={item.link} target="_blank" className="flex items-center justify-center w-full px-4 py-2.5 bg-itd-blue hover:bg-blue-900 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
                                     <FileDown className="w-4 h-4 mr-2"/> Descargar Documento
                                 </a>
@@ -369,14 +372,13 @@ const Dashboard = ({ user, onLogout }) => {
                 <ShieldCheck className="mx-auto h-16 w-16 text-gray-200 mb-4" />
                 <h3 className="text-xl font-bold text-gray-900">Sin resultados</h3>
                 <p className="text-gray-500 mt-2 max-w-sm mx-auto">
-                    {search ? 'No encontramos coincidencias para tu búsqueda.' : 'No tienes documentos disponibles con estatus "ENVIADO" en este periodo.'}
+                    {search ? 'No encontramos coincidencias para tu búsqueda.' : 'No tienes documentos disponibles con estatus "ENVIADO" para este año.'}
                 </p>
                 {user.isAdmin && (
                    <div className="mt-6 inline-block px-4 py-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 text-left">
                         <strong>Diagnóstico Admin:</strong><br/>
-                        1. Verifica que la columna "Correo" exista.<br/>
-                        2. Verifica que el Status sea "ENVIADO".<br/>
-                        3. Filtro actual: {search || "Ninguno"}
+                        Leyendo archivo: <code>db_{year}.csv</code><br/>
+                        Asegúrate que el archivo esté subido en GitHub en la carpeta raíz.
                    </div>
                 )}
             </div>
