@@ -50,27 +50,26 @@ const fetchSheetData = async (year) => {
   const config = SHEET_CONFIGS[year];
   if (!config) return { data: [], error: null, headersFound: [] };
   
-  // Usamos 'export' en lugar de 'gviz' porque maneja mejor las redirecciones en algunos navegadores,
-  // pero IGUAL REQUIERE que la hoja sea pública.
-  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${config.gid}`;
+  // CAMBIO IMPORTANTE: Usamos 'gviz' en lugar de 'export'.
+  // 'gviz' es mucho más amigable con CORS y no redirige a páginas de login tan agresivamente.
+  const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&gid=${config.gid}`;
 
   try {
     const response = await fetch(url);
     
-    // Google redirige (302) a login si no es pública. fetch sigue la redirección y da ok:false o un HTML de login.
     if (!response.ok) {
-         throw new Error("No se pudo conectar con la hoja (Error de red/permisos).");
+         throw new Error(`Error de conexión (${response.status})`);
     }
 
     const text = await response.text();
     
-    // Si la respuesta empieza con <!DOCTYPE html>, es la página de login de Google -> Error de permisos.
-    if (text.trim().startsWith("<!DOCTYPE") || text.includes("accounts.google.com")) {
-        throw new Error("PERMISO DENEGADO: La hoja de cálculo es privada. Debes compartirla como 'Cualquier persona con el enlace'.");
+    // Verificación de seguridad: Si devuelve HTML, es probable que sea la página de login
+    if (text.trim().startsWith("<!DOCTYPE") || text.includes("google.com/accounts")) {
+        throw new Error("ACCESO DENEGADO: Google no permite leer la hoja. Asegúrate de que esté configurada como 'Cualquier persona con el enlace' o ve a 'Archivo > Compartir > Publicar en la web'.");
     }
 
     const rows = parseCSV(text);
-    if (rows.length < 2) return { data: [], error: "La hoja está vacía o no se pudo leer el formato CSV.", headersFound: [] };
+    if (rows.length < 2) return { data: [], error: "La hoja parece vacía o no se pudo leer.", headersFound: [] };
 
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
@@ -89,13 +88,12 @@ const fetchSheetData = async (year) => {
     if (idx.correo === -1) {
         return { 
             data: [], 
-            error: "No se encontró la columna 'Correo' en la hoja.",
+            error: "No se encontró la columna 'Correo'. Verifica los encabezados.",
             headersFound: rawHeaders
         };
     }
 
     const cleanData = rows.slice(1).map((r, i) => {
-        // Status por defecto ENVIADO si no existe la columna, o lo que diga la celda
         const statusRaw = idx.status !== -1 ? (r[idx.status] || 'PENDIENTE') : 'ENVIADO';
         
         return {
@@ -114,11 +112,7 @@ const fetchSheetData = async (year) => {
 
   } catch (error) {
     console.error("Error Fetch:", error);
-    // Si es TypeError suele ser error de CORS (bloqueo por permisos)
-    const msg = error.name === 'TypeError' 
-        ? "BLOQUEO DE SEGURIDAD (CORS): La hoja no es pública. Configúrala en 'Compartir > Cualquier persona con el enlace'." 
-        : error.message;
-    return { data: [], error: msg, headersFound: [] };
+    return { data: [], error: error.message, headersFound: [] };
   }
 };
 
@@ -204,6 +198,7 @@ const Login = ({ onLogin }) => {
 const Dashboard = ({ user, onLogout }) => {
   const [year, setYear] = useState('2025');
   const [allData, setAllData] = useState([]);
+  const [headers, setHeaders] = useState([]);
   const [errorStr, setErrorStr] = useState(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -213,12 +208,9 @@ const Dashboard = ({ user, onLogout }) => {
     setErrorStr(null);
     fetchSheetData(year)
       .then(res => {
-        if (res.error) {
-            setErrorStr(res.error);
-            setAllData([]);
-        } else {
-            setAllData(res.data);
-        }
+        setAllData(res.data);
+        setHeaders(res.headersFound);
+        if (res.error) setErrorStr(res.error);
         setLoading(false);
       });
   }, [year]);
@@ -227,13 +219,11 @@ const Dashboard = ({ user, onLogout }) => {
     if (errorStr || allData.length === 0) return [];
 
     return allData.filter(item => {
-        // Permisos
         const isOwner = item.correo === user.email;
         const isStatusOk = item.status === 'ENVIADO';
         
         if (!user.isAdmin && !(isOwner && isStatusOk)) return false;
 
-        // Búsqueda
         if (search) {
             const term = search.toLowerCase();
             return (
@@ -306,16 +296,21 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="flex items-start">
                     <AlertTriangle className="w-8 h-8 text-red-600 mr-4 mt-1 flex-shrink-0" />
                     <div>
-                        <h3 className="text-lg font-bold text-red-800 mb-2">Error de Conexión con Google Sheets</h3>
+                        <h3 className="text-lg font-bold text-red-800 mb-2">Atención: Error de Permisos</h3>
                         <p className="text-red-700 font-medium mb-3">{errorStr}</p>
-                        <div className="bg-white/60 p-3 rounded text-sm text-red-800 border border-red-100">
-                            <strong>Solución:</strong>
-                            <ul className="list-disc pl-5 mt-1 space-y-1">
-                                <li>Abre tu hoja de cálculo en Google Sheets.</li>
-                                <li>Clic en el botón verde <strong>Compartir</strong>.</li>
-                                <li>En "Acceso general", cambia a <strong>"Cualquier persona con el enlace"</strong>.</li>
-                                <li>Guarda y recarga esta página.</li>
-                            </ul>
+                        {headers.length > 0 && user.isAdmin && (
+                            <div className="mt-2 text-xs text-gray-600 font-mono bg-white p-2 rounded border border-red-200">
+                                Columnas leídas: {headers.join(', ')}
+                            </div>
+                        )}
+                        <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
+                            <strong>Intenta esto:</strong>
+                            <ol className="list-decimal pl-5 mt-1">
+                                <li>Ve a tu Google Sheet.</li>
+                                <li>Clic en <strong>Archivo</strong> {'>'} <strong>Compartir</strong> {'>'} <strong>Publicar en la web</strong>.</li>
+                                <li>Dale clic al botón verde "Publicar".</li>
+                                <li>Recarga esta página.</li>
+                            </ol>
                         </div>
                     </div>
                 </div>
@@ -325,7 +320,7 @@ const Dashboard = ({ user, onLogout }) => {
         {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-itd-blue border-t-transparent mb-4"></div>
-                <p className="text-gray-500 font-medium">Buscando registros en la base de datos...</p>
+                <p className="text-gray-500 font-medium">Conectando con Google Sheets...</p>
             </div>
         ) : filteredData.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -378,9 +373,10 @@ const Dashboard = ({ user, onLogout }) => {
                 </p>
                 {user.isAdmin && (
                    <div className="mt-6 inline-block px-4 py-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 text-left">
-                        <strong>Nota para Admin:</strong><br/>
-                        Asegúrate que la columna "Correo" coincida exactamente.<br/>
-                        Estado actual del filtro: {search ? `Buscando "${search}"` : "Mostrando todo"}
+                        <strong>Diagnóstico Admin:</strong><br/>
+                        1. Verifica que la columna "Correo" exista.<br/>
+                        2. Verifica que el Status sea "ENVIADO".<br/>
+                        3. Filtro actual: {search || "Ninguno"}
                    </div>
                 )}
             </div>
