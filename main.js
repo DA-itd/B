@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
-import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock } from 'lucide-react';
+import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle } from 'lucide-react';
 
 // ==========================================
 // CONFIGURACIÓN DE GOOGLE (OBLIGATORIO)
@@ -63,6 +63,7 @@ const parseCSV = (text) => {
   return rows;
 };
 
+// Función para normalizar texto (Quitar acentos, minúsculas, espacios)
 const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
 const fetchLocalData = async (year) => {
@@ -270,11 +271,12 @@ const Dashboard = ({ user, onLogout }) => {
         if (!user.isAdmin && !(isOwner && isStatusOk)) return false;
 
         if (search) {
-            const term = search.toLowerCase();
+            // NORMALIZACIÓN PARA BÚSQUEDA INSENSIBLE A ACENTOS
+            const term = normalize(search); 
             return (
-                item.nombre.toLowerCase().includes(term) || 
-                item.curso.toLowerCase().includes(term) ||
-                item.correo.includes(term)
+                normalize(item.nombre).includes(term) || 
+                normalize(item.curso).includes(term) ||
+                normalize(item.correo).includes(term)
             );
         }
         return true;
@@ -340,7 +342,13 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
             <div className="relative w-full md:w-96">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="w-4 h-4 text-gray-400"/></div>
-                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5" placeholder="Buscar documento o código..." />
+                <input 
+                    type="text" 
+                    value={search} 
+                    onChange={(e) => setSearch(e.target.value)} 
+                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5" 
+                    placeholder="Buscar por nombre, correo o documento..." 
+                />
             </div>
             {user.isAdmin && (
                 <button onClick={downloadReport} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
@@ -371,46 +379,70 @@ const Dashboard = ({ user, onLogout }) => {
                 <p className="text-gray-500 font-medium">Cargando registros del {year}...</p>
             </div>
         ) : filteredData.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredData.map((item) => (
-                    <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group">
-                        <div className="p-5 flex-1 relative">
-                            {user.isAdmin && (
-                                <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold text-white rounded-bl-lg ${item.status === 'ENVIADO' ? 'bg-green-500' : 'bg-yellow-500'}`}>
-                                    {item.status}
-                                </div>
-                            )}
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="p-2 bg-blue-50 rounded-lg text-itd-blue group-hover:bg-itd-blue group-hover:text-white transition-colors">
-                                    <FileText className="w-6 h-6"/>
-                                </div>
-                                <span className="text-xs text-gray-400 font-mono">{item.fecha}</span>
-                            </div>
-                            <h3 className="font-bold text-gray-900 leading-snug mb-2 line-clamp-2" title={item.curso}>{item.curso}</h3>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {/* CABECERA LISTA (Solo Desktop) */}
+                <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="col-span-4">Nombre / Correo</div>
+                    <div className="col-span-5">Documento</div>
+                    <div className="col-span-3 text-right">Acción</div>
+                </div>
+
+                {/* LISTA DE ITEMS */}
+                <div className="divide-y divide-gray-100">
+                    {filteredData.map((item) => (
+                        <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 hover:bg-gray-50 items-center transition-colors group">
                             
-                            <div className="mt-4 pt-3 border-t border-gray-100">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Otorgado a</p>
-                                <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-[10px] font-bold text-gray-600 mr-2">
-                                        {item.nombre.charAt(0)}
+                            {/* Columna 1: Info Usuario */}
+                            <div className="col-span-1 md:col-span-4 flex items-start gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-itd-blue flex items-center justify-center text-xs font-bold mt-1">
+                                    {item.nombre.charAt(0)}
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <p className="font-bold text-gray-900 text-sm truncate">{item.nombre}</p>
+                                    <p className="text-xs text-gray-500 truncate">{item.correo}</p>
+                                    {/* Fecha visible solo en móvil aquí */}
+                                    <div className="md:hidden flex items-center gap-1 mt-1 text-[10px] text-gray-400">
+                                        <Calendar className="w-3 h-3" /> {item.fecha}
                                     </div>
-                                    <p className="text-sm text-gray-700 truncate font-medium">{item.nombre}</p>
                                 </div>
                             </div>
+
+                            {/* Columna 2: Info Curso/Documento */}
+                            <div className="col-span-1 md:col-span-5">
+                                <div className="flex items-start gap-2">
+                                     {user.isAdmin && (
+                                        <div className="mt-1">
+                                            {item.status === 'ENVIADO' ? 
+                                                <CheckCircle className="w-4 h-4 text-green-500" /> : 
+                                                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                            }
+                                        </div>
+                                     )}
+                                     <div>
+                                        <h3 className="text-sm font-medium text-gray-800 leading-snug">{item.curso}</h3>
+                                        <p className="hidden md:flex items-center gap-1 text-xs text-gray-400 mt-1">
+                                            <Calendar className="w-3 h-3" /> {item.fecha}
+                                        </p>
+                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Columna 3: Botón Acción */}
+                            <div className="col-span-1 md:col-span-3 flex justify-start md:justify-end">
+                                {item.link && item.link !== '#' ? (
+                                    <a href={item.link} target="_blank" className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md">
+                                        <FileDown className="w-4 h-4"/> 
+                                        <span>Descargar</span>
+                                    </a>
+                                ) : (
+                                    <span className="text-xs text-gray-400 italic px-4 py-2 bg-gray-50 rounded border border-gray-100 w-full md:w-auto text-center">
+                                        No disponible
+                                    </span>
+                                )}
+                            </div>
                         </div>
-                        <div className="bg-gray-50 px-5 py-4 border-t border-gray-100">
-                            {item.link && item.link !== '#' ? (
-                                <a href={item.link} target="_blank" className="flex items-center justify-center w-full px-4 py-2.5 bg-itd-blue hover:bg-blue-900 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
-                                    <FileDown className="w-4 h-4 mr-2"/> Descargar Documento
-                                </a>
-                            ) : (
-                                <button disabled className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-400 text-sm font-medium rounded-lg cursor-not-allowed">
-                                    No disponible
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         ) : !loading && !errorStr && (
             <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200">
