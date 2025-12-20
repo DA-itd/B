@@ -305,9 +305,8 @@ const Dashboard = ({ user, onLogout }) => {
                     <img src={LOGO_URL} className="h-10 w-auto" alt="ITD" onError={(e) => e.target.style.display='none'}/>
                     <div className="h-8 w-px bg-gray-300 hidden sm:block mx-1"></div>
                     <div className="flex flex-col">
-                        <span className="text-lg font-bold text-itd-blue leading-none">Portal ITD</span>
-                        <span className="text-xs text-gray-500 flex items-center gap-1">
-                             <Database className="w-3 h-3"/> Base de datos estática
+                        <span className="text-base md:text-lg font-bold text-itd-blue leading-tight">
+                            Descarga de Constancias y Reconocimientos
                         </span>
                     </div>
                 </div>
@@ -388,13 +387,13 @@ const Dashboard = ({ user, onLogout }) => {
                 </div>
 
                 {/* LISTA DE ITEMS */}
-                <div className="divide-y divide-gray-100">
-                    {filteredData.map((item) => (
-                        <div key={item.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 p-4 hover:bg-gray-50 items-center transition-colors group">
+                <div className="">
+                    {filteredData.map((item, index) => (
+                        <div key={item.id} className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-red-50'} hover:bg-blue-50`}>
                             
                             {/* Columna 1: Info Usuario */}
                             <div className="col-span-1 md:col-span-4 flex items-start gap-3">
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-itd-blue flex items-center justify-center text-xs font-bold mt-1">
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mt-1 ${index % 2 === 0 ? 'bg-blue-100 text-itd-blue' : 'bg-white text-itd-red border border-red-100'}`}>
                                     {item.nombre.charAt(0)}
                                 </div>
                                 <div className="min-w-0 flex-1">
