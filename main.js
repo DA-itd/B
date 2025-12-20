@@ -19,8 +19,7 @@ const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw
 const DATA_SOURCES = {
   '2026': './db_2026.csv',
   '2025': './db_2025.csv', 
-  '2024': './db_2024.csv',
-  '2023': './db_2023.csv'
+  '2024': './db_2024.csv'
 };
 
 const ADMIN_EMAILS = [
@@ -298,7 +297,7 @@ const Dashboard = ({ user, onLogout }) => {
   // Función para manejar el clic en "Enviar por correo"
   const handleShareEmail = (item) => {
       const subject = `Documento ITD: ${item.curso}`;
-      const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu documento: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nPortal ITD`;
+      const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu documento: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nCoordinación de Actualización Docente\nDesarrollo Académico`;
       
       // Abre el cliente de correo predeterminado del usuario
       window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -312,7 +311,7 @@ const Dashboard = ({ user, onLogout }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
@@ -345,7 +344,7 @@ const Dashboard = ({ user, onLogout }) => {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="flex gap-4 w-full md:w-auto items-center">
@@ -490,6 +489,12 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
         )}
       </main>
+
+      <footer className="bg-itd-red text-white py-6 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+            <p className="text-sm font-medium">Derechos reservados 2026 - Alejandro Calderón Rentería Desarrollo Académico</p>
+        </div>
+      </footer>
     </div>
   );
 };
