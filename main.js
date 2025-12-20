@@ -9,8 +9,6 @@ import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, F
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
 // CONFIGURACIÓN DE ARCHIVOS
-// El sistema buscará estos nombres exactos en tu repositorio de GitHub.
-// Asegúrate de subir los archivos con estos nombres exactos.
 const DATA_SOURCES = {
   '2026': './db_2026.csv',
   '2025': './db_2025.csv', 
@@ -28,7 +26,17 @@ const ADMIN_EMAILS = [
 // LÓGICA DE DATOS
 // ==========================================
 
+const detectDelimiter = (text) => {
+    if (!text) return ',';
+    const firstLine = text.split('\n')[0] || '';
+    const commas = (firstLine.match(/,/g) || []).length;
+    const semicolons = (firstLine.match(/;/g) || []).length;
+    return semicolons > commas ? ';' : ',';
+};
+
 const parseCSV = (text) => {
+  if (!text) return [];
+  const delimiter = detectDelimiter(text);
   const rows = [];
   let currentRow = [];
   let currentField = '';
@@ -38,7 +46,7 @@ const parseCSV = (text) => {
     const char = text[i];
     if (char === '"' && text[i+1] === '"') { currentField += '"'; i++; }
     else if (char === '"') { inQuotes = !inQuotes; }
-    else if (char === ',' && !inQuotes) { currentRow.push(currentField); currentField = ''; }
+    else if (char === delimiter && !inQuotes) { currentRow.push(currentField); currentField = ''; }
     else if ((char === '\r' || char === '\n') && !inQuotes) {
       if (char === '\r' && text[i+1] === '\n') i++;
       currentRow.push(currentField); rows.push(currentRow); currentRow = []; currentField = '';
@@ -56,49 +64,58 @@ const fetchLocalData = async (year) => {
   if (!fileUrl) return { data: [], error: null, headersFound: [] };
   
   try {
-    // Fetch al archivo local
     const response = await fetch(fileUrl);
     
     if (!response.ok) {
-         if (response.status === 404) throw new Error(`El archivo "db_${year}.csv" no se encuentra en el repositorio. Asegúrate de subirlo.`);
+         if (response.status === 404) throw new Error(`El archivo "db_${year}.csv" no se encuentra en el repositorio.`);
          throw new Error(`Error al cargar el archivo local (${response.status})`);
     }
 
     const text = await response.text();
     
-    // Verificación básica de contenido
     if (!text || text.trim().length === 0) {
         throw new Error("El archivo CSV está vacío.");
     }
 
     const rows = parseCSV(text);
-    if (rows.length < 2) return { data: [], error: "El archivo CSV no tiene datos o encabezados.", headersFound: [] };
+    if (rows.length < 2) return { data: [], error: "El archivo CSV no tiene datos suficientes.", headersFound: [] };
 
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
     
-    // Mapeo flexible de columnas
+    // Función de búsqueda flexible de columnas
     const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(normalize(k))));
 
+    // DICCIONARIO AMPLIADO DE COLUMNAS
     const idx = {
-        nombre: findCol(['nombre', 'participante', 'docente', 'alumno']),
-        correo: findCol(['correo', 'email', 'mail']),
-        curso: findCol(['curso', 'taller', 'reconocimiento', 'concepto', 'actividad']),
-        fecha: findCol(['fecha', 'periodo', 'año']),
+        // Busca: Nombre, Participante, Docente...
+        nombre: findCol(['nombre', 'participante', 'docente', 'alumno', 'name']),
+        
+        // Busca: EmailAddress, Correo, Mail...
+        correo: findCol(['emailaddress', 'correo', 'email', 'mail', 'e-mail']),
+        
+        // Busca: Codigo, Curso, Taller... (Para el título de la tarjeta)
+        curso: findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
+        
+        // Busca: Año, Fecha, Periodo...
+        fecha: findCol(['año', 'fecha', 'periodo', 'year', 'date']),
+        
+        // Busca: Status, Estado...
         status: findCol(['status', 'estatus', 'estado']),
-        link: findCol(['link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
+        
+        // Busca: FileAttachments, Link, Url...
+        link: findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
     };
 
     if (idx.correo === -1) {
         return { 
             data: [], 
-            error: "No se encontró la columna 'Correo' en el archivo CSV. Verifica la primera fila.",
+            error: `No se encontró la columna de Correo (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
             headersFound: rawHeaders
         };
     }
 
     const cleanData = rows.slice(1).map((r, i) => {
-        // Validación para evitar filas vacías al final del archivo
         if (r.length <= 1 && !r[0]) return null;
 
         const statusRaw = idx.status !== -1 ? (r[idx.status] || 'PENDIENTE') : 'ENVIADO';
@@ -107,13 +124,13 @@ const fetchLocalData = async (year) => {
             id: i,
             nombre: idx.nombre !== -1 ? r[idx.nombre] : 'Usuario ITD',
             correo: (r[idx.correo] || '').trim().toLowerCase(),
-            curso: idx.curso !== -1 ? r[idx.curso] : 'Documento General',
+            curso: idx.curso !== -1 ? r[idx.curso] : 'Documento ITD',
             fecha: idx.fecha !== -1 ? r[idx.fecha] : year,
             status: statusRaw.toUpperCase().trim(),
             link: idx.link !== -1 ? r[idx.link] : '',
             year: year
         };
-    }).filter(item => item && item.correo && item.correo.includes('@')); // Filtra nulos y correos inválidos
+    }).filter(item => item && item.correo && item.correo.includes('@'));
 
     return { data: cleanData, error: null, headersFound: rawHeaders };
 
@@ -151,7 +168,7 @@ const Login = ({ onLogin }) => {
         const isAdmin = ADMIN_EMAILS.includes(mail);
         onLogin({ email: mail, isAdmin });
         setLoading(false);
-    }, 400); // Login más rápido al ser local
+    }, 400); 
   };
 
   return (
@@ -250,7 +267,7 @@ const Dashboard = ({ user, onLogout }) => {
   const downloadReport = () => {
     if (!filteredData.length) return;
     const csvContent = "data:text/csv;charset=utf-8," 
-        + "Nombre,Correo,Curso,Fecha,Status,Link\n"
+        + "Nombre,Correo,Documento,Fecha,Status,Link\n"
         + filteredData.map(e => `"${e.nombre}","${e.correo}","${e.curso}","${e.fecha}","${e.status}","${e.link}"`).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -295,7 +312,7 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
             <div className="relative w-full md:w-96">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="w-4 h-4 text-gray-400"/></div>
-                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5" placeholder="Buscar documento..." />
+                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5" placeholder="Buscar documento o código..." />
             </div>
             {user.isAdmin && (
                 <button onClick={downloadReport} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
@@ -309,11 +326,11 @@ const Dashboard = ({ user, onLogout }) => {
                 <div className="flex items-start">
                     <AlertTriangle className="w-8 h-8 text-red-600 mr-4 mt-1 flex-shrink-0" />
                     <div>
-                        <h3 className="text-lg font-bold text-red-800 mb-2">Archivo no encontrado</h3>
+                        <h3 className="text-lg font-bold text-red-800 mb-2">Error de lectura</h3>
                         <p className="text-red-700 font-medium mb-3">{errorStr}</p>
                         <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
-                            <strong>Nota:</strong>
-                            <p className="mt-1">Si seleccionaste el año {year}, debes asegurarte de subir el archivo <code>db_{year}.csv</code> a tu GitHub.</p>
+                            <strong>Ayuda:</strong>
+                            <p className="mt-1">Revisa que el archivo <code>db_{year}.csv</code> esté en GitHub. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
                         </div>
                     </div>
                 </div>
