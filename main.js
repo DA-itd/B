@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
-import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database } from 'lucide-react';
+import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock } from 'lucide-react';
+
+// ==========================================
+// CONFIGURACIÓN DE GOOGLE (OBLIGATORIO)
+// ==========================================
+// Pega aquí tu ID de Cliente obtenido en Google Cloud Console
+// Si no lo pones, el botón no se mostrará.
+const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.googleusercontent.com"; 
 
 // ==========================================
 // CONFIGURACIÓN LOCAL (GITHUB)
@@ -88,22 +95,11 @@ const fetchLocalData = async (year) => {
 
     // DICCIONARIO AMPLIADO DE COLUMNAS
     const idx = {
-        // Busca: Nombre, Participante, Docente...
         nombre: findCol(['nombre', 'participante', 'docente', 'alumno', 'name']),
-        
-        // Busca: EmailAddress, Correo, Mail...
         correo: findCol(['emailaddress', 'correo', 'email', 'mail', 'e-mail']),
-        
-        // Busca: Codigo, Curso, Taller... (Para el título de la tarjeta)
         curso: findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
-        
-        // Busca: Año, Fecha, Periodo...
         fecha: findCol(['año', 'fecha', 'periodo', 'year', 'date']),
-        
-        // Busca: Status, Estado...
         status: findCol(['status', 'estatus', 'estado']),
-        
-        // Busca: FileAttachments, Link, Url...
         link: findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
     };
 
@@ -141,34 +137,64 @@ const fetchLocalData = async (year) => {
 };
 
 // ==========================================
+// AUTH UTILS (GOOGLE JWT DECODER)
+// ==========================================
+
+const decodeJwtResponse = (token) => {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Error decoding JWT", e);
+        return null;
+    }
+};
+
+// ==========================================
 // COMPONENTES UI
 // ==========================================
 
 const Login = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    setTimeout(() => {
-        const mail = email.trim().toLowerCase();
-        const allowed = mail.endsWith('@itdurango.edu.mx') || mail.endsWith('@gmail.com');
-        
-        if (!allowed) {
-            setError('Acceso exclusivo para correos @itdurango.edu.mx o @gmail.com');
-            setLoading(false);
-            return;
+  
+  useEffect(() => {
+    // Inicializar botón de Google si el script se cargó y tenemos un ID
+    if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
+        try {
+            window.google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleCredentialResponse
+            });
+            window.google.accounts.id.renderButton(
+                document.getElementById("googleSignInDiv"),
+                { theme: "outline", size: "large", width: "100%", text: "continue_with" } 
+            );
+        } catch (err) {
+            console.error("Error initializing Google Btn", err);
+            setError("Error al cargar servicios de Google.");
         }
+    }
+  }, []);
 
-        const isAdmin = ADMIN_EMAILS.includes(mail);
-        onLogin({ email: mail, isAdmin });
-        setLoading(false);
-    }, 400); 
+  const handleCredentialResponse = (response) => {
+    const payload = decodeJwtResponse(response.credential);
+    
+    if (payload && payload.email) {
+        const email = payload.email.toLowerCase();
+        
+        // Opcional: Validar dominio si deseas restringir solo a ITD o Gmail
+        // const allowed = email.endsWith('@itdurango.edu.mx') || email.endsWith('@gmail.com');
+        // if (!allowed) { setError('Dominio no permitido.'); return; }
+
+        const isAdmin = ADMIN_EMAILS.includes(email);
+        onLogin({ email: email, name: payload.name, picture: payload.picture, isAdmin });
+    } else {
+        setError('No se pudo verificar la identidad.');
+    }
   };
 
   return (
@@ -179,40 +205,31 @@ const Login = ({ onLogin }) => {
             <div className="text-center mb-8">
                 <img src={LOGO_URL} className="h-24 mx-auto mb-4 object-contain" alt="ITD Logo" onError={(e) => e.target.style.display='none'}/>
                 <h1 className="text-2xl font-bold text-gray-900">Portal ITD</h1>
-                <p className="text-gray-500 text-sm">Descarga de Constancias</p>
+                <p className="text-gray-500 text-sm">Descarga de Constancias Segura</p>
             </div>
 
-            {step === 1 ? (
-                <div className="space-y-4">
-                    <button onClick={() => setStep(2)} className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors">
-                         <Mail className="w-5 h-5 text-gray-500" />
-                         Continuar con Correo
-                    </button>
-                    <p className="text-xs text-center text-gray-400">Personal Docente, Administrativo y Alumnos</p>
-                </div>
-            ) : (
-                <form onSubmit={handleLogin} className="space-y-5">
-                    <button type="button" onClick={() => setStep(1)} className="text-xs text-gray-500 hover:text-itd-blue flex items-center mb-2">
-                        <ArrowRight className="h-3 w-3 rotate-180 mr-1"/> Regresar
-                    </button>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Correo Institucional</label>
-                        <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-itd-blue focus:border-itd-blue"
-                            placeholder="usuario@itdurango.edu.mx"
-                            required
-                            autoFocus
-                        />
+            <div className="space-y-6">
+                {GOOGLE_CLIENT_ID === "TU_CLIENT_ID_AQUI.apps.googleusercontent.com" ? (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
+                        <strong className="block mb-1 flex items-center gap-2"><AlertTriangle className="w-4 h-4"/> Configuración Pendiente</strong>
+                        Para activar el inicio de sesión, el administrador debe agregar el <code>GOOGLE_CLIENT_ID</code> en el código (archivo main.js).
                     </div>
-                    {error && <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2"><AlertCircle className="w-4 h-4"/>{error}</div>}
-                    <button type="submit" disabled={loading} className="w-full py-2.5 px-4 rounded-lg shadow-sm text-sm font-medium text-white bg-itd-blue hover:bg-blue-900 disabled:opacity-70 transition-colors">
-                        {loading ? 'Verificando...' : 'Acceder'}
-                    </button>
-                </form>
-            )}
+                ) : (
+                    <>
+                        <div id="googleSignInDiv" className="w-full flex justify-center min-h-[40px]"></div>
+                        <p className="text-xs text-center text-gray-400">
+                            <Lock className="w-3 h-3 inline mr-1"/>
+                            Autenticación verificada por Google. Solo tú puedes ver tus documentos.
+                        </p>
+                    </>
+                )}
+                
+                {error && (
+                    <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4"/>{error}
+                    </div>
+                )}
+            </div>
         </div>
       </div>
     </div>
@@ -293,9 +310,20 @@ const Dashboard = ({ user, onLogout }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-600 hidden md:block">{user.email}</span>
-                    {user.isAdmin && <span className="bg-itd-red text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase">Admin</span>}
-                    <button onClick={onLogout} className="p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-full transition-colors"><LogOut className="w-5 h-5"/></button>
+                    {user.picture ? (
+                        <img src={user.picture} alt="Profile" className="w-8 h-8 rounded-full border border-gray-200" />
+                    ) : (
+                        <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold">
+                            {user.email.charAt(0).toUpperCase()}
+                        </div>
+                    )}
+                    <div className="hidden md:flex flex-col items-end">
+                         <span className="text-xs font-bold text-gray-700">{user.name || 'Usuario'}</span>
+                         <span className="text-[10px] text-gray-500">{user.email}</span>
+                    </div>
+                    
+                    {user.isAdmin && <span className="bg-itd-red text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase ml-2">Admin</span>}
+                    <button onClick={onLogout} className="ml-2 p-2 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-full transition-colors" title="Cerrar sesión"><LogOut className="w-5 h-5"/></button>
                 </div>
             </div>
         </div>
