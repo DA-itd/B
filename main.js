@@ -492,7 +492,7 @@ const Dashboard = ({ user, onLogout }) => {
 
       <footer className="bg-itd-red text-white py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-4 text-center">
-            <p className="text-sm font-medium">Derechos reservados 2026 - Alejandro Calderón Rentería Desarrollo Académico</p>
+            <p className="text-sm font-medium">Derechos reservados 2026 - Alejandro Calderón Rentería - Desarrollo Académico</p>
         </div>
       </footer>
     </div>
