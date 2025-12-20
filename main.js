@@ -204,8 +204,8 @@ const Login = ({ onLogin }) => {
         <div className="p-8">
             <div className="text-center mb-8">
                 <img src={LOGO_URL} className="h-24 mx-auto mb-4 object-contain" alt="ITD Logo" onError={(e) => e.target.style.display='none'}/>
-                <h1 className="text-2xl font-bold text-gray-900">Portal ITD</h1>
-                <p className="text-gray-500 text-sm">Descarga de Constancias Segura</p>
+                <h1 className="text-2xl font-bold text-gray-900">Constancias y Reconocimientos</h1>
+                <p className="text-gray-500 text-sm">Portal ITD</p>
             </div>
 
             <div className="space-y-6">
@@ -492,7 +492,7 @@ const Dashboard = ({ user, onLogout }) => {
 
       <footer className="bg-itd-red text-white py-6 mt-auto">
         <div className="max-w-7xl mx-auto px-4 text-center">
-            <p className="text-sm font-medium">Derechos reservados 2026 - Alejandro Calderón Rentería - Desarrollo Académico</p>
+            <p className="text-sm font-medium">Derechos reservados 2026 - Alejandro Calderón Rentería Desarrollo Académico</p>
         </div>
       </footer>
     </div>
