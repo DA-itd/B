@@ -126,7 +126,7 @@ const fetchLocalData = async (year) => {
             link: idx.link !== -1 ? r[idx.link] : '',
             year: year
         };
-    }).filter(item => item && item.correo && item.correo.includes('@'));
+    }).filter(item => item && item.correo);
 
     return { data: cleanData, error: null, headersFound: rawHeaders };
 
@@ -268,6 +268,7 @@ const Dashboard = ({ user, onLogout }) => {
         const isStatusOk = item.status === 'ENVIADO';
         
         if (!user.isAdmin && !(isOwner && isStatusOk)) return false;
+        if (!user.isAdmin && !item.correo.includes('@')) return false;
 
         if (search) {
             const term = normalize(search); 
