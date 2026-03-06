@@ -226,7 +226,7 @@ const CardConstancias = ({ user }) => {
             </div>
 
             <a
-              href={CONSTANCIAS_URL}
+              href={`${CONSTANCIAS_URL}?email=${encodeURIComponent(user.email)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors shadow-sm text-sm"
