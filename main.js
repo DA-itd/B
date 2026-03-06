@@ -359,6 +359,8 @@ const Login = ({ onLogin }) => {
   const [mostrarInputBypass, setMostrarInputBypass] = useState(false);
   const [inputBypass, setInputBypass] = useState('');
   const [errorBypass, setErrorBypass] = useState(false);
+  const [pasoBypass, setPasoBypass] = useState('clave'); // 'clave' | 'correo'
+  const [bypassEmail, setBypassEmail] = useState('');
 
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
@@ -390,14 +392,24 @@ const Login = ({ onLogin }) => {
   };
 
   const intentarBypassLogin = () => {
-    if (inputBypass === ADMIN_BYPASS_KEY) {
-      setBypassActivo(true);
-      setMostrarInputBypass(false);
-      setErrorBypass(false);
-      setInputBypass('');
+    if (pasoBypass === 'clave') {
+      if (inputBypass === ADMIN_BYPASS_KEY) {
+        setErrorBypass(false);
+        setInputBypass('');
+        setPasoBypass('correo');
+      } else {
+        setErrorBypass(true);
+        setInputBypass('');
+      }
     } else {
-      setErrorBypass(true);
-      setInputBypass('');
+      // paso correo
+      const prefijo = bypassEmail.replace(/@.*$/, '').trim();
+      if (!prefijo) { setErrorBypass(true); return; }
+      const emailFinal = prefijo + '@itdurango.edu.mx';
+      setBypassActivo(true);
+      setBypassEmail(emailFinal);
+      setMostrarInputBypass(false);
+      setPasoBypass('clave');
     }
   };
 
@@ -420,33 +432,55 @@ const Login = ({ onLogin }) => {
         <p className="text-gray-500 text-sm mt-1">Instituto Tecnológico de Durango — Portal ITD</p>
       </div>
 
-      {/* Modal bypass — aparece al hacer clic en el logo */}
+      {/* Modal bypass — dos pasos: clave y correo */}
       {mostrarInputBypass && (
         <div className="fixed inset-0 flex items-center justify-center z-50" style={{background:'rgba(0,0,0,0.35)'}}>
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-xs mx-4">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-1">
               <img src={LOGO_URL} className="h-8 w-8 object-contain" alt="" onError={(e) => e.target.style.display='none'}/>
               <span className="text-sm font-bold text-gray-700">Acceso especial</span>
             </div>
-            <input
-              type="password"
-              value={inputBypass}
-              onChange={(e) => { setInputBypass(e.target.value); setErrorBypass(false); }}
-              onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
-              placeholder="Contraseña"
-              className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 outline-none mb-2"
-              autoFocus
-            />
-            {errorBypass && <p className="text-xs text-red-500 mb-2">Contraseña incorrecta.</p>}
-            <div className="flex gap-2">
+            {pasoBypass === 'clave' ? (
+              <>
+                <p className="text-xs text-gray-400 mb-3">Ingresa la contraseña de administrador</p>
+                <input
+                  type="password"
+                  value={inputBypass}
+                  onChange={(e) => { setInputBypass(e.target.value); setErrorBypass(false); }}
+                  onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
+                  placeholder="Contraseña"
+                  className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 outline-none mb-2"
+                  autoFocus
+                />
+                {errorBypass && <p className="text-xs text-red-500 mb-2">Contraseña incorrecta.</p>}
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-gray-400 mb-3">¿Para quién generas la constancia?</p>
+                <div className="flex items-center mb-2">
+                  <input
+                    type="text"
+                    value={bypassEmail}
+                    onChange={(e) => { setBypassEmail(e.target.value.replace(/@.*$/,'')); setErrorBypass(false); }}
+                    onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
+                    placeholder="usuario"
+                    className="flex-1 text-sm px-3 py-2 rounded-l-lg border border-gray-300 outline-none"
+                    autoFocus
+                  />
+                  <span className="text-xs px-2 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-500 whitespace-nowrap">@itdurango.edu.mx</span>
+                </div>
+                {errorBypass && <p className="text-xs text-red-500 mb-2">Ingresa un usuario válido.</p>}
+              </>
+            )}
+            <div className="flex gap-2 mt-1">
               <button
                 onClick={intentarBypassLogin}
                 className="flex-1 py-2 bg-itd-blue hover:bg-blue-900 text-white text-sm font-bold rounded-lg transition-colors"
               >
-                Entrar
+                {pasoBypass === 'clave' ? 'Continuar' : 'Abrir'}
               </button>
               <button
-                onClick={() => { setMostrarInputBypass(false); setInputBypass(''); setErrorBypass(false); }}
+                onClick={() => { setMostrarInputBypass(false); setInputBypass(''); setBypassEmail(''); setErrorBypass(false); setPasoBypass('clave'); }}
                 className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-bold rounded-lg transition-colors"
               >
                 Cancelar
@@ -518,7 +552,7 @@ const Login = ({ onLogin }) => {
             <div className="mt-auto space-y-3">
               {constanciasDesbloqueadas ? (
                 <a
-                  href={CONSTANCIAS_URL}
+                  href={bypassEmail ? `${CONSTANCIAS_URL}?email=${encodeURIComponent(bypassEmail)}` : CONSTANCIAS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors text-sm"
