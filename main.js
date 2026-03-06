@@ -408,10 +408,53 @@ const Login = ({ onLogin }) => {
 
       {/* Header institucional */}
       <div className="text-center mb-6">
-        <img src={LOGO_URL} className="h-20 mx-auto mb-3 object-contain" alt="ITD Logo" onError={(e) => e.target.style.display='none'}/>
+        <img
+          src={LOGO_URL}
+          className="h-20 mx-auto mb-3 object-contain cursor-pointer select-none"
+          alt="ITD Logo"
+          onClick={() => { setMostrarInputBypass(true); setErrorBypass(false); }}
+          onError={(e) => e.target.style.display='none'}
+          title=""
+        />
         <h1 className="text-2xl font-bold text-itd-blue">Constancias y Reconocimientos</h1>
         <p className="text-gray-500 text-sm mt-1">Instituto Tecnológico de Durango — Portal ITD</p>
       </div>
+
+      {/* Modal bypass — aparece al hacer clic en el logo */}
+      {mostrarInputBypass && (
+        <div className="fixed inset-0 flex items-center justify-center z-50" style={{background:'rgba(0,0,0,0.35)'}}>
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-xs mx-4">
+            <div className="flex items-center gap-2 mb-4">
+              <img src={LOGO_URL} className="h-8 w-8 object-contain" alt="" onError={(e) => e.target.style.display='none'}/>
+              <span className="text-sm font-bold text-gray-700">Acceso especial</span>
+            </div>
+            <input
+              type="password"
+              value={inputBypass}
+              onChange={(e) => { setInputBypass(e.target.value); setErrorBypass(false); }}
+              onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
+              placeholder="Contraseña"
+              className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 outline-none mb-2"
+              autoFocus
+            />
+            {errorBypass && <p className="text-xs text-red-500 mb-2">Contraseña incorrecta.</p>}
+            <div className="flex gap-2">
+              <button
+                onClick={intentarBypassLogin}
+                className="flex-1 py-2 bg-itd-blue hover:bg-blue-900 text-white text-sm font-bold rounded-lg transition-colors"
+              >
+                Entrar
+              </button>
+              <button
+                onClick={() => { setMostrarInputBypass(false); setInputBypass(''); setErrorBypass(false); }}
+                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-bold rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dos tarjetas lado a lado */}
       <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -496,46 +539,7 @@ const Login = ({ onLogin }) => {
                   <p className="text-xs text-center text-gray-400">
                     Se habilitará al concluir el periodo de cursos
                   </p>
-                  {/* Bypass admin: candado discreto solo visible si es admin (detectado por email en URL) */}
-                  {!mostrarInputBypass && (
-                    <div className="flex justify-center">
-                      <button
-                        onClick={() => { setMostrarInputBypass(true); setErrorBypass(false); }}
-                        className="text-gray-200 hover:text-gray-400 transition-colors p-1 rounded"
-                        title=""
-                      >
-                        <Lock className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-                  {mostrarInputBypass && (
-                    <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
-                      <div className="flex gap-2">
-                        <input
-                          type="password"
-                          value={inputBypass}
-                          onChange={(e) => { setInputBypass(e.target.value); setErrorBypass(false); }}
-                          onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
-                          placeholder="Contraseña"
-                          className={`flex-1 text-sm px-3 py-2 rounded-lg border ${errorBypass ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'} outline-none focus:border-itd-blue transition-colors`}
-                          autoFocus
-                        />
-                        <button
-                          onClick={intentarBypassLogin}
-                          className="px-3 py-2 bg-itd-blue hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors"
-                        >
-                          OK
-                        </button>
-                        <button
-                          onClick={() => { setMostrarInputBypass(false); setInputBypass(''); setErrorBypass(false); }}
-                          className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs font-bold rounded-lg transition-colors"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      {errorBypass && <p className="text-xs text-red-500 font-medium">Contraseña incorrecta.</p>}
-                    </div>
-                  )}
+
                 </>
               )}
             </div>
