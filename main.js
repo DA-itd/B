@@ -402,14 +402,18 @@ const Login = ({ onLogin }) => {
         setInputBypass('');
       }
     } else {
-      // paso correo
+      // paso correo — abrir directamente el Apps Script
       const prefijo = bypassEmail.replace(/@.*$/, '').trim();
       if (!prefijo) { setErrorBypass(true); return; }
       const emailFinal = prefijo + '@itdurango.edu.mx';
-      setBypassActivo(true);
-      setBypassEmail(emailFinal);
+      const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(emailFinal);
+      window.open(url, '_blank');
+      // resetear modal
       setMostrarInputBypass(false);
+      setInputBypass('');
+      setBypassEmail('');
       setPasoBypass('clave');
+      setErrorBypass(false);
     }
   };
 
