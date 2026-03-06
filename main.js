@@ -176,8 +176,67 @@ const UnitBox = ({ valor, label }) => (
   </div>
 );
 
+const ADMIN_BYPASS_KEY = "Xela1615";
+
+const ModuloAbierto = ({ user }) => (
+  <div className="space-y-4">
+    <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+      <div>
+        <p className="text-sm font-semibold text-green-800">¡El módulo está disponible!</p>
+        <p className="text-xs text-green-700 mt-0.5">
+          Haz clic en el botón para acceder con tu cuenta institucional.
+          Tu sesión de Google ya está activa.
+        </p>
+      </div>
+    </div>
+    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+      {user.picture ? (
+        <img src={user.picture} className="w-8 h-8 rounded-full border border-gray-200 flex-shrink-0" alt=""/>
+      ) : (
+        <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+          {user.email.charAt(0).toUpperCase()}
+        </div>
+      )}
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-gray-700 truncate">{user.name || 'Usuario'}</p>
+        <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+      </div>
+      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 ml-auto" />
+    </div>
+    <a
+      href={`${CONSTANCIAS_URL}?email=${encodeURIComponent(user.email)}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors shadow-sm text-sm"
+    >
+      <Award className="w-4 h-4" />
+      Acceder a mis constancias
+      <ExternalLink className="w-4 h-4 ml-auto opacity-70" />
+    </a>
+  </div>
+);
+
 const CardConstancias = ({ user }) => {
   const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
+  const [bypassActivo, setBypassActivo]   = useState(false);
+  const [mostrarInput, setMostrarInput]   = useState(false);
+  const [inputClave, setInputClave]       = useState('');
+  const [errorClave, setErrorClave]       = useState(false);
+
+  const intentarBypass = () => {
+    if (inputClave === ADMIN_BYPASS_KEY) {
+      setBypassActivo(true);
+      setMostrarInput(false);
+      setErrorClave(false);
+      setInputClave('');
+    } else {
+      setErrorClave(true);
+      setInputClave('');
+    }
+  };
+
+  const moduloVisible = abierto || bypassActivo;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -195,47 +254,8 @@ const CardConstancias = ({ user }) => {
       </div>
 
       <div className="p-5">
-        {abierto ? (
-          // ── MÓDULO ABIERTO ──
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-semibold text-green-800">¡El módulo está disponible!</p>
-                <p className="text-xs text-green-700 mt-0.5">
-                  Haz clic en el botón para acceder con tu cuenta institucional.
-                  Tu sesión de Google ya está activa.
-                </p>
-              </div>
-            </div>
-
-            {/* Info del usuario activo */}
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-              {user.picture ? (
-                <img src={user.picture} className="w-8 h-8 rounded-full border border-gray-200 flex-shrink-0" alt=""/>
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-                  {user.email.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-gray-700 truncate">{user.name || 'Usuario'}</p>
-                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
-              </div>
-              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 ml-auto" />
-            </div>
-
-            <a
-              href={`${CONSTANCIAS_URL}?email=${encodeURIComponent(user.email)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors shadow-sm text-sm"
-            >
-              <Award className="w-4 h-4" />
-              Acceder a mis constancias
-              <ExternalLink className="w-4 h-4 ml-auto opacity-70" />
-            </a>
-          </div>
+        {moduloVisible ? (
+          <ModuloAbierto user={user} />
         ) : (
           // ── MÓDULO BLOQUEADO CON CUENTA REGRESIVA ──
           <div className="space-y-5">
@@ -275,6 +295,52 @@ const CardConstancias = ({ user }) => {
             <p className="text-[10px] text-center text-gray-400">
               Se habilitará automáticamente el 29 de Junio de 2026
             </p>
+
+            {/* ── Bypass admin: solo visible para admins ── */}
+            {user.isAdmin && !mostrarInput && (
+              <div className="flex justify-center pt-1">
+                <button
+                  onClick={() => { setMostrarInput(true); setErrorClave(false); }}
+                  className="text-gray-300 hover:text-gray-400 transition-colors p-1 rounded"
+                  title="Acceso administrador"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {user.isAdmin && mostrarInput && (
+              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">Acceso administrador</p>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={inputClave}
+                    onChange={(e) => { setInputClave(e.target.value); setErrorClave(false); }}
+                    onKeyDown={(e) => e.key === 'Enter' && intentarBypass()}
+                    placeholder="Contraseña"
+                    className={`flex-1 text-sm px-3 py-2 rounded-lg border ${errorClave ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'} outline-none focus:border-itd-blue transition-colors`}
+                    autoFocus
+                  />
+                  <button
+                    onClick={intentarBypass}
+                    className="px-3 py-2 bg-itd-blue hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors"
+                  >
+                    Entrar
+                  </button>
+                  <button
+                    onClick={() => { setMostrarInput(false); setInputClave(''); setErrorClave(false); }}
+                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs font-bold rounded-lg transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+                {errorClave && (
+                  <p className="text-[10px] text-red-500 font-medium">Contraseña incorrecta.</p>
+                )}
+              </div>
+            )}
+
           </div>
         )}
       </div>
