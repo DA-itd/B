@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
-import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2 } from 'lucide-react';
+import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
 
 // ==========================================
 // CONFIGURACIÓN DE GOOGLE (OBLIGATORIO)
 // ==========================================
-// Pega aquí tu ID de Cliente obtenido en Google Cloud Console
-// Si no lo pones, el botón no se mostrará.
 const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.googleusercontent.com"; 
 
 // ==========================================
 // CONFIGURACIÓN LOCAL (GITHUB)
 // ==========================================
-
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
 // CONFIGURACIÓN DE ARCHIVOS
@@ -27,6 +24,13 @@ const ADMIN_EMAILS = [
     'coord_actualizaciondocente@itdurango.edu.mx',
     'usuario@itdurango.edu.mx' 
 ];
+
+// ==========================================
+// MÓDULO: GENERACIÓN DE CONSTANCIAS
+// ==========================================
+const CONSTANCIAS_URL = "https://script.google.com/macros/s/AKfycbwxTOTI0iXjs4l8qZrOP5sK-tflW7Bz-cugiq55LTtuIRziM9SLfM8z9GgjqaoS-o5v/exec";
+// Lunes 29 de Junio 2026 — después de que terminen los cursos el 26 de junio
+const CONSTANCIAS_FECHA_APERTURA = new Date('2026-06-29T00:00:00');
 
 // ==========================================
 // LÓGICA DE DATOS
@@ -62,45 +66,35 @@ const parseCSV = (text) => {
   return rows;
 };
 
-// Función para normalizar texto (Quitar acentos, minúsculas, espacios)
 const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
 const fetchLocalData = async (year) => {
   const fileUrl = DATA_SOURCES[year];
-  
   if (!fileUrl) return { data: [], error: null, headersFound: [] };
   
   try {
     const response = await fetch(fileUrl);
-    
     if (!response.ok) {
          if (response.status === 404) throw new Error(`El archivo "db_${year}.csv" no se encuentra en el repositorio.`);
          throw new Error(`Error al cargar el archivo local (${response.status})`);
     }
-
     const text = await response.text();
-    
-    if (!text || text.trim().length === 0) {
-        throw new Error("El archivo CSV está vacío.");
-    }
+    if (!text || text.trim().length === 0) throw new Error("El archivo CSV está vacío.");
 
     const rows = parseCSV(text);
     if (rows.length < 2) return { data: [], error: "El archivo CSV no tiene datos suficientes.", headersFound: [] };
 
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
-    
-    // Función de búsqueda flexible de columnas
     const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(normalize(k))));
 
-    // DICCIONARIO AMPLIADO DE COLUMNAS
     const idx = {
         nombre: findCol(['nombre', 'participante', 'docente', 'alumno', 'name']),
         correo: findCol(['emailaddress', 'correo', 'email', 'mail', 'e-mail']),
-        curso: findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
-        fecha: findCol(['año', 'fecha', 'periodo', 'year', 'date']),
+        curso:  findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
+        fecha:  findCol(['año', 'fecha', 'periodo', 'year', 'date']),
         status: findCol(['status', 'estatus', 'estado']),
-        link: findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
+        link:   findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
     };
 
     if (idx.correo === -1) {
@@ -113,23 +107,20 @@ const fetchLocalData = async (year) => {
 
     const cleanData = rows.slice(1).map((r, i) => {
         if (r.length <= 1 && !r[0]) return null;
-
         const statusRaw = idx.status !== -1 ? (r[idx.status] || 'PENDIENTE') : 'ENVIADO';
-        
         return {
-            id: i,
+            id:     i,
             nombre: idx.nombre !== -1 ? r[idx.nombre] : 'Usuario ITD',
             correo: (r[idx.correo] || '').trim().toLowerCase(),
-            curso: idx.curso !== -1 ? r[idx.curso] : 'Documento ITD',
-            fecha: idx.fecha !== -1 ? r[idx.fecha] : year,
+            curso:  idx.curso !== -1 ? r[idx.curso] : 'Documento ITD',
+            fecha:  idx.fecha !== -1 ? r[idx.fecha] : year,
             status: statusRaw.toUpperCase().trim(),
-            link: idx.link !== -1 ? r[idx.link] : '',
-            year: year
+            link:   idx.link !== -1 ? r[idx.link] : '',
+            year:   year
         };
     }).filter(item => item && item.correo);
 
     return { data: cleanData, error: null, headersFound: rawHeaders };
-
   } catch (error) {
     console.error("Error Fetch Local:", error);
     return { data: [], error: error.message, headersFound: [] };
@@ -139,7 +130,6 @@ const fetchLocalData = async (year) => {
 // ==========================================
 // AUTH UTILS (GOOGLE JWT DECODER)
 // ==========================================
-
 const decodeJwtResponse = (token) => {
     try {
         const base64Url = token.split('.')[1];
@@ -155,6 +145,144 @@ const decodeJwtResponse = (token) => {
 };
 
 // ==========================================
+// COMPONENTE: CUENTA REGRESIVA — CONSTANCIAS
+// ==========================================
+const useCountdown = (targetDate) => {
+  const calc = () => {
+    const diff = targetDate - new Date();
+    if (diff <= 0) return { dias: 0, horas: 0, minutos: 0, segundos: 0, abierto: true };
+    return {
+      dias:     Math.floor(diff / (1000 * 60 * 60 * 24)),
+      horas:    Math.floor((diff / (1000 * 60 * 60)) % 24),
+      minutos:  Math.floor((diff / (1000 * 60)) % 60),
+      segundos: Math.floor((diff / 1000) % 60),
+      abierto:  false
+    };
+  };
+  const [tiempo, setTiempo] = useState(calc);
+  useEffect(() => {
+    const t = setInterval(() => setTiempo(calc()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return tiempo;
+};
+
+const UnitBox = ({ valor, label }) => (
+  <div className="flex flex-col items-center">
+    <div className="bg-itd-blue text-white rounded-lg w-14 h-14 flex items-center justify-center text-2xl font-bold tabular-nums shadow-inner">
+      {String(valor).padStart(2, '0')}
+    </div>
+    <span className="text-[10px] uppercase tracking-widest text-gray-500 mt-1">{label}</span>
+  </div>
+);
+
+const CardConstancias = ({ user }) => {
+  const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      {/* Encabezado */}
+      <div className="bg-gradient-to-r from-itd-red to-itd-blue p-5 text-white">
+        <div className="flex items-center gap-3">
+          <div className="bg-white/20 rounded-lg p-2">
+            <Award className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold">Generación de Constancias</h2>
+            <p className="text-white/75 text-xs mt-0.5">Cursos del periodo Enero–Junio 2026</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-5">
+        {abierto ? (
+          // ── MÓDULO ABIERTO ──
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">¡El módulo está disponible!</p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  Haz clic en el botón para acceder con tu cuenta institucional.
+                  Tu sesión de Google ya está activa.
+                </p>
+              </div>
+            </div>
+
+            {/* Info del usuario activo */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+              {user.picture ? (
+                <img src={user.picture} className="w-8 h-8 rounded-full border border-gray-200 flex-shrink-0" alt=""/>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {user.email.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-700 truncate">{user.name || 'Usuario'}</p>
+                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+              </div>
+              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 ml-auto" />
+            </div>
+
+            <a
+              href={CONSTANCIAS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors shadow-sm text-sm"
+            >
+              <Award className="w-4 h-4" />
+              Acceder a mis constancias
+              <ExternalLink className="w-4 h-4 ml-auto opacity-70" />
+            </a>
+          </div>
+        ) : (
+          // ── MÓDULO BLOQUEADO CON CUENTA REGRESIVA ──
+          <div className="space-y-5">
+            <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">Disponible a partir del 29 de Junio 2026</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Este módulo estará activo una vez que concluya el periodo actual (cursos hasta el 26 de junio).
+                  Podrás generar tus constancias de los cursos en los que participaste.
+                </p>
+              </div>
+            </div>
+
+            {/* Cuenta regresiva */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest text-center mb-3">Tiempo restante</p>
+              <div className="flex justify-center gap-3">
+                <UnitBox valor={dias}     label="Días"  />
+                <div className="text-2xl font-bold text-gray-300 self-start mt-3">:</div>
+                <UnitBox valor={horas}    label="Horas" />
+                <div className="text-2xl font-bold text-gray-300 self-start mt-3">:</div>
+                <UnitBox valor={minutos}  label="Min"   />
+                <div className="text-2xl font-bold text-gray-300 self-start mt-3">:</div>
+                <UnitBox valor={segundos} label="Seg"   />
+              </div>
+            </div>
+
+            <button
+              disabled
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 text-gray-400 font-bold rounded-lg cursor-not-allowed text-sm border border-gray-200"
+            >
+              <Lock className="w-4 h-4" />
+              Módulo no disponible aún
+            </button>
+
+            <p className="text-[10px] text-center text-gray-400">
+              Se habilitará automáticamente el 29 de Junio de 2026
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ==========================================
 // COMPONENTES UI
 // ==========================================
 
@@ -162,7 +290,6 @@ const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
   
   useEffect(() => {
-    // Inicializar botón de Google si el script se cargó y tenemos un ID
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
             window.google.accounts.id.initialize({
@@ -182,14 +309,8 @@ const Login = ({ onLogin }) => {
 
   const handleCredentialResponse = (response) => {
     const payload = decodeJwtResponse(response.credential);
-    
     if (payload && payload.email) {
         const email = payload.email.toLowerCase();
-        
-        // Opcional: Validar dominio si deseas restringir solo a ITD o Gmail
-        // const allowed = email.endsWith('@itdurango.edu.mx') || email.endsWith('@gmail.com');
-        // if (!allowed) { setError('Dominio no permitido.'); return; }
-
         const isAdmin = ADMIN_EMAILS.includes(email);
         onLogin({ email: email, name: payload.name, picture: payload.picture, isAdmin });
     } else {
@@ -207,7 +328,6 @@ const Login = ({ onLogin }) => {
                 <h1 className="text-2xl font-bold text-gray-900">Constancias y Reconocimientos</h1>
                 <p className="text-gray-500 text-sm">Portal ITD</p>
             </div>
-
             <div className="space-y-6">
                 {GOOGLE_CLIENT_ID === "TU_CLIENT_ID_AQUI.apps.googleusercontent.com" ? (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-800">
@@ -223,7 +343,6 @@ const Login = ({ onLogin }) => {
                         </p>
                     </>
                 )}
-                
                 {error && (
                     <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg flex items-center gap-2">
                         <AlertCircle className="w-4 h-4"/>{error}
@@ -245,36 +364,29 @@ const Dashboard = ({ user, onLogout }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!DATA_SOURCES[year]) {
-        setAllData([]);
-        return;
-    }
+    if (!DATA_SOURCES[year]) { setAllData([]); return; }
     setLoading(true);
     setErrorStr(null);
-    fetchLocalData(year)
-      .then(res => {
+    fetchLocalData(year).then(res => {
         setAllData(res.data);
         setHeaders(res.headersFound);
         if (res.error) setErrorStr(res.error);
         setLoading(false);
-      });
+    });
   }, [year]);
 
   const filteredData = useMemo(() => {
     if (errorStr || allData.length === 0) return [];
-
     return allData.filter(item => {
-        const isOwner = item.correo === user.email;
+        const isOwner    = item.correo === user.email;
         const isStatusOk = item.status === 'ENVIADO';
-        
         if (!user.isAdmin && !(isOwner && isStatusOk)) return false;
         if (!user.isAdmin && !item.correo.includes('@')) return false;
-
         if (search) {
-            const term = normalize(search); 
+            const term = normalize(search);
             return (
-                normalize(item.nombre).includes(term) || 
-                normalize(item.curso).includes(term) ||
+                normalize(item.nombre).includes(term) ||
+                normalize(item.curso).includes(term)  ||
                 normalize(item.correo).includes(term)
             );
         }
@@ -284,7 +396,7 @@ const Dashboard = ({ user, onLogout }) => {
 
   const downloadReport = () => {
     if (!filteredData.length) return;
-    const csvContent = "data:text/csv;charset=utf-8," 
+    const csvContent = "data:text/csv;charset=utf-8,"
         + "Nombre,Correo,Documento,Fecha,Status,Link\n"
         + filteredData.map(e => `"${e.nombre}","${e.correo}","${e.curso}","${e.fecha}","${e.status}","${e.link}"`).join("\n");
     const encodedUri = encodeURI(csvContent);
@@ -295,19 +407,13 @@ const Dashboard = ({ user, onLogout }) => {
     link.click();
   };
 
-  // Función para manejar el clic en "Enviar por correo"
   const handleShareEmail = (item) => {
       const subject = `Documento ITD: ${item.curso}`;
       const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu documento: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nCoordinación de Actualización Docente\nDesarrollo Académico`;
-      
-      // Abre el cliente de correo predeterminado del usuario
       window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
-  // Función para simular el registro de descarga
   const handleDownloadClick = (item) => {
-      // NOTA TÉCNICA: En una app estática sin backend, no podemos guardar esto en una base de datos real.
-      // Aquí se podría conectar un evento de Google Analytics.
       console.log(`[Analytics] Descarga iniciada: ${item.curso} por ${user.email}`);
   };
 
@@ -337,9 +443,7 @@ const Dashboard = ({ user, onLogout }) => {
                          <span className="text-xs font-bold text-gray-700">{user.name || 'Usuario'}</span>
                          <span className="text-[10px] text-gray-500">{user.email}</span>
                     </div>
-                    
                     {user.isAdmin && <span className="bg-itd-red text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase ml-2">Admin</span>}
-                    
                     <button 
                         onClick={onLogout} 
                         className="ml-2 flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
@@ -355,6 +459,7 @@ const Dashboard = ({ user, onLogout }) => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
         
+        {/* Filtros */}
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="flex gap-4 w-full md:w-auto items-center">
                 <span className="text-sm font-bold text-gray-500 uppercase">Año:</span>
@@ -365,9 +470,7 @@ const Dashboard = ({ user, onLogout }) => {
             <div className="relative w-full md:w-96">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="w-4 h-4 text-gray-400"/></div>
                 <input 
-                    type="text" 
-                    value={search} 
-                    onChange={(e) => setSearch(e.target.value)} 
+                    type="text" value={search} onChange={(e) => setSearch(e.target.value)}
                     className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5" 
                     placeholder="Buscar por nombre, correo o documento..." 
                 />
@@ -379,6 +482,7 @@ const Dashboard = ({ user, onLogout }) => {
             )}
         </div>
 
+        {/* Error de lectura */}
         {errorStr && (
             <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-xl shadow-sm mb-8 animate-pulse">
                 <div className="flex items-start">
@@ -395,6 +499,7 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
         )}
 
+        {/* Lista de documentos */}
         {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
                 <div className="animate-spin rounded-full h-10 w-10 border-4 border-itd-blue border-t-transparent mb-4"></div>
@@ -402,19 +507,14 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
         ) : filteredData.length > 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {/* CABECERA LISTA (Solo Desktop) */}
                 <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <div className="col-span-4">Nombre / Correo</div>
                     <div className="col-span-5">Documento</div>
                     <div className="col-span-3 text-right">Acciones</div>
                 </div>
-
-                {/* LISTA DE ITEMS */}
-                <div className="">
+                <div>
                     {filteredData.map((item, index) => (
                         <div key={item.id} className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-red-50'} hover:bg-blue-50`}>
-                            
-                            {/* Columna 1: Info Usuario */}
                             <div className="col-span-1 md:col-span-4 flex items-start gap-3">
                                 <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mt-1 ${index % 2 === 0 ? 'bg-blue-100 text-itd-blue' : 'bg-white text-itd-red border border-red-100'}`}>
                                     {item.nombre.charAt(0)}
@@ -422,14 +522,11 @@ const Dashboard = ({ user, onLogout }) => {
                                 <div className="min-w-0 flex-1">
                                     <p className="font-bold text-gray-900 text-sm truncate">{item.nombre}</p>
                                     <p className="text-xs text-gray-500 truncate">{item.correo}</p>
-                                    {/* Fecha visible solo en móvil aquí */}
                                     <div className="md:hidden flex items-center gap-1 mt-1 text-[10px] text-gray-400">
                                         <Calendar className="w-3 h-3" /> {item.fecha}
                                     </div>
                                 </div>
                             </div>
-
-                            {/* Columna 2: Info Curso/Documento */}
                             <div className="col-span-1 md:col-span-5">
                                 <div className="flex items-start gap-2">
                                      {user.isAdmin && (
@@ -448,8 +545,6 @@ const Dashboard = ({ user, onLogout }) => {
                                      </div>
                                 </div>
                             </div>
-
-                            {/* Columna 3: Botones Acción */}
                             <div className="col-span-1 md:col-span-3 flex justify-start md:justify-end gap-2">
                                 {item.link && item.link !== '#' && item.status === 'ENVIADO' ? (
                                     <>
@@ -460,10 +555,8 @@ const Dashboard = ({ user, onLogout }) => {
                                         >
                                             <Mail className="w-5 h-5" />
                                         </button>
-
                                         <a 
-                                            href={item.link} 
-                                            target="_blank" 
+                                            href={item.link} target="_blank"
                                             onClick={() => handleDownloadClick(item)}
                                             className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md"
                                         >
@@ -497,6 +590,19 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
             </div>
         )}
+
+        {/* ── MÓDULO: GENERACIÓN DE CONSTANCIAS ── */}
+        <div className="mt-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1 bg-gray-200"></div>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Otros servicios</span>
+            <div className="h-px flex-1 bg-gray-200"></div>
+          </div>
+          <div className="max-w-lg">
+            <CardConstancias user={user} />
+          </div>
+        </div>
+
       </main>
 
       <footer className="bg-itd-red text-white py-6 mt-auto">
@@ -510,12 +616,7 @@ const Dashboard = ({ user, onLogout }) => {
 
 const App = () => {
   const [user, setUser] = useState(null);
-  
-  const handleLogout = () => {
-    // Redirigir a la URL solicitada al salir
-    window.location.href = "https://da-itd.github.io/A/";
-  };
-
+  const handleLogout = () => { window.location.href = "https://da-itd.github.io/A/"; };
   return user ? <Dashboard user={user} onLogout={handleLogout} /> : <Login onLogin={setUser} />;
 };
 
