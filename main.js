@@ -25,7 +25,7 @@ const ADMIN_EMAILS = [
     'usuario@itdurango.edu.mx' 
 ];
 // Clave de acceso rápido admin (doble click en logo)
-const ADMIN_PASSWORD = "itd2026";
+const ADMIN_PASSWORD = "Xela1615";
 
 // ==========================================
 // MÓDULO: GENERACIÓN DE CONSTANCIAS
@@ -294,27 +294,37 @@ const Login = ({ onLogin }) => {
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminPass, setAdminPass] = useState('');
   const [adminError, setAdminError] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
   const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
 
   // Doble click en logo → modal admin
   const handleLogoClick = () => {
-    const next = clickCount + 1;
-    setClickCount(next);
-    if (next >= 2) {
-      setClickCount(0);
-      setAdminPass('');
-      setAdminError('');
-      setShowAdminModal(true);
-    }
-    setTimeout(() => setClickCount(0), 600);
+    setAdminPass('');
+    setAdminError('');
+    setAdminEmail('');
+    setAdminStep('clave');
+    setShowAdminModal(true);
   };
 
   const handleAdminLogin = () => {
-    if (adminPass === ADMIN_PASSWORD) {
-      setShowAdminModal(false);
-      onLogin({ email: ADMIN_EMAILS[0], name: 'Administrador', picture: null, isAdmin: true });
+    if (adminStep === 'clave') {
+      if (adminPass === ADMIN_PASSWORD) {
+        setAdminError('');
+        setAdminPass('');
+        setAdminStep('correo');
+      } else {
+        setAdminError('Clave incorrecta.');
+      }
     } else {
-      setAdminError('Clave incorrecta. Intenta de nuevo.');
+      const prefijo = adminEmail.replace(/@.*$/, '').trim();
+      if (!prefijo) { setAdminError('Ingresa un usuario válido.'); return; }
+      const emailFinal = prefijo + '@itdurango.edu.mx';
+      const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(emailFinal);
+      window.open(url, '_blank');
+      setShowAdminModal(false);
+      setAdminStep('clave');
+      setAdminEmail('');
     }
   };
 
@@ -474,27 +484,54 @@ const Login = ({ onLogin }) => {
             <div style={{height:4, background:'linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14)', backgroundSize:'200% 100%', animation:'shimmer 3s linear infinite'}}/>
             <div style={{padding:'1.6rem 1.8rem'}}>
               <div style={{textAlign:'center', marginBottom:'1.2rem'}}>
-                <div style={{fontSize:'1.8rem', marginBottom:'.4rem'}}>🔐</div>
+                <div style={{fontSize:'1.8rem', marginBottom:'.4rem'}}>{adminStep === 'clave' ? '🔐' : '👤'}</div>
                 <div style={{fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.1rem', color:'#3D0A14'}}>Acceso Administrador</div>
-                <div style={{fontSize:'.75rem', color:'#9090A0', marginTop:'.2rem'}}>Ingresa la clave de acceso</div>
+                <div style={{fontSize:'.75rem', color:'#9090A0', marginTop:'.2rem'}}>
+                  {adminStep === 'clave' ? 'Ingresa la clave de acceso' : '¿Para quién generas la constancia?'}
+                </div>
               </div>
-              <input
-                type="password"
-                value={adminPass}
-                onChange={e => { setAdminPass(e.target.value); setAdminError(''); }}
-                onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
-                placeholder="••••••••"
-                autoFocus
-                style={{
-                  width:'100%', padding:'.75rem 1rem',
-                  border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
-                  borderRadius:10, fontSize:'.9rem',
-                  fontFamily:"'DM Sans',sans-serif", outline:'none',
-                  marginBottom:'.5rem', boxSizing:'border-box',
-                  transition:'border-color .2s',
-                  background: adminError ? '#fff5f5' : '#fff'
-                }}
-              />
+              {adminStep === 'clave' ? (
+                <input
+                  type="password"
+                  value={adminPass}
+                  onChange={e => { setAdminPass(e.target.value); setAdminError(''); }}
+                  onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
+                  placeholder="••••••••"
+                  autoFocus
+                  style={{
+                    width:'100%', padding:'.75rem 1rem',
+                    border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
+                    borderRadius:10, fontSize:'.9rem',
+                    fontFamily:"'DM Sans',sans-serif", outline:'none',
+                    marginBottom:'.5rem', boxSizing:'border-box',
+                    background: adminError ? '#fff5f5' : '#fff'
+                  }}
+                />
+              ) : (
+                <div style={{display:'flex', marginBottom:'.5rem'}}>
+                  <input
+                    type="text"
+                    value={adminEmail}
+                    onChange={e => { setAdminEmail(e.target.value.replace(/@.*$/,'')); setAdminError(''); }}
+                    onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
+                    placeholder="usuario"
+                    autoFocus
+                    style={{
+                      flex:1, padding:'.75rem 1rem',
+                      border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
+                      borderRadius:'10px 0 0 10px', fontSize:'.9rem',
+                      fontFamily:"'DM Sans',sans-serif", outline:'none',
+                      boxSizing:'border-box', background: adminError ? '#fff5f5' : '#fff'
+                    }}
+                  />
+                  <span style={{
+                    padding:'.75rem .6rem', background:'#f3f4f6',
+                    border:'1.5px solid #e0e0e0', borderLeft:'none',
+                    borderRadius:'0 10px 10px 0', fontSize:'.72rem',
+                    color:'#6b7280', whiteSpace:'nowrap', display:'flex', alignItems:'center'
+                  }}>@itdurango.edu.mx</span>
+                </div>
+              )}
               {adminError && (
                 <div style={{fontSize:'.73rem', color:'#c0392b', marginBottom:'.6rem', display:'flex', alignItems:'center', gap:'.3rem'}}>
                   <AlertCircle size={12}/> {adminError}
@@ -508,8 +545,8 @@ const Login = ({ onLogin }) => {
                 fontSize:'.88rem', cursor:'pointer',
                 boxShadow:'0 4px 14px rgba(107,26,42,.28)',
                 marginBottom:'.6rem'
-              }}>Acceder</button>
-              <button onClick={() => setShowAdminModal(false)} style={{
+              }}>{adminStep === 'clave' ? 'Continuar' : 'Abrir constancias'}</button>
+              <button onClick={() => { setShowAdminModal(false); setAdminStep('clave'); setAdminEmail(''); setAdminPass(''); setAdminError(''); }} style={{
                 width:'100%', padding:'.55rem',
                 background:'transparent', border:'1.5px solid #e8e8e8',
                 borderRadius:10, fontFamily:"'DM Sans',sans-serif",
