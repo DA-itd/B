@@ -24,6 +24,8 @@ const ADMIN_EMAILS = [
     'coord_actualizaciondocente@itdurango.edu.mx',
     'usuario@itdurango.edu.mx' 
 ];
+// Clave de acceso rápido admin (doble click en logo)
+const ADMIN_PASSWORD = "itd2026";
 
 // ==========================================
 // MÓDULO: GENERACIÓN DE CONSTANCIAS
@@ -287,7 +289,34 @@ const CardConstancias = ({ user }) => {
 
 const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
+  const [logoError, setLogoError] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
+  const [adminError, setAdminError] = useState('');
   const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
+
+  // Doble click en logo → modal admin
+  const handleLogoClick = () => {
+    const next = clickCount + 1;
+    setClickCount(next);
+    if (next >= 2) {
+      setClickCount(0);
+      setAdminPass('');
+      setAdminError('');
+      setShowAdminModal(true);
+    }
+    setTimeout(() => setClickCount(0), 600);
+  };
+
+  const handleAdminLogin = () => {
+    if (adminPass === ADMIN_PASSWORD) {
+      setShowAdminModal(false);
+      onLogin({ email: ADMIN_EMAILS[0], name: 'Administrador', picture: null, isAdmin: true });
+    } else {
+      setAdminError('Clave incorrecta. Intenta de nuevo.');
+    }
+  };
 
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
@@ -300,6 +329,12 @@ const Login = ({ onLogin }) => {
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
+            // Clonar visualmente al espejo de tarjeta 2
+            setTimeout(() => {
+              const src = document.getElementById("googleSignInDiv");
+              const mirror = document.getElementById("googleSignInMirror");
+              if (src && mirror) { mirror.innerHTML = src.innerHTML; }
+            }, 900);
         } catch (err) {
             console.error("Error initializing Google Btn", err);
             setError("Error al cargar servicios de Google.");
@@ -423,12 +458,88 @@ const Login = ({ onLogin }) => {
     <div style={S.page}>
       <div style={S.bgDeco}/>
 
+      {/* Modal acceso admin */}
+      {showAdminModal && (
+        <div style={{
+          position:'fixed', inset:0, zIndex:1000,
+          background:'rgba(0,0,0,.45)', backdropFilter:'blur(4px)',
+          display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'
+        }} onClick={e => { if(e.target===e.currentTarget) setShowAdminModal(false); }}>
+          <div style={{
+            background:'#fff', borderRadius:18, overflow:'hidden',
+            width:'100%', maxWidth:340,
+            boxShadow:'0 24px 60px rgba(0,0,0,.25)',
+            animation:'fadeUp .3s cubic-bezier(.22,.68,0,1.2) both'
+          }}>
+            <div style={{height:4, background:'linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14)', backgroundSize:'200% 100%', animation:'shimmer 3s linear infinite'}}/>
+            <div style={{padding:'1.6rem 1.8rem'}}>
+              <div style={{textAlign:'center', marginBottom:'1.2rem'}}>
+                <div style={{fontSize:'1.8rem', marginBottom:'.4rem'}}>🔐</div>
+                <div style={{fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.1rem', color:'#3D0A14'}}>Acceso Administrador</div>
+                <div style={{fontSize:'.75rem', color:'#9090A0', marginTop:'.2rem'}}>Ingresa la clave de acceso</div>
+              </div>
+              <input
+                type="password"
+                value={adminPass}
+                onChange={e => { setAdminPass(e.target.value); setAdminError(''); }}
+                onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
+                placeholder="••••••••"
+                autoFocus
+                style={{
+                  width:'100%', padding:'.75rem 1rem',
+                  border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
+                  borderRadius:10, fontSize:'.9rem',
+                  fontFamily:"'DM Sans',sans-serif", outline:'none',
+                  marginBottom:'.5rem', boxSizing:'border-box',
+                  transition:'border-color .2s',
+                  background: adminError ? '#fff5f5' : '#fff'
+                }}
+              />
+              {adminError && (
+                <div style={{fontSize:'.73rem', color:'#c0392b', marginBottom:'.6rem', display:'flex', alignItems:'center', gap:'.3rem'}}>
+                  <AlertCircle size={12}/> {adminError}
+                </div>
+              )}
+              <button onClick={handleAdminLogin} style={{
+                width:'100%', padding:'.75rem',
+                background:'linear-gradient(135deg,#3D0A14,#922438)',
+                color:'#F5E4A8', border:'none', borderRadius:10,
+                fontFamily:"'DM Sans',sans-serif", fontWeight:700,
+                fontSize:'.88rem', cursor:'pointer',
+                boxShadow:'0 4px 14px rgba(107,26,42,.28)',
+                marginBottom:'.6rem'
+              }}>Acceder</button>
+              <button onClick={() => setShowAdminModal(false)} style={{
+                width:'100%', padding:'.55rem',
+                background:'transparent', border:'1.5px solid #e8e8e8',
+                borderRadius:10, fontFamily:"'DM Sans',sans-serif",
+                fontSize:'.8rem', color:'#9090A0', cursor:'pointer'
+              }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={S.header}>
-        <div style={S.logoWrap}>
+        <div style={{...S.logoWrap, cursor:'pointer'}} onClick={handleLogoClick} title="">
           <div style={S.logoRing}/>
           <div style={S.logoRing2}/>
-          <img src={LOGO_URL} alt="ITD" style={S.logoImg} onError={e => e.target.style.display='none'}/>
+          {logoError ? (
+            <div style={{
+              width:'100%', height:'100%', borderRadius:'50%',
+              background:'linear-gradient(135deg,#3D0A14,#6B1A2A)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              boxShadow:'0 4px 22px rgba(107,26,42,.2), 0 0 0 2.5px rgba(196,154,53,.65)',
+              flexDirection:'column', gap:2
+            }}>
+              <span style={{fontSize:'.65rem', fontWeight:900, color:'#F5E4A8', letterSpacing:'.1em', lineHeight:1}}>ITD</span>
+              <span style={{fontSize:'.42rem', color:'rgba(245,228,168,.6)', letterSpacing:'.06em', lineHeight:1}}>DURANGO</span>
+            </div>
+          ) : (
+            <img src={LOGO_URL} alt="ITD" style={S.logoImg}
+              onError={() => setLogoError(true)}/>
+          )}
         </div>
         <h1 style={S.h1}>
           Constancias y <em style={{fontStyle:'italic',color:'#922438'}}>Reconocimientos</em>
@@ -497,22 +608,39 @@ const Login = ({ onLogin }) => {
 
             {abierto ? (
               <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer" style={{
-                display:'flex',alignItems:'center',justifyContent:'center',gap:'.5rem',
-                padding:'.85rem 1rem',borderRadius:12,textDecoration:'none',
+                display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
+                padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
                 background:'linear-gradient(135deg,#3D0A14,#922438)',
-                color:'#F5E4A8',fontWeight:700,fontSize:'.84rem',
-                boxShadow:'0 4px 18px rgba(107,26,42,.3)',transition:'all .2s'
+                color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
+                boxShadow:'0 4px 18px rgba(107,26,42,.3)', transition:'all .2s'
               }}>
                 <Award size={15}/> Acceder a mis constancias
                 <ExternalLink size={12} style={{marginLeft:'auto',opacity:.7}}/>
               </a>
             ) : (
               <>
-                {/* Botón bloqueado */}
-                <div style={S.lockBtn}>
-                  <Lock size={14} color="#B0B0BE"/>
-                  <span>Disponible el 29 de Jun 2026</span>
+                {/* Mismo recuadro Google clonado — bloqueado */}
+                <div style={{ position:'relative', marginBottom:'.7rem' }}>
+                  <div id="googleSignInMirror" style={{
+                    width:'100%', minHeight:44, pointerEvents:'none', userSelect:'none'
+                  }}/>
+                  {/* Overlay con candado encima */}
+                  <div style={{
+                    position:'absolute', inset:0,
+                    background:'rgba(250,247,242,.72)',
+                    backdropFilter:'blur(1.5px)',
+                    borderRadius:4,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                    gap:'.45rem', cursor:'not-allowed'
+                  }}>
+                    <Lock size={13} color="#8888A0"/>
+                    <span style={{
+                      fontSize:'.8rem', fontWeight:600,
+                      color:'#5A5A6A', letterSpacing:'.01em'
+                    }}>Disponible el 29 de Jun 2026</span>
+                  </div>
                 </div>
+
                 {/* Cuenta regresiva */}
                 <div style={S.countdown}>
                   {[{v:dias,l:'días'},{v:horas,l:'hrs'},{v:minutos,l:'min'},{v:segundos,l:'seg'}].map(({v,l},i) => (
@@ -525,7 +653,7 @@ const Login = ({ onLogin }) => {
                     </React.Fragment>
                   ))}
                 </div>
-                <p style={{textAlign:'center',fontSize:'.7rem',color:'#A0A0B0',margin:0}}>
+                <p style={{textAlign:'center', fontSize:'.7rem', color:'#A0A0B0', margin:0}}>
                   Se habilitará al concluir el periodo de cursos
                 </p>
               </>
