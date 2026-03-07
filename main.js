@@ -10,7 +10,7 @@ const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.goo
 // ==========================================
 // CONFIGURACIÓN LOCAL (GITHUB)
 // ==========================================
-const LOGO_URL = "https://raw.githubusercontent.com/DA-itd/web/main/logo_itdurango.png";
+const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
 // CONFIGURACIÓN DE ARCHIVOS
 const DATA_SOURCES = {
@@ -172,90 +172,69 @@ const UnitBox = ({ valor, label }) => (
     <div className="bg-itd-blue text-white rounded-lg w-14 h-14 flex items-center justify-center text-2xl font-bold tabular-nums shadow-inner">
       {String(valor).padStart(2, '0')}
     </div>
-    <span className="text-xs uppercase tracking-widest text-gray-500 mt-1">{label}</span>
-  </div>
-);
-
-const ADMIN_BYPASS_KEY = "Xela1615";
-
-const ModuloAbierto = ({ user }) => (
-  <div className="space-y-4">
-    <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-      <div>
-        <p className="text-sm font-semibold text-green-800">¡El módulo está disponible!</p>
-        <p className="text-xs text-green-700 mt-0.5">
-          Haz clic en el botón para acceder con tu cuenta institucional.
-          Tu sesión de Google ya está activa.
-        </p>
-      </div>
-    </div>
-    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-      {user.picture ? (
-        <img src={user.picture} className="w-8 h-8 rounded-full border border-gray-200 flex-shrink-0" alt=""/>
-      ) : (
-        <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
-          {user.email.charAt(0).toUpperCase()}
-        </div>
-      )}
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-gray-700 truncate">{user.name || 'Usuario'}</p>
-        <p className="text-xs text-gray-500 truncate">{user.email}</p>
-      </div>
-      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 ml-auto" />
-    </div>
-    <a
-      href={`${CONSTANCIAS_URL}?email=${encodeURIComponent(user.email)}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors shadow-sm text-sm"
-    >
-      <Award className="w-4 h-4" />
-      Acceder a mis constancias
-      <ExternalLink className="w-4 h-4 ml-auto opacity-70" />
-    </a>
+    <span className="text-[10px] uppercase tracking-widest text-gray-500 mt-1">{label}</span>
   </div>
 );
 
 const CardConstancias = ({ user }) => {
   const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
-  const [bypassActivo, setBypassActivo]   = useState(false);
-  const [mostrarInput, setMostrarInput]   = useState(false);
-  const [inputClave, setInputClave]       = useState('');
-  const [errorClave, setErrorClave]       = useState(false);
-
-  const intentarBypass = () => {
-    if (inputClave === ADMIN_BYPASS_KEY) {
-      setBypassActivo(true);
-      setMostrarInput(false);
-      setErrorClave(false);
-      setInputClave('');
-    } else {
-      setErrorClave(true);
-      setInputClave('');
-    }
-  };
-
-  const moduloVisible = abierto || bypassActivo;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       {/* Encabezado */}
       <div className="bg-gradient-to-r from-itd-red to-itd-blue p-5 text-white">
         <div className="flex items-center gap-3">
-          <div className="bg-white bg-opacity-20 rounded-lg p-2">
+          <div className="bg-white/20 rounded-lg p-2">
             <Award className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-bold">Generación de Constancias</h2>
-            <p className="text-white opacity-75 text-xs mt-0.5">Cursos del periodo Enero–Junio 2026</p>
+            <h2 className="text-lg font-bold">Constancias y Reconocimientos</h2>
+            <p className="text-white/75 text-xs mt-0.5">Cursos del periodo Enero–Junio 2026</p>
           </div>
         </div>
       </div>
 
       <div className="p-5">
-        {moduloVisible ? (
-          <ModuloAbierto user={user} />
+        {abierto ? (
+          // ── MÓDULO ABIERTO ──
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">¡El módulo está disponible!</p>
+                <p className="text-xs text-green-700 mt-0.5">
+                  Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
+                </p>
+              </div>
+            </div>
+
+            {/* Info del usuario activo */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+              {user.picture ? (
+                <img src={user.picture} className="w-8 h-8 rounded-full border border-gray-200 flex-shrink-0" alt=""/>
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  {user.email.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-gray-700 truncate">{user.name || 'Usuario'}</p>
+                <p className="text-[10px] text-gray-500 truncate">{user.email}</p>
+              </div>
+              <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 ml-auto" />
+            </div>
+
+            <a
+              href={CONSTANCIAS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors shadow-sm text-sm"
+            >
+              <Award className="w-4 h-4" />
+              Generar mi Constancia o Reconocimiento
+              <ExternalLink className="w-4 h-4 ml-auto opacity-70" />
+            </a>
+          </div>
         ) : (
           // ── MÓDULO BLOQUEADO CON CUENTA REGRESIVA ──
           <div className="space-y-5">
@@ -264,8 +243,7 @@ const CardConstancias = ({ user }) => {
               <div>
                 <p className="text-sm font-semibold text-amber-800">Disponible a partir del 29 de Junio 2026</p>
                 <p className="text-xs text-amber-700 mt-0.5">
-                  Este módulo estará activo una vez que concluya el periodo actual (cursos hasta el 26 de junio).
-                  Podrás generar tus constancias de los cursos en los que participaste.
+                  Se habilitará al concluir el periodo de cursos (hasta el 26 de junio). Podrás generar tu constancia o reconocimiento de los cursos en que participaste.
                 </p>
               </div>
             </div>
@@ -292,55 +270,9 @@ const CardConstancias = ({ user }) => {
               Módulo no disponible aún
             </button>
 
-            <p className="text-xs text-center text-gray-400">
+            <p className="text-[10px] text-center text-gray-400">
               Se habilitará automáticamente el 29 de Junio de 2026
             </p>
-
-            {/* ── Bypass admin: solo visible para admins ── */}
-            {user.isAdmin && !mostrarInput && (
-              <div className="flex justify-center pt-1">
-                <button
-                  onClick={() => { setMostrarInput(true); setErrorClave(false); }}
-                  className="text-gray-300 hover:text-gray-400 transition-colors p-1 rounded"
-                  title="Acceso administrador"
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-
-            {user.isAdmin && mostrarInput && (
-              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Acceso administrador</p>
-                <div className="flex gap-2">
-                  <input
-                    type="password"
-                    value={inputClave}
-                    onChange={(e) => { setInputClave(e.target.value); setErrorClave(false); }}
-                    onKeyDown={(e) => e.key === 'Enter' && intentarBypass()}
-                    placeholder="Contraseña"
-                    className={`flex-1 text-sm px-3 py-2 rounded-lg border ${errorClave ? 'border-red-400 bg-red-50' : 'border-gray-300 bg-white'} outline-none focus:border-itd-blue transition-colors`}
-                    autoFocus
-                  />
-                  <button
-                    onClick={intentarBypass}
-                    className="px-3 py-2 bg-itd-blue hover:bg-blue-800 text-white text-xs font-bold rounded-lg transition-colors"
-                  >
-                    Entrar
-                  </button>
-                  <button
-                    onClick={() => { setMostrarInput(false); setInputClave(''); setErrorClave(false); }}
-                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-600 text-xs font-bold rounded-lg transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-                {errorClave && (
-                  <p className="text-xs text-red-500 font-medium">Contraseña incorrecta.</p>
-                )}
-              </div>
-            )}
-
           </div>
         )}
       </div>
@@ -352,15 +284,10 @@ const CardConstancias = ({ user }) => {
 // COMPONENTES UI
 // ==========================================
 
+
 const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
-  const { abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
-  const [bypassActivo, setBypassActivo] = useState(false);
-  const [mostrarInputBypass, setMostrarInputBypass] = useState(false);
-  const [inputBypass, setInputBypass] = useState('');
-  const [errorBypass, setErrorBypass] = useState(false);
-  const [pasoBypass, setPasoBypass] = useState('clave'); // 'clave' | 'correo'
-  const [bypassEmail, setBypassEmail] = useState('');
+  const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
 
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
@@ -385,215 +312,232 @@ const Login = ({ onLogin }) => {
     if (payload && payload.email) {
         const email = payload.email.toLowerCase();
         const isAdmin = ADMIN_EMAILS.includes(email);
-        onLogin({ email: email, name: payload.name, picture: payload.picture, isAdmin });
+        onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
     } else {
         setError('No se pudo verificar la identidad.');
     }
   };
 
-  const intentarBypassLogin = () => {
-    if (pasoBypass === 'clave') {
-      if (inputBypass === ADMIN_BYPASS_KEY) {
-        setErrorBypass(false);
-        setInputBypass('');
-        setPasoBypass('correo');
-      } else {
-        setErrorBypass(true);
-        setInputBypass('');
-      }
-    } else {
-      // paso correo — abrir directamente el Apps Script
-      const prefijo = bypassEmail.replace(/@.*$/, '').trim();
-      if (!prefijo) { setErrorBypass(true); return; }
-      const emailFinal = prefijo + '@itdurango.edu.mx';
-      const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(emailFinal);
-      window.open(url, '_blank');
-      // resetear modal
-      setMostrarInputBypass(false);
-      setInputBypass('');
-      setBypassEmail('');
-      setPasoBypass('clave');
-      setErrorBypass(false);
+  const S = {
+    page: {
+      minHeight:'100vh',
+      background:'linear-gradient(150deg, #f8f4ec 0%, #efe7d5 45%, #e8f0f8 100%)',
+      display:'flex', flexDirection:'column', alignItems:'center',
+      justifyContent:'center', padding:'2rem 1rem',
+      fontFamily:"'DM Sans','Inter',sans-serif",
+      position:'relative', overflow:'hidden'
+    },
+    bgDeco: {
+      position:'absolute', inset:0, pointerEvents:'none',
+      background:'radial-gradient(ellipse 70% 50% at 15% 5%, rgba(107,26,42,.08) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 85% 95%, rgba(26,58,92,.08) 0%, transparent 50%)'
+    },
+    header: {
+      textAlign:'center', marginBottom:'2rem', position:'relative',
+      animation:'fadeUp .5s cubic-bezier(.22,.68,0,1.2) both'
+    },
+    logoWrap: {
+      position:'relative', width:84, height:84, margin:'0 auto 1rem'
+    },
+    logoRing: {
+      position:'absolute', inset:-8, borderRadius:'50%',
+      border:'1.5px solid rgba(196,154,53,.5)',
+      animation:'ringPulse 2.8s ease-out infinite'
+    },
+    logoRing2: {
+      position:'absolute', inset:-8, borderRadius:'50%',
+      border:'1.5px solid rgba(196,154,53,.3)',
+      animation:'ringPulse 2.8s 1.4s ease-out infinite'
+    },
+    logoImg: {
+      width:'100%', height:'100%', objectFit:'contain', borderRadius:'50%',
+      background:'#fff', padding:8,
+      boxShadow:'0 4px 22px rgba(107,26,42,.2), 0 0 0 2.5px rgba(196,154,53,.65)'
+    },
+    h1: {
+      fontFamily:"'Playfair Display','Georgia',serif",
+      fontSize:'clamp(1.55rem,5vw,2.1rem)', fontWeight:900,
+      color:'#3D0A14', margin:'0 0 .35rem', letterSpacing:'-.015em', lineHeight:1.15
+    },
+    sub: { fontSize:'.83rem', color:'#6B6B7B', margin:0 },
+    grid: {
+      display:'grid',
+      gridTemplateColumns:'repeat(auto-fit, minmax(288px, 1fr))',
+      gap:'1.1rem', width:'100%', maxWidth:760,
+      animation:'fadeUp .55s .1s cubic-bezier(.22,.68,0,1.2) both'
+    },
+    card: (accent) => ({
+      background:'#fff', borderRadius:22, overflow:'hidden',
+      boxShadow:`0 4px 8px rgba(0,0,0,.04), 0 24px 52px ${accent}, 0 0 0 1px rgba(196,154,53,.12)`,
+      display:'flex', flexDirection:'column'
+    }),
+    stripe: (g) => ({
+      height:5, backgroundSize:'200% 100%',
+      animation:'shimmer 4s linear infinite',
+      background: g
+    }),
+    cardBody: { padding:'1.7rem 1.9rem', flex:1, display:'flex', flexDirection:'column' },
+    iconWrap: (bg, shadow) => ({
+      width:46, height:46, borderRadius:13, flexShrink:0,
+      background: bg, display:'flex', alignItems:'center', justifyContent:'center',
+      boxShadow: shadow
+    }),
+    cardTitle: { fontWeight:700, fontSize:'1.02rem', color:'#1A1720', lineHeight:1.2 },
+    cardSub:   { fontSize:'.74rem', color:'#6B6B7B', marginTop:'.08rem' },
+    desc: { fontSize:'.82rem', color:'#5A5A6A', lineHeight:1.62, margin:'1rem 0 1.2rem' },
+    lockBtn: {
+      display:'flex', alignItems:'center', justifyContent:'center', gap:'.6rem',
+      padding:'.84rem 1rem', borderRadius:12,
+      border:'1.5px solid #e2e2e2', background:'#f7f7f7',
+      color:'#9090A0', fontSize:'.83rem', fontWeight:500,
+      cursor:'not-allowed', userSelect:'none', marginBottom:'.65rem'
+    },
+    countdown: {
+      display:'flex', justifyContent:'center', alignItems:'flex-start', gap:'.45rem',
+      padding:'.75rem', borderRadius:12,
+      background:'rgba(26,58,92,.04)', border:'1px solid rgba(26,58,92,.09)',
+      marginBottom:'.55rem'
+    },
+    unitBox: {
+      background:'#1B396A', color:'#fff', borderRadius:9,
+      width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center',
+      fontWeight:700, fontSize:'1rem', fontVariantNumeric:'tabular-nums',
+      boxShadow:'0 2px 8px rgba(26,58,92,.22)'
+    },
+    unitLabel: {
+      fontSize:'.54rem', color:'#9090A0', marginTop:'.22rem',
+      letterSpacing:'.06em', textTransform:'uppercase', textAlign:'center'
+    },
+    colon: { color:'#C8C8D0', fontWeight:300, fontSize:'1rem', marginTop:'.35rem', lineHeight:1 },
+    authNote: {
+      display:'flex', alignItems:'center', justifyContent:'center', gap:'.35rem',
+      fontSize:'.7rem', color:'#A0A0B0', marginTop:'.5rem'
+    },
+    footer: {
+      marginTop:'1.8rem', textAlign:'center',
+      fontSize:'.68rem', color:'rgba(80,65,55,.55)',
+      animation:'fadeUp .5s .3s ease both', letterSpacing:'.02em'
     }
   };
 
-  const constanciasDesbloqueadas = abierto || bypassActivo;
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4 font-sans">
+    <div style={S.page}>
+      <div style={S.bgDeco}/>
 
-      {/* Header institucional */}
-      <div className="text-center mb-6">
-        <div
-          onClick={() => { setMostrarInputBypass(true); setErrorBypass(false); }}
-          className="cursor-pointer select-none mx-auto mb-3 flex items-center justify-center"
-          style={{width:'80px', height:'80px'}}
-          title=""
-        >
-          <img
-            src={LOGO_URL}
-            className="h-20 w-20 object-contain"
-            alt="ITD Logo"
-            onError={(e) => { e.target.style.display='none'; e.target.parentNode.innerHTML='<div style="width:80px;height:80px;border-radius:50%;background:#6B1A2A;display:flex;align-items:center;justify-content:center;color:#EDD98A;font-weight:bold;font-size:1.2rem;">ITD</div>'; }}
-          />
+      {/* Header */}
+      <div style={S.header}>
+        <div style={S.logoWrap}>
+          <div style={S.logoRing}/>
+          <div style={S.logoRing2}/>
+          <img src={LOGO_URL} alt="ITD" style={S.logoImg} onError={e => e.target.style.display='none'}/>
         </div>
-        <h1 className="text-2xl font-bold text-itd-blue">Constancias y Reconocimientos</h1>
-        <p className="text-gray-500 text-sm mt-1">Instituto Tecnológico de Durango — Portal ITD</p>
+        <h1 style={S.h1}>
+          Constancias y <em style={{fontStyle:'italic',color:'#922438'}}>Reconocimientos</em>
+        </h1>
+        <p style={S.sub}>Instituto Tecnológico de Durango — Portal ITD</p>
       </div>
 
-      {/* Modal bypass — dos pasos: clave y correo */}
-      {mostrarInputBypass && (
-        <div className="fixed inset-0 flex items-center justify-center z-50" style={{background:'rgba(0,0,0,0.35)'}}>
-          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-xs mx-4">
-            <div className="flex items-center gap-2 mb-1">
-              <img src={LOGO_URL} className="h-8 w-8 object-contain" alt="" onError={(e) => e.target.style.display='none'}/>
-              <span className="text-sm font-bold text-gray-700">Acceso especial</span>
+      {/* Grid de tarjetas */}
+      <div style={S.grid}>
+
+        {/* Tarjeta 1: Mis Constancias */}
+        <div style={S.card('rgba(107,26,42,.12)')}>
+          <div style={S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)')}/>
+          <div style={S.cardBody}>
+            <div style={{display:'flex',alignItems:'center',gap:'.85rem',marginBottom:'.2rem'}}>
+              <div style={S.iconWrap('linear-gradient(135deg,#3D0A14,#922438)','0 3px 14px rgba(107,26,42,.28)')}>
+                <FileText size={21} color="#F5E4A8"/>
+              </div>
+              <div>
+                <div style={S.cardTitle}>Mis Constancias</div>
+                <div style={S.cardSub}>Descarga tus documentos</div>
+              </div>
             </div>
-            {pasoBypass === 'clave' ? (
-              <>
-                <p className="text-xs text-gray-400 mb-3">Ingresa la contraseña de administrador</p>
-                <input
-                  type="password"
-                  value={inputBypass}
-                  onChange={(e) => { setInputBypass(e.target.value); setErrorBypass(false); }}
-                  onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
-                  placeholder="Contraseña"
-                  className="w-full text-sm px-3 py-2 rounded-lg border border-gray-300 outline-none mb-2"
-                  autoFocus
-                />
-                {errorBypass && <p className="text-xs text-red-500 mb-2">Contraseña incorrecta.</p>}
-              </>
+
+            <p style={S.desc}>
+              Inicia sesión con tu cuenta <strong style={{color:'#1B396A'}}>@itdurango.edu.mx</strong> para ver y descargar tus constancias y reconocimientos.
+            </p>
+
+            {GOOGLE_CLIENT_ID === "TU_CLIENT_ID_AQUI.apps.googleusercontent.com" ? (
+              <div style={{padding:'.85rem',background:'#fffbee',border:'1.5px solid rgba(196,154,53,.3)',borderRadius:12,fontSize:'.78rem',color:'#7A5500'}}>
+                <strong>⚠ Configuración pendiente:</strong> agrega el GOOGLE_CLIENT_ID en main.js.
+              </div>
+            ) : (
+              <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.6rem'}}>
+                <div id="googleSignInDiv" style={{width:'100%',minHeight:44}}/>
+                {error && (
+                  <div style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.7rem .9rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.18)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
+                    <AlertCircle size={14}/> {error}
+                  </div>
+                )}
+                <div style={S.authNote}>
+                  <Lock size={11}/> Autenticación segura con Google
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tarjeta 2: Generar Constancia */}
+        <div style={S.card('rgba(26,58,92,.1)')}>
+          <div style={S.stripe('linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)')}/>
+          <div style={S.cardBody}>
+            <div style={{display:'flex',alignItems:'center',gap:'.85rem',marginBottom:'.2rem'}}>
+              <div style={S.iconWrap('linear-gradient(135deg,#1B396A,#2B5580)','0 3px 14px rgba(26,58,92,.25)')}>
+                <Award size={21} color="#F5E4A8"/>
+              </div>
+              <div>
+                <div style={S.cardTitle}>Generar Constancia</div>
+                <div style={S.cardSub}>Cursos Enero–Junio 2026</div>
+              </div>
+            </div>
+
+            <p style={S.desc}>
+              Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
+            </p>
+
+            {abierto ? (
+              <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer" style={{
+                display:'flex',alignItems:'center',justifyContent:'center',gap:'.5rem',
+                padding:'.85rem 1rem',borderRadius:12,textDecoration:'none',
+                background:'linear-gradient(135deg,#3D0A14,#922438)',
+                color:'#F5E4A8',fontWeight:700,fontSize:'.84rem',
+                boxShadow:'0 4px 18px rgba(107,26,42,.3)',transition:'all .2s'
+              }}>
+                <Award size={15}/> Acceder a mis constancias
+                <ExternalLink size={12} style={{marginLeft:'auto',opacity:.7}}/>
+              </a>
             ) : (
               <>
-                <p className="text-xs text-gray-400 mb-3">¿Para quién generas la constancia?</p>
-                <div className="flex items-center mb-2">
-                  <input
-                    type="text"
-                    value={bypassEmail}
-                    onChange={(e) => { setBypassEmail(e.target.value.replace(/@.*$/,'')); setErrorBypass(false); }}
-                    onKeyDown={(e) => e.key === 'Enter' && intentarBypassLogin()}
-                    placeholder="usuario"
-                    className="flex-1 text-sm px-3 py-2 rounded-l-lg border border-gray-300 outline-none"
-                    autoFocus
-                  />
-                  <span className="text-xs px-2 py-2 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-gray-500 whitespace-nowrap">@itdurango.edu.mx</span>
+                {/* Botón bloqueado */}
+                <div style={S.lockBtn}>
+                  <Lock size={14} color="#B0B0BE"/>
+                  <span>Disponible el 29 de Jun 2026</span>
                 </div>
-                {errorBypass && <p className="text-xs text-red-500 mb-2">Ingresa un usuario válido.</p>}
+                {/* Cuenta regresiva */}
+                <div style={S.countdown}>
+                  {[{v:dias,l:'días'},{v:horas,l:'hrs'},{v:minutos,l:'min'},{v:segundos,l:'seg'}].map(({v,l},i) => (
+                    <React.Fragment key={l}>
+                      {i > 0 && <span style={S.colon}>:</span>}
+                      <div style={{textAlign:'center'}}>
+                        <div style={S.unitBox}>{String(v).padStart(2,'0')}</div>
+                        <div style={S.unitLabel}>{l}</div>
+                      </div>
+                    </React.Fragment>
+                  ))}
+                </div>
+                <p style={{textAlign:'center',fontSize:'.7rem',color:'#A0A0B0',margin:0}}>
+                  Se habilitará al concluir el periodo de cursos
+                </p>
               </>
             )}
-            <div className="flex gap-2 mt-1">
-              <button
-                onClick={intentarBypassLogin}
-                className="flex-1 py-2 bg-itd-blue hover:bg-blue-900 text-white text-sm font-bold rounded-lg transition-colors"
-              >
-                {pasoBypass === 'clave' ? 'Continuar' : 'Abrir'}
-              </button>
-              <button
-                onClick={() => { setMostrarInputBypass(false); setInputBypass(''); setBypassEmail(''); setErrorBypass(false); setPasoBypass('clave'); }}
-                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-bold rounded-lg transition-colors"
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Dos tarjetas lado a lado */}
-      <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        {/* ── Tarjeta 1: Ver documentos (login Google) ── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-          <div className="bg-gradient-to-r from-itd-blue to-itd-red h-0.5"></div>
-          <div className="p-6 flex flex-col flex-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:'rgba(27,57,106,0.1)'}}>
-                <FileText className="w-5 h-5 text-itd-blue" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-900">Mis Constancias</h2>
-                <p className="text-xs text-gray-500">Descarga tus documentos</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
-              Inicia sesión con tu cuenta institucional <span className="font-semibold text-itd-blue">@itdurango.edu.mx</span> para ver y descargar tus constancias y reconocimientos.
-            </p>
-            <div className="mt-auto space-y-3">
-              {GOOGLE_CLIENT_ID === "TU_CLIENT_ID_AQUI.apps.googleusercontent.com" ? (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-                  <strong className="flex items-center gap-1 mb-1"><AlertTriangle className="w-3.5 h-3.5"/> Configuración pendiente</strong>
-                  Agrega el <code>GOOGLE_CLIENT_ID</code> en main.js.
-                </div>
-              ) : (
-                <>
-                  <div id="googleSignInDiv" className="w-full flex justify-center min-h-10"></div>
-                  <p className="text-xs text-center text-gray-400 flex items-center justify-center gap-1">
-                    <Lock className="w-3 h-3"/>
-                    Autenticación segura con Google
-                  </p>
-                </>
-              )}
-              {error && (
-                <div className="p-2 bg-red-50 text-red-700 text-xs rounded-lg flex items-center gap-2">
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0"/>{error}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Tarjeta 2: Generar constancia (Apps Script) ── */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
-          <div className="bg-gradient-to-r from-itd-red to-itd-blue h-0.5"></div>
-          <div className="p-6 flex flex-col flex-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{background:'rgba(179,32,50,0.1)'}}>
-                <Award className="w-5 h-5 text-itd-red" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-900">Generar Constancia</h2>
-                <p className="text-xs text-gray-500">Cursos Enero–Junio 2026</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-500 mb-5 leading-relaxed">
-              Genera el PDF de tu constancia de participación de los cursos de actualización docente del periodo actual.
-            </p>
-            <div className="mt-auto space-y-3">
-              {constanciasDesbloqueadas ? (
-                <a
-                  href={bypassEmail ? `${CONSTANCIAS_URL}?email=${encodeURIComponent(bypassEmail)}` : CONSTANCIAS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-itd-red hover:bg-red-800 text-white font-bold rounded-lg transition-colors text-sm"
-                >
-                  <Award className="w-4 h-4" />
-                  Generar mi constancia
-                  <ExternalLink className="w-3.5 h-3.5 ml-auto opacity-70" />
-                </a>
-              ) : (
-                <>
-                  <button
-                    disabled
-                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-400 font-bold rounded-lg cursor-not-allowed text-sm border border-gray-200"
-                  >
-                    <Lock className="w-4 h-4" />
-                    Disponible el 29 Jun 2026
-                  </button>
-                  <p className="text-xs text-center text-gray-400">
-                    Se habilitará al concluir el periodo de cursos
-                  </p>
-
-                </>
-              )}
-            </div>
           </div>
         </div>
 
       </div>
 
-      <p className="text-xs text-gray-400 mt-6">
+      <div style={S.footer}>
         © {new Date().getFullYear()} Dr. Alejandro Calderón Rentería — Coordinación Docente ITD
-      </p>
+      </div>
     </div>
   );
 };
@@ -684,9 +628,9 @@ const Dashboard = ({ user, onLogout }) => {
                     )}
                     <div className="hidden md:flex flex-col items-end">
                          <span className="text-xs font-bold text-gray-700">{user.name || 'Usuario'}</span>
-                         <span className="text-xs text-gray-500">{user.email}</span>
+                         <span className="text-[10px] text-gray-500">{user.email}</span>
                     </div>
-                    {user.isAdmin && <span className="bg-itd-red text-white text-xs px-2 py-0.5 rounded font-bold uppercase ml-2">Admin</span>}
+                    {user.isAdmin && <span className="bg-itd-red text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase ml-2">Admin</span>}
                     <button 
                         onClick={onLogout} 
                         className="ml-2 flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
@@ -733,7 +677,7 @@ const Dashboard = ({ user, onLogout }) => {
                     <div>
                         <h3 className="text-lg font-bold text-red-800 mb-2">Error de lectura</h3>
                         <p className="text-red-700 font-medium mb-3">{errorStr}</p>
-                        <div className="mt-3 text-sm text-red-800 bg-white bg-opacity-50 p-3 rounded">
+                        <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
                             <strong>Ayuda:</strong>
                             <p className="mt-1">Revisa que el archivo <code>db_{year}.csv</code> esté en GitHub. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
                         </div>
@@ -765,7 +709,7 @@ const Dashboard = ({ user, onLogout }) => {
                                 <div className="min-w-0 flex-1">
                                     <p className="font-bold text-gray-900 text-sm truncate">{item.nombre}</p>
                                     <p className="text-xs text-gray-500 truncate">{item.correo}</p>
-                                    <div className="md:hidden flex items-center gap-1 mt-1 text-xs text-gray-400">
+                                    <div className="md:hidden flex items-center gap-1 mt-1 text-[10px] text-gray-400">
                                         <Calendar className="w-3 h-3" /> {item.fecha}
                                     </div>
                                 </div>
@@ -833,6 +777,18 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
             </div>
         )}
+
+        {/* ── MÓDULO: GENERACIÓN DE CONSTANCIAS ── */}
+        <div className="mt-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-px flex-1 bg-gray-200"></div>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Otros servicios</span>
+            <div className="h-px flex-1 bg-gray-200"></div>
+          </div>
+          <div className="max-w-lg">
+            <CardConstancias user={user} />
+          </div>
+        </div>
 
       </main>
 
