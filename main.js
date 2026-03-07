@@ -943,17 +943,7 @@ const Dashboard = ({ user, onLogout }) => {
             </div>
         )}
 
-        {/* ── MÓDULO: GENERACIÓN DE CONSTANCIAS ── */}
-        <div className="mt-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-px flex-1 bg-gray-200"></div>
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Otros servicios</span>
-            <div className="h-px flex-1 bg-gray-200"></div>
-          </div>
-          <div className="max-w-lg">
-            <CardConstancias user={user} />
-          </div>
-        </div>
+
 
       </main>
 
