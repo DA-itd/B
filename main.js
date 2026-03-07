@@ -10,7 +10,7 @@ const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.goo
 // ==========================================
 // CONFIGURACIÓN LOCAL (GITHUB)
 // ==========================================
-const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
+const LOGO_URL = "https://raw.githubusercontent.com/DA-itd/web/main/logo_itdurango.png";
 
 // CONFIGURACIÓN DE ARCHIVOS
 const DATA_SOURCES = {
@@ -424,14 +424,19 @@ const Login = ({ onLogin }) => {
 
       {/* Header institucional */}
       <div className="text-center mb-6">
-        <img
-          src={LOGO_URL}
-          className="h-20 mx-auto mb-3 object-contain cursor-pointer select-none"
-          alt="ITD Logo"
+        <div
           onClick={() => { setMostrarInputBypass(true); setErrorBypass(false); }}
-          onError={(e) => e.target.style.display='none'}
+          className="cursor-pointer select-none mx-auto mb-3 flex items-center justify-center"
+          style={{width:'80px', height:'80px'}}
           title=""
-        />
+        >
+          <img
+            src={LOGO_URL}
+            className="h-20 w-20 object-contain"
+            alt="ITD Logo"
+            onError={(e) => { e.target.style.display='none'; e.target.parentNode.innerHTML='<div style="width:80px;height:80px;border-radius:50%;background:#6B1A2A;display:flex;align-items:center;justify-content:center;color:#EDD98A;font-weight:bold;font-size:1.2rem;">ITD</div>'; }}
+          />
+        </div>
         <h1 className="text-2xl font-bold text-itd-blue">Constancias y Reconocimientos</h1>
         <p className="text-gray-500 text-sm mt-1">Instituto Tecnológico de Durango — Portal ITD</p>
       </div>
