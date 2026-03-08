@@ -218,7 +218,7 @@ const Login = ({ onLogin }) => {
       if (!prefijo) { setAdminError('Ingresa un usuario válido.'); return; }
       const emailFinal = prefijo + '@itdurango.edu.mx';
       const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(emailFinal);
-      window.open(url, '_blank');
+      window.open(url, "_blank"); setTimeout(function(){ window.close(); }, 400);
       setShowAdminModal(false);
       setAdminStep('clave');
       setAdminEmail('');
@@ -541,7 +541,7 @@ const Login = ({ onLogin }) => {
             </p>
 
             {abierto ? (
-              <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer" style={{
+              <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer" onClick={(e)=>{ e.preventDefault(); window.open(CONSTANCIAS_URL,"_blank"); setTimeout(()=>window.close(),400); }} style={{
                 display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
                 padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
                 background:'linear-gradient(135deg,#3D0A14,#922438)',
