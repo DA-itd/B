@@ -1,82 +1,78 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V2V4CT2C69"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-V2V4CT2C69');
-  
-</script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Portal oficial para la descarga de constancias y reconocimientos del Instituto Tecnológico de Durango.">
-    <title>Constancias y Reconocimientos | ITD</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-      @keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
-      @keyframes shimmer   { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-      @keyframes ringPulse { 0%{transform:scale(1);opacity:.55} 100%{transform:scale(1.55);opacity:0} }
-      @keyframes spin      { to{transform:rotate(360deg)} }
-    </style>
-    
-    <!-- Babel para JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Portal ITD — Constancias y Reconocimientos</title>
+  <meta name="description" content="Portal de constancias, reconocimientos y documentos del Instituto Tecnológico de Durango"/>
 
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-            },
-            colors: {
-              itd: {
-                red: '#B32032', 
-                blue: '#1B396A', 
-                light: '#F3F4F6'
-              }
-            }
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'itd-blue': '#1B396A',
+            'itd-red':  '#8B1A2A',
+            'itd-gold': '#C49A35',
           }
         }
       }
-    </script>
-    
-    <!-- IMPORT MAP: LIMPIO (Solo React 18) -->
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@18.2.0",
-    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.303.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
-  </head>
-  <body class="bg-gray-50 text-gray-900 antialiased">
-    <!-- Botón de salida -->
-    <a href="https://da-itd.github.io/A/index.html"
-       style="position:fixed;top:16px;right:16px;z-index:9999;display:inline-flex;align-items:center;gap:7px;background:#1B396A;color:#fff;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);transition:background 0.2s;"
-       onmouseover="this.style.background='#B32032'" onmouseout="this.style.background='#1B396A'">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-      </svg>
-      Salir
-    </a>
+    }
+  </script>
 
-    <div id="root"></div>
-    
-    <!-- Carga de la aplicación principal -->
-    <script type="text/babel" data-type="module" src="./main.js"></script>
-  </body>
+  <!-- Google Sign-In -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <!-- SheetJS (para leer Excel en Otras Constancias) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <!-- html2canvas + jsPDF (para generar PDF en Otras Constancias) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body { margin: 0; font-family: 'DM Sans', 'Inter', sans-serif; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:.6} 50%{transform:scale(1.12);opacity:0} }
+    @keyframes spin    { to{transform:rotate(360deg)} }
+    @keyframes slideIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React + ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel (transpila JSX en el browser; en producción usa bundler) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- ============================================================
+       MÓDULO: OTRAS CONSTANCIAS
+       Archivo externo — debe estar en el mismo directorio del repo
+       ============================================================ -->
+  <script type="text/babel" data-type="module" src="./otras-constancias.js"></script>
+
+  <!-- ============================================================
+       MAIN — Carga condicional:
+       Si ?app=constancias → renderiza OtrasConstanciasRoot
+       Si no → renderiza el portal principal con todas las tarjetas
+       ============================================================ -->
+  <script type="text/babel">
+    // Detectar si hay un parámetro de app en la URL
+    // ?app=constancias redirige al módulo de otras constancias
+    // Esto permite que el botón de la tarjeta cambie el view sin recargar la página
+  </script>
+
+  <!-- MAIN PRINCIPAL (basado en tu main-4.js + nueva tarjeta) -->
+  <script type="text/babel" src="./main-4.js"></script>
+</body>
 </html>
