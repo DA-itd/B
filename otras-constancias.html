@@ -182,7 +182,7 @@
           <span style="font-size:12px;font-weight:700;color:#333" id="nav-nm">—</span>
           <span id="nav-bdg"></span>
         </div>
-        <a href="https://da-itd.github.io/A/index.html" class="btn-exit" title="Volver al Portal ITD">← Portal</a>
+        <a href="https://da-itd.github.io/A/index.html" class="btn-exit" style="text-decoration:none">← Portal</a>
       </div>
     </div>
   </nav>
@@ -192,35 +192,13 @@
     <!-- TAB GENERAR -->
     <div id="tab-generar">
       <div class="gen-hdr">
-        <div><div class="gen-h2">Generar Constancias</div><div class="gen-sub">Plantilla oficial ITD · QR de verificación incluido</div></div>
+        <div><div class="gen-h2">Generar Constancias</div><div class="gen-sub">Plantilla Google Docs · Solo ingresa el nombre · QR incluido</div></div>
         <span class="badge badge-blue">📄 PDF + QR</span>
       </div>
       <div class="gen-grid">
 
         <!-- FORM -->
         <div class="form-col">
-          <div class="card">
-            <div class="card-title">⚙️ Tipo de documento</div>
-            <div style="display:flex;flex-direction:column;gap:12px">
-              <div class="field"><label>Tipo</label>
-                <select id="f-tipo" onchange="updatePrev()">
-                  <option value="constancia">📜 Constancia</option>
-                  <option value="reconocimiento">🏅 Reconocimiento</option>
-                </select>
-              </div>
-
-              <div class="field"><label>Fecha de expedición</label>
-                <input type="text" id="f-fecha" oninput="updatePrev()"/>
-              </div>
-
-
-            </div>
-            <!-- Valores fijos de plantilla — no editables -->
-            <input type="hidden" id="f-desc" value=""/>
-            <input type="hidden" id="f-firm" value="Dr. Alejandro Calderón Rentería"/>
-            <input type="hidden" id="f-carg" value="Coordinación de Actualización Docente"/>
-          </div>
-
           <div class="card">
             <div class="card-title">👤 Destinatario(s)</div>
             <div style="display:flex;gap:8px;margin-bottom:14px">
@@ -262,16 +240,15 @@
                 <span class="prev-qrl">Verif. ITD</span>
               </div>
               <div style="font-size:9px;letter-spacing:.2em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin-bottom:5px">Otorga la presente</div>
-              <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#3D0A14;margin-bottom:8px" id="pv-tipo">Constancia</div>
+              <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#3D0A14;margin-bottom:8px">Constancia</div>
               <div style="font-size:10px;color:#777;margin-bottom:5px">a</div>
               <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:#1B396A;font-weight:700;border-bottom:1px solid #C49A35;padding-bottom:6px;margin-bottom:8px" id="pv-nom">Nombre del destinatario</div>
-
-              <div style="font-size:9px;color:#aaa;margin-bottom:12px" id="pv-fch"></div>
-              <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:0 auto 3px"></div>
-              <div style="font-size:8px;font-weight:700;color:#3D0A14" id="pv-firm">Dr. Alejandro Calderón Rentería</div>
-              <div style="font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.03em" id="pv-carg">Coordinación de Actualización Docente</div>
+              <div style="font-size:9px;color:#999;margin-top:8px">Ver plantilla completa en Google Docs</div>
+              <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:14px auto 3px"></div>
+              <div style="font-size:8px;font-weight:700;color:#3D0A14">Dr. Alejandro Calderón Rentería</div>
+              <div style="font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.03em">Coordinación de Actualización Docente</div>
             </div>
-            <p class="prev-note">El PDF incluye bordes decorativos, sello y QR</p>
+            <p class="prev-note">Plantilla completa en Google Docs · PDF con sello y QR</p>
           </div>
 
           <div class="card hidden" id="res-card">
@@ -373,8 +350,6 @@ let CU=null, XL=[], mode='manual', GEN=[];
     users.push({id:'adm0',name:'Dr. Alejandro Calderón Rentería',email:ADM_EMAIL,hash,isAdmin:true,active:true,createdAt:new Date().toISOString()});
     setU(users);
   }
-  // fecha por defecto
-  document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
   // enter en login
   document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
@@ -480,15 +455,8 @@ function loadExcel(inp){
 
 /* ═══ PREVIEW ═══════════════════════════════════════ */
 function updatePrev(){
-  const tipo =document.getElementById('f-tipo').value;
-  const desc =document.getElementById('f-desc').value;
-  const fch  =document.getElementById('f-fecha').value;
-  const firm =document.getElementById('f-firm').value;
-  const carg =document.getElementById('f-carg').value;
-  const nom  =mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
-  document.getElementById('pv-tipo').textContent=tipo==='reconocimiento'?'Reconocimiento':'Constancia';
+  const nom=mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
   document.getElementById('pv-nom').textContent=nom||'Nombre del destinatario';
-  document.getElementById('pv-fch').textContent=fch?'Durango, Dgo. a '+fch:'';
   const qw=document.getElementById('pv-qrw');
   if(nom){document.getElementById('pv-qri').src=qrUrl(nom,isoToday());qw.style.display='flex';}
   else qw.style.display='none';
@@ -496,16 +464,10 @@ function updatePrev(){
 
 /* ═══ GENERAR ═══════════════════════════════════════ */
 async function generar(){
-  const tipo=document.getElementById('f-tipo').value;
-  const desc=document.getElementById('f-desc').value.trim();
-  const fch =document.getElementById('f-fecha').value.trim();
-  const firm=document.getElementById('f-firm').value.trim();
-  const carg=document.getElementById('f-carg').value.trim();
-  // descripción viene de la plantilla, no se valida
   let noms;
   if(mode==='manual'){
     const n=document.getElementById('f-nom').value.trim();
-    if(!n){toast('⚠ Ingresa un nombre.','warn');return;}
+    if(!n){toast('⚠ Ingresa el nombre del destinatario.','warn');return;}
     noms=[{nombre:n,correo:''}];
   }else{
     if(!XL.length){toast('⚠ Carga un archivo Excel primero.','warn');return;}
@@ -515,13 +477,13 @@ async function generar(){
   btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Generando…';
   const fc=isoToday(); GEN=[];
   for(const item of noms){
-    const html=buildHTML({nombre:item.nombre,tipo,descripcion:desc,fecha:fch,firmante:firm,cargo:carg,fechaCreacion:fc});
+    const html=buildHTML({nombre:item.nombre,fechaCreacion:fc});
     let driveUrl=null;
     try{
-      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'savePDF',html,filename:`Constancia_${item.nombre.replace(/\s+/g,'_')}_${new Date().getFullYear()}.pdf`,folderId:FOLDER_ID,tipo})});
+      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'savePDF',html,filename:`Constancia_${item.nombre.replace(/\s+/g,'_')}_${new Date().getFullYear()}.pdf`,folderId:FOLDER_ID})});
       const d=await r.json(); driveUrl=d.url||null;
     }catch{}
-    GEN.push({nombre:item.nombre,correo:item.correo,html,driveUrl,fc,tipo,descripcion:desc,fecha:fch});
+    GEN.push({nombre:item.nombre,correo:item.correo,html,driveUrl,fc});
   }
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
@@ -584,82 +546,95 @@ async function dlPDF(i){
 
 function correo(i){
   const g=GEN[i];
-  const s=`Constancia ITD: ${g.descripcion}`;
-  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su ${g.tipo==='reconocimiento'?'reconocimiento':'constancia'} correspondiente a:\n\n${g.descripcion}\n\nExpedido el ${g.fecha}.\n\nAtentamente,\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
+  const s=`Constancia ITD — ${g.nombre}`;
+  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su constancia de participación.\n\nAtentamente,\nDr. Alejandro Calderón Rentería\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
   window.location.href=`mailto:${g.correo||''}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
 }
 
 /* ═══ BUILD HTML ═══════════════════════════════════════ */
-function buildHTML({nombre,tipo,descripcion,fecha,firmante,cargo,fechaCreacion}){
+function buildHTML({nombre,fechaCreacion}){
+  // La plantilla tiene TODO fijo; solo insertamos el nombre del destinatario
+  // y el QR de verificación.
   const qu=qrUrl(nombre,fechaCreacion), qd=qrData(nombre,fechaCreacion);
-  const tx=tipo==='reconocimiento'?'Por su destacada participación y contribución a las actividades académicas e institucionales.':'Ha cumplido satisfactoriamente con los requisitos establecidos para el presente reconocimiento.';
+  const LOGO_ITD='https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true';
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Lato:wght@300;400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{width:794px;height:1123px;font-family:'Lato',sans-serif;background:#fff;position:relative;overflow:hidden}
-.bo{position:absolute;inset:18px;border:3px solid #8B1A2A;border-radius:4px}
-.bi{position:absolute;inset:24px;border:1px solid #C49A35;border-radius:2px}
-.cr{position:absolute;width:40px;height:40px;background:linear-gradient(135deg,#8B1A2A,#C49A35)}
+body{width:794px;min-height:1123px;font-family:'Lato',sans-serif;background:#fff;position:relative;}
+/* Bordes decorativos */
+.bo{position:fixed;inset:18px;border:3px solid #8B1A2A;border-radius:4px;pointer-events:none;z-index:5}
+.bi{position:fixed;inset:24px;border:1px solid #C49A35;border-radius:2px;pointer-events:none;z-index:5}
+.cr{position:fixed;width:40px;height:40px;background:linear-gradient(135deg,#8B1A2A,#C49A35);z-index:6}
 .tl{top:14px;left:14px;clip-path:polygon(0 0,100% 0,0 100%)}
 .tr{top:14px;right:14px;clip-path:polygon(100% 0,100% 100%,0 0)}
 .bl{bottom:14px;left:14px;clip-path:polygon(0 0,100% 100%,0 100%)}
 .br{bottom:14px;right:14px;clip-path:polygon(100% 0,100% 100%,0 100%)}
-.wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-family:'Playfair Display',serif;font-size:90px;color:rgba(139,26,42,.04);font-weight:700;pointer-events:none;z-index:1;letter-spacing:.1em;white-space:nowrap}
-.se{position:absolute;bottom:100px;right:90px;width:90px;height:90px;opacity:.12;border:3px solid #C49A35;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2}
-.se span{font-size:8px;font-weight:700;color:#C49A35;text-transform:uppercase;letter-spacing:.08em;text-align:center}
-.qb{position:absolute;bottom:38px;left:58px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10}
+.wm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-family:'Playfair Display',serif;font-size:90px;color:rgba(139,26,42,.04);font-weight:700;pointer-events:none;z-index:1;letter-spacing:.1em;white-space:nowrap}
+/* QR */
+.qb{position:fixed;bottom:38px;left:58px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10}
 .qf{padding:5px;background:#fff;border:1.5px solid #C49A35;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.10)}
 .qf img{width:80px;height:80px;display:block}
 .ql{font-size:7.5px;color:#8B1A2A;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center}
 .qd{font-size:6.5px;color:#aaa;text-align:center;max-width:92px;word-break:break-all;line-height:1.4}
-.ct{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;padding:55px 80px 50px}
-.lr{display:flex;align-items:center;gap:18px;margin-bottom:14px}
-.li{width:70px;height:70px;object-fit:contain}
-.in{font-size:13px;font-weight:700;color:#3D0A14;letter-spacing:.06em;text-transform:uppercase}
-.is{font-size:10px;color:#888;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
-.dv{width:100%;height:2px;background:linear-gradient(90deg,transparent,#C49A35,transparent);margin:10px 0}
-.dt{font-size:11px;letter-spacing:.3em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin:18px 0 8px}
-.tw{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#3D0A14;letter-spacing:.02em;line-height:1;margin-bottom:22px}
-.bt{text-align:center;font-size:14px;color:#444;line-height:1.85;max-width:580px}
-.rn{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;font-style:italic;color:#1B396A;display:block;margin:16px 0 6px;border-bottom:1.5px solid #C49A35;padding-bottom:8px;width:100%;text-align:center}
-.an{font-size:16px;font-weight:700;color:#3D0A14;margin:8px 0 4px;text-align:center}
-.ds{font-size:12.5px;color:#666;text-align:center;max-width:520px;line-height:1.7;margin-top:4px}
-.fa{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
-.ft{font-size:12px;color:#777;margin-bottom:28px;letter-spacing:.02em}
-.fl{width:220px;height:1.5px;background:linear-gradient(90deg,transparent,#3D0A14,transparent)}
-.fn{font-weight:700;color:#3D0A14;font-size:13px;letter-spacing:.03em;text-align:center}
-.fc{font-size:11px;color:#888;text-align:center;letter-spacing:.04em;text-transform:uppercase}
+/* Sello */
+.se{position:fixed;bottom:100px;right:90px;width:90px;height:90px;opacity:.12;border:3px solid #C49A35;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2}
+.se span{font-size:8px;font-weight:700;color:#C49A35;text-transform:uppercase;letter-spacing:.08em;text-align:center}
+/* Contenido principal — copia fiel de la plantilla Google Docs */
+.ct{position:relative;z-index:10;padding:60px 80px 140px;display:flex;flex-direction:column;align-items:center;}
+.logo-row{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+.logo-img{width:70px;height:70px;object-fit:contain}
+.inst{font-size:13px;font-weight:700;color:#3D0A14;letter-spacing:.06em;text-transform:uppercase}
+.inst-sub{font-size:10px;color:#888;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
+.div{width:100%;height:2px;background:linear-gradient(90deg,transparent,#C49A35,transparent);margin:10px 0 20px}
+.ot{font-size:11px;letter-spacing:.3em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin-bottom:8px}
+.titulo{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#3D0A14;line-height:1;margin-bottom:24px}
+/* NOMBRE DEL DESTINATARIO — destacado */
+.nom-label{font-size:12px;color:#777;margin-bottom:4px}
+.nom{font-family:'Playfair Display',serif;font-size:34px;font-weight:700;font-style:italic;color:#1B396A;border-bottom:1.5px solid #C49A35;padding-bottom:10px;margin-bottom:20px;text-align:center;width:100%}
+/* Párrafo descriptivo — copiado de la plantilla */
+.body-txt{font-size:13.5px;color:#444;line-height:1.9;text-align:center;max-width:580px}
+/* Firma */
+.firma-wrap{margin-top:auto;padding-top:40px;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
+.firma-lugar{font-size:12px;color:#777;margin-bottom:20px}
+.firma-linea{width:220px;height:1.5px;background:linear-gradient(90deg,transparent,#3D0A14,transparent)}
+.firma-nombre{font-weight:700;color:#3D0A14;font-size:13px;letter-spacing:.03em;margin-top:4px;text-align:center}
+.firma-cargo{font-size:11px;color:#888;text-align:center;letter-spacing:.04em;text-transform:uppercase}
 </style></head><body>
+<!-- Decoración -->
 <div class="bo"></div><div class="bi"></div>
 <div class="cr tl"></div><div class="cr tr"></div><div class="cr bl"></div><div class="cr br"></div>
 <div class="wm">ITD</div>
 <div class="se"><span>INSTITUTO<br>TECNOLÓGICO<br>DE DURANGO</span></div>
+<!-- QR -->
 <div class="qb">
   <div class="qf"><img src="${qu}" alt="QR" onerror="this.parentElement.style.display='none'"/></div>
   <div class="ql">Verificación ITD</div>
   <div class="qd">${qd}</div>
 </div>
+<!-- Contenido (fiel a plantilla Google Docs) -->
 <div class="ct">
-  <div class="lr">
-    <img src="${LOGO}" class="li" alt="ITD" onerror="this.style.display='none'"/>
-    <div><div class="in">Instituto Tecnológico de Durango</div><div class="is">Tecnológico Nacional de México</div></div>
-  </div>
-  <div class="dv"></div>
-  <div class="dt">Otorga la presente</div>
-  <div class="tw">${tipo==='reconocimiento'?'Reconocimiento':'Constancia'}</div>
-  <p class="bt">El Instituto Tecnológico de Durango hace constar que
-    <span class="rn">${nombre}</span><span class="an">${descripcion||''}</span>
-  </p>
-  <p class="ds">${tx}</p>
-  <div class="fa">
-    <div class="ft">Durango, Dgo. a ${fecha}</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <div class="fl"></div><div class="fn">${firmante||'Dr. Alejandro Calderón Rentería'}</div>
-      <div class="fc">${cargo||'Coordinación de Actualización Docente'}</div>
+  <div class="logo-row">
+    <img src="${LOGO_ITD}" class="logo-img" alt="ITD" onerror="this.style.display='none'"/>
+    <div>
+      <div class="inst">Instituto Tecnológico de Durango</div>
+      <div class="inst-sub">Tecnológico Nacional de México</div>
     </div>
   </div>
-</div></body></html>`;
+  <div class="div"></div>
+  <div class="ot">Otorga la presente</div>
+  <div class="titulo">Constancia</div>
+  <div class="nom-label">a</div>
+  <div class="nom">${nombre}</div>
+  <p class="body-txt">Por su valiosa participación como integrante del staff de organización de la ExpoTecno Open House 2026, llevada a cabo del 23 al 27 de febrero, destacando su compromiso y responsabilidad en el desarrollo exitoso de este evento.</p>
+  <div class="firma-wrap">
+    <div class="firma-lugar">Durango, Dgo. a 27 de Febrero de 2026</div>
+    <div class="firma-linea"></div>
+    <div class="firma-nombre">Dr. Alejandro Calderón Rentería</div>
+    <div class="firma-cargo">Coordinación de Actualización Docente</div>
+  </div>
+</div>
+</body></html>`;
 }
 
 /* ═══ USUARIOS ═══════════════════════════════════════ */
