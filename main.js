@@ -595,6 +595,32 @@ const Login = ({ onLogin }) => {
           </div>
         </div>
 
+
+        {/* Tarjeta 3: Otras Constancias */}
+        <a href="./otras-constancias.html" style={{...S.card('rgba(26,58,92,.1)'), cursor:'pointer', textDecoration:'none', transition:'transform .2s, box-shadow .2s'}}
+          onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(26,58,92,.15)';}}
+          onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}
+        >
+          <div style={S.stripe('linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)')}/>
+          <div style={S.cardBody}>
+            <div style={{display:'flex', alignItems:'center', gap:'.85rem', marginBottom:'.2rem'}}>
+              <div style={S.iconWrap('linear-gradient(135deg,#1B396A,#2B5580)', '0 3px 14px rgba(26,58,92,.25)')}>
+                <span style={{fontSize:21}}>📋</span>
+              </div>
+              <div>
+                <div style={S.cardTitle}>Otras Constancias</div>
+                <div style={S.cardSub}>Generar documentos PDF</div>
+              </div>
+            </div>
+            <p style={S.desc}>
+              Genera constancias y reconocimientos personalizados con la plantilla oficial ITD. Ingresa nombres manualmente o carga un Excel. Incluye QR de verificación.
+            </p>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', padding:'.85rem 1rem', borderRadius:12, background:'linear-gradient(135deg,#1B396A,#2B5580)', color:'#F5E4A8', fontWeight:700, fontSize:'.84rem', boxShadow:'0 4px 18px rgba(26,58,92,.3)'}}>
+              📜 Acceder
+            </div>
+          </div>
+        </a>
+
       </div>
 
       <div style={S.footer}>
