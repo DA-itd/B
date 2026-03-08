@@ -130,7 +130,7 @@
   <div class="login-wrap">
     <div class="login-logo">
       <img id="li" class="logo-img"
-        src="https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true" alt="ITD"
+        src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD"
         onerror="this.style.display='none';document.getElementById('lf').style.display='inline-flex'"/>
       <span id="lf" class="logo-fb" style="display:none">
         <span style="font-size:14px;font-weight:900;color:#F5E4A8">ITD</span>
@@ -164,7 +164,7 @@
 <div id="page-app" class="hidden">
   <nav id="navbar">
     <div class="nav-inner">
-      <img class="nav-logo" src="https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true" alt="ITD"
+      <img class="nav-logo" src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD"
            onerror="this.style.background='linear-gradient(135deg,#3D0A14,#6B1A2A)'"/>
       <div class="nav-div"></div>
       <div>
@@ -182,7 +182,7 @@
           <span style="font-size:12px;font-weight:700;color:#333" id="nav-nm">—</span>
           <span id="nav-bdg"></span>
         </div>
-        <button class="btn-exit" onclick="doLogout()">Salir</button>
+        <a href="https://da-itd.github.io/A/index.html" class="btn-exit" title="Volver al Portal ITD">← Portal</a>
       </div>
     </div>
   </nav>
@@ -200,7 +200,7 @@
         <!-- FORM -->
         <div class="form-col">
           <div class="card">
-            <div class="card-title">⚙️ Configuración</div>
+            <div class="card-title">⚙️ Tipo de documento</div>
             <div style="display:flex;flex-direction:column;gap:12px">
               <div class="field"><label>Tipo</label>
                 <select id="f-tipo" onchange="updatePrev()">
@@ -208,19 +208,17 @@
                   <option value="reconocimiento">🏅 Reconocimiento</option>
                 </select>
               </div>
-              <div class="field"><label>Descripción / Actividad <span style="color:#e05050">*</span></label>
-                <input type="text" id="f-desc" placeholder="Ej: Participación en Congreso ITD 2026" oninput="updatePrev()"/>
-              </div>
+
               <div class="field"><label>Fecha de expedición</label>
                 <input type="text" id="f-fecha" oninput="updatePrev()"/>
               </div>
-              <div class="field"><label>Firmante</label>
-                <input type="text" id="f-firm" value="Dr. Alejandro Calderón Rentería" oninput="updatePrev()"/>
-              </div>
-              <div class="field"><label>Cargo</label>
-                <input type="text" id="f-carg" value="Coordinación de Actualización Docente" oninput="updatePrev()"/>
-              </div>
+
+
             </div>
+            <!-- Valores fijos de plantilla — no editables -->
+            <input type="hidden" id="f-desc" value=""/>
+            <input type="hidden" id="f-firm" value="Dr. Alejandro Calderón Rentería"/>
+            <input type="hidden" id="f-carg" value="Coordinación de Actualización Docente"/>
           </div>
 
           <div class="card">
@@ -267,7 +265,7 @@
               <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#3D0A14;margin-bottom:8px" id="pv-tipo">Constancia</div>
               <div style="font-size:10px;color:#777;margin-bottom:5px">a</div>
               <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:#1B396A;font-weight:700;border-bottom:1px solid #C49A35;padding-bottom:6px;margin-bottom:8px" id="pv-nom">Nombre del destinatario</div>
-              <div style="font-size:10px;color:#555;font-weight:700;margin-bottom:6px" id="pv-desc"></div>
+
               <div style="font-size:9px;color:#aaa;margin-bottom:12px" id="pv-fch"></div>
               <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:0 auto 3px"></div>
               <div style="font-size:8px;font-weight:700;color:#3D0A14" id="pv-firm">Dr. Alejandro Calderón Rentería</div>
@@ -329,7 +327,7 @@
 
 <script>
 /* ═══ CONFIG ═══════════════════════════════════════ */
-const LOGO      = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
+const LOGO      = "https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true";
 const ADM_EMAIL = "alejandro.calderon@itdurango.edu.mx";
 const FOLDER_ID = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
 const SCRIPT_URL= "https://script.google.com/macros/s/AKfycbxtt1oKbMYo5t7X9ZIIDoeZ0RTVDOFuNPacN6cKzQllNVJDqxPP569GKX6jqbDKmvwnRA/exec";
@@ -490,10 +488,7 @@ function updatePrev(){
   const nom  =mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
   document.getElementById('pv-tipo').textContent=tipo==='reconocimiento'?'Reconocimiento':'Constancia';
   document.getElementById('pv-nom').textContent=nom||'Nombre del destinatario';
-  document.getElementById('pv-desc').textContent=desc;
   document.getElementById('pv-fch').textContent=fch?'Durango, Dgo. a '+fch:'';
-  document.getElementById('pv-firm').textContent=firm;
-  document.getElementById('pv-carg').textContent=carg;
   const qw=document.getElementById('pv-qrw');
   if(nom){document.getElementById('pv-qri').src=qrUrl(nom,isoToday());qw.style.display='flex';}
   else qw.style.display='none';
@@ -506,7 +501,7 @@ async function generar(){
   const fch =document.getElementById('f-fecha').value.trim();
   const firm=document.getElementById('f-firm').value.trim();
   const carg=document.getElementById('f-carg').value.trim();
-  if(!desc){toast('⚠ Ingresa la descripción / actividad.','warn');return;}
+  // descripción viene de la plantilla, no se valida
   let noms;
   if(mode==='manual'){
     const n=document.getElementById('f-nom').value.trim();
