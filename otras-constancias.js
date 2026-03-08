@@ -13,7 +13,7 @@ const DRIVE_FOLDER_ID = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
 
 // Google Apps Script Web App URL para subir PDFs a Drive y enviar correos
 // Necesitas crear este Apps Script y pegar la URL aquí
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/TU_APPS_SCRIPT_ID/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxtt1oKbMYo5t7X9ZIIDoeZ0RTVDOFuNPacN6cKzQllNVJDqxPP569GKX6jqbDKmvwnRA/exec";
 
 // ==========================================
 // ALMACENAMIENTO LOCAL (simula base de datos)
