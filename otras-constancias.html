@@ -4,17 +4,724 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Otras Constancias — ITD</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: #f4f6fa; color: #1a1a2e; min-height: 100vh; }
+    .hidden { display: none !important; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes spin    { to { transform: rotate(360deg); } }
+    @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideIn { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #c0c8d0; border-radius: 3px; }
+
+    /* CARD */
+    .card { background:#fff; border-radius:14px; box-shadow:0 1px 4px rgba(0,0,0,.06); padding:20px; }
+    .card-title { font-size:14px; font-weight:700; color:#333; margin-bottom:14px; }
+
+    /* STRIPE */
+    .stripe { height:5px; background:linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14); background-size:200% 100%; animation:shimmer 4s linear infinite; }
+
+    /* BUTTONS */
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:10px 20px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:opacity .15s,transform .1s; outline:none; }
+    .btn:active { transform:scale(.97); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-primary { background:linear-gradient(135deg,#1B396A,#2B5580); color:#F5E4A8; box-shadow:0 4px 14px rgba(26,58,92,.28); }
+    .btn-ghost   { background:transparent; color:#555; border:1.5px solid #d0d0d0; }
+    .btn-full    { width:100%; }
+    .btn-sm-blue { background:#eff6ff; color:#1B396A; border:1px solid #bfdbfe; padding:5px 11px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:4px; }
+    .btn-sm-grn  { background:#f0fdf4; color:#14532d; border:1px solid #86efac;  padding:5px 11px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:4px; }
+    .btn-sm-yel  { background:#fefce8; color:#713f12; border:1px solid #fde68a;  padding:5px 11px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; display:inline-flex; align-items:center; gap:4px; }
+    .btn-sm-prp  { background:#fdf4ff; color:#701a75; border:1px solid #e879f9;  padding:5px 11px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+    .btn-sm-red  { background:#fef2f2; color:#7f1d1d; border:1px solid #fecaca; padding:5px 11px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+    /* FIELDS */
+    .field { display:flex; flex-direction:column; gap:5px; }
+    .field label { font-size:11px; font-weight:700; color:#555; letter-spacing:.04em; text-transform:uppercase; }
+    .field input, .field select { padding:10px 14px; border-radius:10px; font-size:14px; border:1.5px solid #e0e0e0; outline:none; font-family:'DM Sans',sans-serif; background:#fff; transition:border-color .15s; width:100%; }
+    .field input:focus, .field select:focus { border-color:#1B396A; }
+
+    /* BADGES */
+    .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+    .badge-blue { background:#1B396A18; color:#1B396A; border:1px solid #1B396A28; }
+    .badge-red  { background:#8B1A2A18; color:#8B1A2A; border:1px solid #8B1A2A28; }
+
+    /* SPINNER */
+    .spinner { width:20px; height:20px; border-radius:50%; border:3px solid rgba(26,58,92,.15); border-top-color:#1B396A; animation:spin .7s linear infinite; flex-shrink:0; }
+
+    /* TOAST */
+    #toast { position:fixed; bottom:24px; right:24px; z-index:9999; padding:13px 18px; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,.12); font-size:14px; font-weight:600; max-width:340px; display:flex; align-items:center; gap:10px; animation:toastIn .3s ease both; }
+    #toast.info    { background:#eff6ff; color:#1B396A; border:1.5px solid #1B396A22; }
+    #toast.success { background:#f0fdf4; color:#14532d; border:1.5px solid #14532d22; }
+    #toast.error   { background:#fef2f2; color:#7f1d1d; border:1.5px solid #7f1d1d22; }
+    #toast.warn    { background:#fffbeb; color:#78350f; border:1.5px solid #78350f22; }
+    #toast button  { background:none; border:none; cursor:pointer; font-size:18px; line-height:1; color:inherit; padding:0; }
+
+    /* TABS */
+    .tab-btn { padding:7px 16px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all .15s; background:transparent; color:#666; }
+    .tab-btn.active { background:#1B396A; color:#F5E4A8; }
+    .mode-btn { flex:1; padding:9px 10px; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; transition:all .15s; background:#f3f4f6; color:#555; }
+    .mode-btn.active { background:#1B396A; color:#F5E4A8; }
+
+    /* LOGIN */
+    #page-login { min-height:100vh; background:linear-gradient(150deg,#f8f4ec 0%,#efe7d5 45%,#e8f0f8 100%); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2rem 1rem; position:relative; overflow:hidden; }
+    #page-login::before { content:''; position:absolute; inset:0; pointer-events:none; background:radial-gradient(ellipse 70% 50% at 15% 5%,rgba(107,26,42,.08) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 85% 95%,rgba(26,58,92,.08) 0%,transparent 50%); }
+    .login-wrap  { position:relative; width:100%; max-width:400px; animation:fadeUp .5s ease both; }
+    .login-logo  { text-align:center; margin-bottom:2rem; }
+    .logo-img    { width:80px; height:80px; border-radius:50%; object-fit:contain; background:#fff; padding:6px; box-shadow:0 0 0 2px rgba(196,154,53,.5),0 4px 18px rgba(107,26,42,.2); }
+    .logo-fb     { width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,#3D0A14,#6B1A2A); display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 0 2px rgba(196,154,53,.5); }
+    .login-card  { background:#fff; border-radius:22px; overflow:hidden; box-shadow:0 4px 8px rgba(0,0,0,.04),0 24px 52px rgba(107,26,42,.1); }
+    .login-body  { padding:1.8rem 2rem; display:flex; flex-direction:column; gap:14px; }
+    .err-box     { padding:10px 14px; background:#fef2f2; border-radius:10px; font-size:13px; color:#7f1d1d; border:1px solid #fecaca; }
+
+    /* NAVBAR */
+    #navbar { background:#fff; border-bottom:1px solid #e8ecf2; position:sticky; top:0; z-index:50; box-shadow:0 1px 8px rgba(0,0,0,.06); }
+    .nav-inner { max-width:1100px; margin:0 auto; padding:0 20px; display:flex; align-items:center; height:60px; gap:14px; }
+    .nav-logo  { width:36px; height:36px; border-radius:50%; object-fit:contain; padding:3px; box-shadow:0 0 0 2px rgba(196,154,53,.4); background:#fff; }
+    .nav-div   { width:1px; height:28px; background:#e5e5e5; }
+    .nav-title { font-size:14px; font-weight:800; color:#1B396A; line-height:1.2; }
+    .nav-sub   { font-size:10px; color:#bbb; }
+    .nav-sp    { flex:1; }
+    .nav-av    { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,#1B396A,#2B5580); display:flex; align-items:center; justify-content:center; color:#F5E4A8; font-size:13px; font-weight:700; flex-shrink:0; }
+    .btn-exit  { padding:6px 12px; border-radius:9px; font-size:12px; font-weight:700; cursor:pointer; background:#fef2f2; color:#7f1d1d; border:1px solid #fecaca; margin-left:4px; font-family:'DM Sans',sans-serif; }
+
+    /* MAIN */
+    #main { max-width:1100px; margin:0 auto; padding:24px 20px; }
+
+    /* GENERADOR */
+    .gen-hdr  { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:#fff; border-radius:14px; padding:18px 22px; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .gen-h2   { font-size:20px; font-weight:800; }
+    .gen-sub  { font-size:13px; color:#999; margin-top:2px; }
+    .gen-grid { display:grid; grid-template-columns:minmax(300px,1fr) minmax(260px,400px); gap:18px; align-items:start; margin-top:18px; }
+    @media(max-width:720px){ .gen-grid { grid-template-columns:1fr; } }
+    .form-col  { display:flex; flex-direction:column; gap:14px; }
+    .right-col { display:flex; flex-direction:column; gap:14px; }
+
+    /* PREVIEW */
+    .prev-box  { background:linear-gradient(135deg,#f8f4ec,#efe7d5); border-radius:12px; padding:20px; text-align:center; border:2px solid #e8d5b0; position:relative; min-height:220px; }
+    .prev-ibdr { position:absolute; top:7px; left:7px; right:7px; bottom:7px; border:1px solid #C49A3530; border-radius:8px; pointer-events:none; }
+    .prev-qrw  { position:absolute; bottom:10px; left:12px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+    .prev-qrf  { padding:3px; background:#fff; border:1px solid #C49A35; border-radius:4px; }
+    .prev-qrl  { font-size:6px; color:#8B1A2A; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+    .prev-note { margin:8px 0 0; font-size:10px; color:#bbb; text-align:center; }
+
+    /* RESULT */
+    .result-item { background:#f8faff; border-radius:10px; padding:12px 14px; border:1px solid #e0e8f5; display:flex; flex-direction:column; gap:8px; animation:slideIn .3s ease both; }
+    .result-info { display:flex; align-items:center; gap:10px; }
+    .result-qr   { width:44px; height:44px; border-radius:6px; border:1.5px solid #C49A35; flex-shrink:0; background:#fff; padding:2px; }
+    .result-acts { display:flex; flex-wrap:wrap; gap:6px; }
+
+    /* USERS TABLE */
+    .usr-hdr { display:grid; grid-template-columns:1fr 1fr 90px 90px 50px; gap:8px; padding:10px 18px; background:#f8fafc; border-bottom:1px solid #eee; font-size:10px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:.05em; }
+    .usr-row { display:grid; grid-template-columns:1fr 1fr 90px 90px 50px; gap:8px; padding:12px 18px; align-items:center; border-bottom:1px solid #f5f5f5; }
+    @media(max-width:680px){ .usr-hdr,.usr-row{ grid-template-columns:1fr 90px 50px; } .hide-sm{ display:none; } }
+    .tog-btn { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; cursor:pointer; border:none; font-family:'DM Sans',sans-serif; }
+    .tog-on  { background:#dcfce7; color:#14532d; }
+    .tog-off { background:#fee2e2; color:#7f1d1d; }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script type="text/babel" src="./otras-constancias.js"></script>
+
+<!-- LOGIN -->
+<div id="page-login">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <img id="li" class="logo-img"
+        src="https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true" alt="ITD"
+        onerror="this.style.display='none';document.getElementById('lf').style.display='inline-flex'"/>
+      <span id="lf" class="logo-fb" style="display:none">
+        <span style="font-size:14px;font-weight:900;color:#F5E4A8">ITD</span>
+      </span>
+      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:#3D0A14;margin:12px 0 4px">Otras Constancias</h1>
+      <p style="font-size:13px;color:#888">Instituto Tecnológico de Durango</p>
+    </div>
+    <div class="login-card">
+      <div class="stripe"></div>
+      <div class="login-body">
+        <div class="field">
+          <label>Correo electrónico <span style="color:#e05050">*</span></label>
+          <input type="email" id="li-email" placeholder="usuario@itdurango.edu.mx" autocomplete="username"/>
+        </div>
+        <div class="field">
+          <label>Contraseña <span style="color:#e05050">*</span></label>
+          <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <div id="li-err" class="err-box hidden"></div>
+        <button class="btn btn-primary btn-full" id="li-btn" onclick="doLogin()">🔐 Iniciar sesión</button>
+        <p style="text-align:center;font-size:11px;color:#bbb">Acceso restringido — Portal ITD</p>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:2rem;font-size:11px;color:rgba(80,65,55,.45);position:relative;text-align:center">
+    © <span id="yr"></span> Dr. Alejandro Calderón Rentería — Coordinación Docente
+  </p>
+</div>
+
+<!-- APP -->
+<div id="page-app" class="hidden">
+  <nav id="navbar">
+    <div class="nav-inner">
+      <img class="nav-logo" src="https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true" alt="ITD"
+           onerror="this.style.background='linear-gradient(135deg,#3D0A14,#6B1A2A)'"/>
+      <div class="nav-div"></div>
+      <div>
+        <div class="nav-title">Otras Constancias</div>
+        <div class="nav-sub">Instituto Tecnológico de Durango</div>
+      </div>
+      <div class="nav-sp"></div>
+      <div style="display:flex;gap:4px">
+        <button class="tab-btn active" onclick="showTab('generar')">📜 Generar</button>
+        <button class="tab-btn hidden" id="tab-usr-btn" onclick="showTab('usuarios')">👥 Usuarios</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-left:8px">
+        <div class="nav-av" id="nav-av">?</div>
+        <div style="display:flex;flex-direction:column;line-height:1.3">
+          <span style="font-size:12px;font-weight:700;color:#333" id="nav-nm">—</span>
+          <span id="nav-bdg"></span>
+        </div>
+        <button class="btn-exit" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+  </nav>
+
+  <div id="main">
+
+    <!-- TAB GENERAR -->
+    <div id="tab-generar">
+      <div class="gen-hdr">
+        <div><div class="gen-h2">Generar Constancias</div><div class="gen-sub">Plantilla oficial ITD · QR de verificación incluido</div></div>
+        <span class="badge badge-blue">📄 PDF + QR</span>
+      </div>
+      <div class="gen-grid">
+
+        <!-- FORM -->
+        <div class="form-col">
+          <div class="card">
+            <div class="card-title">⚙️ Configuración</div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="field"><label>Tipo</label>
+                <select id="f-tipo" onchange="updatePrev()">
+                  <option value="constancia">📜 Constancia</option>
+                  <option value="reconocimiento">🏅 Reconocimiento</option>
+                </select>
+              </div>
+              <div class="field"><label>Descripción / Actividad <span style="color:#e05050">*</span></label>
+                <input type="text" id="f-desc" placeholder="Ej: Participación en Congreso ITD 2026" oninput="updatePrev()"/>
+              </div>
+              <div class="field"><label>Fecha de expedición</label>
+                <input type="text" id="f-fecha" oninput="updatePrev()"/>
+              </div>
+              <div class="field"><label>Firmante</label>
+                <input type="text" id="f-firm" value="Dr. Alejandro Calderón Rentería" oninput="updatePrev()"/>
+              </div>
+              <div class="field"><label>Cargo</label>
+                <input type="text" id="f-carg" value="Coordinación de Actualización Docente" oninput="updatePrev()"/>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">👤 Destinatario(s)</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px">
+              <button class="mode-btn active" id="mb-manual" onclick="setMode('manual')">✍️ Manual</button>
+              <button class="mode-btn" id="mb-excel" onclick="setMode('excel')">📊 Excel</button>
+            </div>
+            <div id="pnl-manual">
+              <div class="field"><label>Nombre completo <span style="color:#e05050">*</span></label>
+                <input type="text" id="f-nom" placeholder="Ej: Dra. María García López" oninput="updatePrev()"/>
+              </div>
+            </div>
+            <div id="pnl-excel" class="hidden">
+              <p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:10px">
+                Archivo <strong>.xlsx / .xls</strong>. Primera fila = encabezados.<br>
+                Columna: <em>Nombre</em>, Participante, Docente o Alumno.<br>
+                Opcional: columna <em>Correo / Email</em>.
+              </p>
+              <input type="file" id="xl-input" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(this)"/>
+              <button class="btn btn-ghost btn-full" onclick="document.getElementById('xl-input').click()">📂 Seleccionar Excel</button>
+              <div id="xl-err" class="err-box hidden" style="margin-top:8px"></div>
+              <div id="xl-ok" class="hidden" style="background:#f0fdf4;border-radius:10px;padding:10px 14px;border:1px solid #86efac;margin-top:10px">
+                <strong style="font-size:13px;color:#14532d" id="xl-cnt">0 cargados</strong>
+                <div id="xl-prev" style="margin-top:6px;font-size:12px;color:#166534;display:flex;flex-direction:column;gap:2px;max-height:100px;overflow-y:auto"></div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-full" id="gen-btn" onclick="generar()">🚀 Generar Constancia(s)</button>
+        </div>
+
+        <!-- PREVIEW + RESULTADOS -->
+        <div class="right-col">
+          <div class="card">
+            <div class="card-title">👁 Vista previa</div>
+            <div class="prev-box">
+              <div class="prev-ibdr"></div>
+              <div class="prev-qrw" id="pv-qrw" style="display:none">
+                <div class="prev-qrf"><img id="pv-qri" src="" width="36" height="36" alt="QR"/></div>
+                <span class="prev-qrl">Verif. ITD</span>
+              </div>
+              <div style="font-size:9px;letter-spacing:.2em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin-bottom:5px">Otorga la presente</div>
+              <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#3D0A14;margin-bottom:8px" id="pv-tipo">Constancia</div>
+              <div style="font-size:10px;color:#777;margin-bottom:5px">a</div>
+              <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:#1B396A;font-weight:700;border-bottom:1px solid #C49A35;padding-bottom:6px;margin-bottom:8px" id="pv-nom">Nombre del destinatario</div>
+              <div style="font-size:10px;color:#555;font-weight:700;margin-bottom:6px" id="pv-desc"></div>
+              <div style="font-size:9px;color:#aaa;margin-bottom:12px" id="pv-fch"></div>
+              <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:0 auto 3px"></div>
+              <div style="font-size:8px;font-weight:700;color:#3D0A14" id="pv-firm">Dr. Alejandro Calderón Rentería</div>
+              <div style="font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.03em" id="pv-carg">Coordinación de Actualización Docente</div>
+            </div>
+            <p class="prev-note">El PDF incluye bordes decorativos, sello y QR</p>
+          </div>
+
+          <div class="card hidden" id="res-card">
+            <div class="card-title" id="res-title">✅ Generadas</div>
+            <div id="res-list" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB USUARIOS -->
+    <div id="tab-usuarios" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div><div class="gen-h2">Gestión de Usuarios</div><div class="gen-sub" id="usr-cnt">—</div></div>
+        <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
+      </div>
+
+      <div class="card hidden" id="uf-card" style="margin-top:14px;border:2px solid #1B396A18">
+        <div class="card-title" style="color:#1B396A">➕ Crear usuario</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
+          <div class="field"><label>Nombre completo *</label><input type="text" id="uf-nm" placeholder="Nombre Apellido"/></div>
+          <div class="field"><label>Correo *</label><input type="email" id="uf-em" placeholder="usuario@itdurango.edu.mx"/></div>
+          <div class="field"><label>Contraseña *</label><input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/></div>
+          <div class="field"><label>Rol</label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:14px">
+              <input type="checkbox" id="uf-adm"/> Administrador
+            </label>
+          </div>
+        </div>
+        <div id="uf-err" class="err-box hidden" style="margin-top:10px"></div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-primary" id="uf-sv" onclick="crearUsuario()">💾 Crear usuario</button>
+          <button class="btn btn-ghost" onclick="toggleUF(true)">Cancelar</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;padding:0;overflow:hidden">
+        <div class="usr-hdr">
+          <span>Nombre</span><span class="hide-sm">Correo</span><span>Rol</span><span>Estado</span><span></span>
+        </div>
+        <div id="usr-list"></div>
+        <div id="usr-empty" class="hidden" style="padding:40px 24px;text-align:center;color:#aaa">
+          <div style="font-size:36px;margin-bottom:8px">👤</div>
+          <div style="font-weight:700">Sin usuarios — crea el primero</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast" class="hidden"></div>
+
+<script>
+/* ═══ CONFIG ═══════════════════════════════════════ */
+const LOGO      = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
+const ADM_EMAIL = "alejandro.calderon@itdurango.edu.mx";
+const FOLDER_ID = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
+const SCRIPT_URL= "https://script.google.com/macros/s/AKfycbxtt1oKbMYo5t7X9ZIIDoeZ0RTVDOFuNPacN6cKzQllNVJDqxPP569GKX6jqbDKmvwnRA/exec";
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+/* ═══ STORAGE ═══════════════════════════════════════ */
+const getU  = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_u')||'[]')}catch{return[]} };
+const setU  = (u) => localStorage.setItem('itd_oc_u', JSON.stringify(u));
+const getSS = ()  => { try{return JSON.parse(sessionStorage.getItem('itd_oc_s'))}catch{return null} };
+const setSS = (u) => sessionStorage.setItem('itd_oc_s', JSON.stringify(u));
+const delSS = ()  => sessionStorage.removeItem('itd_oc_s');
+
+/* ═══ HASH ═══════════════════════════════════════ */
+async function h256(s){
+  const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+/* ═══ QR ═══════════════════════════════════════ */
+const isoToday = () => new Date().toISOString().split('T')[0];
+const qrData   = (n,f) => `DA+${n}+${f||isoToday()}`;
+const qrUrl    = (n,f) => `https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=4&data=${encodeURIComponent(qrData(n,f))}`;
+
+/* ═══ TOAST ═══════════════════════════════════════ */
+let tTimer;
+function toast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.className=type;
+  el.innerHTML=`<span style="flex:1">${msg}</span><button onclick="document.getElementById('toast').className='hidden'" style="background:none;border:none;cursor:pointer;font-size:18px;color:inherit">×</button>`;
+  clearTimeout(tTimer); tTimer=setTimeout(()=>el.className='hidden',4500);
+}
+
+/* ═══ STATE ═══════════════════════════════════════ */
+let CU=null, XL=[], mode='manual', GEN=[];
+
+/* ═══ INIT ═══════════════════════════════════════ */
+(async()=>{
+  // crear admin si no existe
+  const users=getU();
+  if(!users.find(u=>u.email===ADM_EMAIL)){
+    const hash=await h256('Xela1615');
+    users.push({id:'adm0',name:'Dr. Alejandro Calderón Rentería',email:ADM_EMAIL,hash,isAdmin:true,active:true,createdAt:new Date().toISOString()});
+    setU(users);
+  }
+  // fecha por defecto
+  document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+  // enter en login
+  document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
+  // sesión activa
+  const s=getSS(); if(s){CU=s;showApp();}
+  updatePrev();
+})();
+
+/* ═══ LOGIN ═══════════════════════════════════════ */
+async function doLogin(){
+  const email=document.getElementById('li-email').value.trim().toLowerCase();
+  const pass =document.getElementById('li-pass').value.trim();
+  const errEl=document.getElementById('li-err');
+  const btn  =document.getElementById('li-btn');
+  errEl.classList.add('hidden');
+  if(!email||!pass){errEl.textContent='⚠ Completa todos los campos.';errEl.classList.remove('hidden');return;}
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Verificando…';
+  try{
+    const hash=await h256(pass);
+    const found=getU().find(u=>u.email===email&&u.hash===hash&&u.active);
+    if(found){CU={email:found.email,name:found.name,isAdmin:found.isAdmin};setSS(CU);showApp();}
+    else{errEl.textContent='⚠ Credenciales incorrectas o usuario inactivo.';errEl.classList.remove('hidden');}
+  }finally{btn.disabled=false;btn.innerHTML='🔐 Iniciar sesión';}
+}
+
+function doLogout(){
+  delSS();CU=null;
+  document.getElementById('page-app').classList.add('hidden');
+  document.getElementById('page-login').style.display='flex';
+  document.getElementById('li-pass').value='';
+  document.getElementById('li-err').classList.add('hidden');
+}
+
+function showApp(){
+  document.getElementById('page-login').style.display='none';
+  document.getElementById('page-app').classList.remove('hidden');
+  document.getElementById('nav-av').textContent=(CU.name||CU.email).charAt(0).toUpperCase();
+  document.getElementById('nav-nm').textContent=CU.name||CU.email;
+  if(CU.isAdmin){
+    document.getElementById('nav-bdg').innerHTML='<span class="badge badge-red">Admin</span>';
+    document.getElementById('tab-usr-btn').classList.remove('hidden');
+  }
+  renderUsers();
+}
+
+/* ═══ TABS ═══════════════════════════════════════ */
+function showTab(tab){
+  ['generar','usuarios'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab);
+    const b=document.querySelector(`[onclick="showTab('${t}')"]`);
+    if(b) b.classList.toggle('active',t===tab);
+  });
+  if(tab==='usuarios') renderUsers();
+}
+
+/* ═══ MODE ═══════════════════════════════════════ */
+function setMode(m){
+  mode=m;
+  document.getElementById('pnl-manual').classList.toggle('hidden',m!=='manual');
+  document.getElementById('pnl-excel').classList.toggle('hidden',m!=='excel');
+  document.getElementById('mb-manual').classList.toggle('active',m==='manual');
+  document.getElementById('mb-excel').classList.toggle('active',m==='excel');
+  updatePrev();
+}
+
+/* ═══ EXCEL ═══════════════════════════════════════ */
+function loadExcel(inp){
+  const file=inp.files[0]; if(!file)return;
+  document.getElementById('xl-err').classList.add('hidden');
+  if(!window.XLSX){document.getElementById('xl-err').textContent='⚠ SheetJS no disponible.';document.getElementById('xl-err').classList.remove('hidden');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      const hdrs=(rows[0]||[]).map(h=>String(h).toLowerCase().trim());
+      const ni=hdrs.findIndex(h=>['nombre','name','participante','docente','alumno'].some(k=>h.includes(k)));
+      const ei=hdrs.findIndex(h=>['correo','email','mail'].some(k=>h.includes(k)));
+      XL=rows.slice(1).reduce((a,row)=>{
+        if(!row||!row.length)return a;
+        const n=String(row[ni>=0?ni:0]||'').trim();
+        const c=ei>=0?String(row[ei]||'').trim():'';
+        if(n)a.push({nombre:n,correo:c});
+        return a;
+      },[]);
+      if(!XL.length)throw new Error('No se encontraron nombres.');
+      document.getElementById('xl-cnt').textContent=`✅ ${XL.length} nombre(s) cargados`;
+      const pv=document.getElementById('xl-prev');
+      pv.innerHTML=XL.slice(0,6).map(n=>`<span>• ${n.nombre}${n.correo?' — '+n.correo:''}</span>`).join('');
+      if(XL.length>6) pv.innerHTML+=`<span style="color:#888">…y ${XL.length-6} más</span>`;
+      document.getElementById('xl-ok').classList.remove('hidden');
+      toast(`✅ ${XL.length} nombre(s) cargados`,'success');
+      updatePrev();
+    }catch(err){
+      document.getElementById('xl-err').textContent='⚠ '+err.message;
+      document.getElementById('xl-err').classList.remove('hidden');
+    }
+    inp.value='';
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/* ═══ PREVIEW ═══════════════════════════════════════ */
+function updatePrev(){
+  const tipo =document.getElementById('f-tipo').value;
+  const desc =document.getElementById('f-desc').value;
+  const fch  =document.getElementById('f-fecha').value;
+  const firm =document.getElementById('f-firm').value;
+  const carg =document.getElementById('f-carg').value;
+  const nom  =mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
+  document.getElementById('pv-tipo').textContent=tipo==='reconocimiento'?'Reconocimiento':'Constancia';
+  document.getElementById('pv-nom').textContent=nom||'Nombre del destinatario';
+  document.getElementById('pv-desc').textContent=desc;
+  document.getElementById('pv-fch').textContent=fch?'Durango, Dgo. a '+fch:'';
+  document.getElementById('pv-firm').textContent=firm;
+  document.getElementById('pv-carg').textContent=carg;
+  const qw=document.getElementById('pv-qrw');
+  if(nom){document.getElementById('pv-qri').src=qrUrl(nom,isoToday());qw.style.display='flex';}
+  else qw.style.display='none';
+}
+
+/* ═══ GENERAR ═══════════════════════════════════════ */
+async function generar(){
+  const tipo=document.getElementById('f-tipo').value;
+  const desc=document.getElementById('f-desc').value.trim();
+  const fch =document.getElementById('f-fecha').value.trim();
+  const firm=document.getElementById('f-firm').value.trim();
+  const carg=document.getElementById('f-carg').value.trim();
+  if(!desc){toast('⚠ Ingresa la descripción / actividad.','warn');return;}
+  let noms;
+  if(mode==='manual'){
+    const n=document.getElementById('f-nom').value.trim();
+    if(!n){toast('⚠ Ingresa un nombre.','warn');return;}
+    noms=[{nombre:n,correo:''}];
+  }else{
+    if(!XL.length){toast('⚠ Carga un archivo Excel primero.','warn');return;}
+    noms=XL;
+  }
+  const btn=document.getElementById('gen-btn');
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Generando…';
+  const fc=isoToday(); GEN=[];
+  for(const item of noms){
+    const html=buildHTML({nombre:item.nombre,tipo,descripcion:desc,fecha:fch,firmante:firm,cargo:carg,fechaCreacion:fc});
+    let driveUrl=null;
+    try{
+      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'savePDF',html,filename:`Constancia_${item.nombre.replace(/\s+/g,'_')}_${new Date().getFullYear()}.pdf`,folderId:FOLDER_ID,tipo})});
+      const d=await r.json(); driveUrl=d.url||null;
+    }catch{}
+    GEN.push({nombre:item.nombre,correo:item.correo,html,driveUrl,fc,tipo,descripcion:desc,fecha:fch});
+  }
+  renderResults();
+  btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
+  toast(`🎉 ${GEN.length} constancia(s) generada(s)`,'success');
+}
+
+function renderResults(){
+  const list=document.getElementById('res-list');
+  document.getElementById('res-title').textContent=`✅ Generadas (${GEN.length})`;
+  list.innerHTML='';
+  GEN.forEach((g,i)=>{
+    const div=document.createElement('div');
+    div.className='result-item';
+    div.innerHTML=`
+      <div class="result-info">
+        <img class="result-qr" src="${qrUrl(g.nombre,g.fc)}" alt="QR"/>
+        <div>
+          <div style="font-weight:700;font-size:14px">${g.nombre}</div>
+          <div style="font-size:9px;color:#bbb;font-family:monospace;margin-top:2px">${qrData(g.nombre,g.fc)}</div>
+        </div>
+      </div>
+      <div class="result-acts">
+        <button class="btn-sm-blue" onclick="dlPDF(${i})">⬇ PDF</button>
+        <button class="btn-sm-grn"  onclick="imprimir(${i})">🖨 Imprimir</button>
+        <button class="btn-sm-yel"  onclick="correo(${i})">📧 Correo</button>
+        ${g.driveUrl?`<a class="btn-sm-prp" href="${g.driveUrl}" target="_blank">☁ Drive</a>`:''}
+      </div>`;
+    list.appendChild(div);
+  });
+  document.getElementById('res-card').classList.remove('hidden');
+}
+
+/* ═══ PRINT / PDF / EMAIL ═══════════════════════════════════════ */
+function imprimir(i){
+  const win=window.open('','_blank','width=900,height=750');
+  if(!win){alert('Permite ventanas emergentes para imprimir.');return;}
+  win.document.write(GEN[i].html); win.document.close(); win.focus();
+  setTimeout(()=>win.print(),700);
+}
+
+async function dlPDF(i){
+  if(window.html2canvas&&window.jspdf){
+    const btns=document.querySelectorAll('.result-item')[i].querySelectorAll('button');
+    btns[0].textContent='⏳…'; btns[0].disabled=true;
+    try{
+      const iframe=document.createElement('iframe');
+      iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;';
+      document.body.appendChild(iframe);
+      iframe.contentDocument.open(); iframe.contentDocument.write(GEN[i].html); iframe.contentDocument.close();
+      await new Promise(r=>setTimeout(r,900));
+      const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,allowTaint:true,width:794,height:1123});
+      document.body.removeChild(iframe);
+      const {jsPDF}=window.jspdf;
+      const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[794,1123]});
+      pdf.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,794,1123);
+      pdf.save(`Constancia_${GEN[i].nombre.replace(/\s+/g,'_')}.pdf`);
+    }finally{btns[0].textContent='⬇ PDF'; btns[0].disabled=false;}
+  }else{ imprimir(i); }
+}
+
+function correo(i){
+  const g=GEN[i];
+  const s=`Constancia ITD: ${g.descripcion}`;
+  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su ${g.tipo==='reconocimiento'?'reconocimiento':'constancia'} correspondiente a:\n\n${g.descripcion}\n\nExpedido el ${g.fecha}.\n\nAtentamente,\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
+  window.location.href=`mailto:${g.correo||''}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
+}
+
+/* ═══ BUILD HTML ═══════════════════════════════════════ */
+function buildHTML({nombre,tipo,descripcion,fecha,firmante,cargo,fechaCreacion}){
+  const qu=qrUrl(nombre,fechaCreacion), qd=qrData(nombre,fechaCreacion);
+  const tx=tipo==='reconocimiento'?'Por su destacada participación y contribución a las actividades académicas e institucionales.':'Ha cumplido satisfactoriamente con los requisitos establecidos para el presente reconocimiento.';
+  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Lato:wght@300;400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:794px;height:1123px;font-family:'Lato',sans-serif;background:#fff;position:relative;overflow:hidden}
+.bo{position:absolute;inset:18px;border:3px solid #8B1A2A;border-radius:4px}
+.bi{position:absolute;inset:24px;border:1px solid #C49A35;border-radius:2px}
+.cr{position:absolute;width:40px;height:40px;background:linear-gradient(135deg,#8B1A2A,#C49A35)}
+.tl{top:14px;left:14px;clip-path:polygon(0 0,100% 0,0 100%)}
+.tr{top:14px;right:14px;clip-path:polygon(100% 0,100% 100%,0 0)}
+.bl{bottom:14px;left:14px;clip-path:polygon(0 0,100% 100%,0 100%)}
+.br{bottom:14px;right:14px;clip-path:polygon(100% 0,100% 100%,0 100%)}
+.wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-family:'Playfair Display',serif;font-size:90px;color:rgba(139,26,42,.04);font-weight:700;pointer-events:none;z-index:1;letter-spacing:.1em;white-space:nowrap}
+.se{position:absolute;bottom:100px;right:90px;width:90px;height:90px;opacity:.12;border:3px solid #C49A35;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2}
+.se span{font-size:8px;font-weight:700;color:#C49A35;text-transform:uppercase;letter-spacing:.08em;text-align:center}
+.qb{position:absolute;bottom:38px;left:58px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10}
+.qf{padding:5px;background:#fff;border:1.5px solid #C49A35;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.10)}
+.qf img{width:80px;height:80px;display:block}
+.ql{font-size:7.5px;color:#8B1A2A;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.qd{font-size:6.5px;color:#aaa;text-align:center;max-width:92px;word-break:break-all;line-height:1.4}
+.ct{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;padding:55px 80px 50px}
+.lr{display:flex;align-items:center;gap:18px;margin-bottom:14px}
+.li{width:70px;height:70px;object-fit:contain}
+.in{font-size:13px;font-weight:700;color:#3D0A14;letter-spacing:.06em;text-transform:uppercase}
+.is{font-size:10px;color:#888;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
+.dv{width:100%;height:2px;background:linear-gradient(90deg,transparent,#C49A35,transparent);margin:10px 0}
+.dt{font-size:11px;letter-spacing:.3em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin:18px 0 8px}
+.tw{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#3D0A14;letter-spacing:.02em;line-height:1;margin-bottom:22px}
+.bt{text-align:center;font-size:14px;color:#444;line-height:1.85;max-width:580px}
+.rn{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;font-style:italic;color:#1B396A;display:block;margin:16px 0 6px;border-bottom:1.5px solid #C49A35;padding-bottom:8px;width:100%;text-align:center}
+.an{font-size:16px;font-weight:700;color:#3D0A14;margin:8px 0 4px;text-align:center}
+.ds{font-size:12.5px;color:#666;text-align:center;max-width:520px;line-height:1.7;margin-top:4px}
+.fa{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
+.ft{font-size:12px;color:#777;margin-bottom:28px;letter-spacing:.02em}
+.fl{width:220px;height:1.5px;background:linear-gradient(90deg,transparent,#3D0A14,transparent)}
+.fn{font-weight:700;color:#3D0A14;font-size:13px;letter-spacing:.03em;text-align:center}
+.fc{font-size:11px;color:#888;text-align:center;letter-spacing:.04em;text-transform:uppercase}
+</style></head><body>
+<div class="bo"></div><div class="bi"></div>
+<div class="cr tl"></div><div class="cr tr"></div><div class="cr bl"></div><div class="cr br"></div>
+<div class="wm">ITD</div>
+<div class="se"><span>INSTITUTO<br>TECNOLÓGICO<br>DE DURANGO</span></div>
+<div class="qb">
+  <div class="qf"><img src="${qu}" alt="QR" onerror="this.parentElement.style.display='none'"/></div>
+  <div class="ql">Verificación ITD</div>
+  <div class="qd">${qd}</div>
+</div>
+<div class="ct">
+  <div class="lr">
+    <img src="${LOGO}" class="li" alt="ITD" onerror="this.style.display='none'"/>
+    <div><div class="in">Instituto Tecnológico de Durango</div><div class="is">Tecnológico Nacional de México</div></div>
+  </div>
+  <div class="dv"></div>
+  <div class="dt">Otorga la presente</div>
+  <div class="tw">${tipo==='reconocimiento'?'Reconocimiento':'Constancia'}</div>
+  <p class="bt">El Instituto Tecnológico de Durango hace constar que
+    <span class="rn">${nombre}</span><span class="an">${descripcion||''}</span>
+  </p>
+  <p class="ds">${tx}</p>
+  <div class="fa">
+    <div class="ft">Durango, Dgo. a ${fecha}</div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      <div class="fl"></div><div class="fn">${firmante||'Dr. Alejandro Calderón Rentería'}</div>
+      <div class="fc">${cargo||'Coordinación de Actualización Docente'}</div>
+    </div>
+  </div>
+</div></body></html>`;
+}
+
+/* ═══ USUARIOS ═══════════════════════════════════════ */
+function renderUsers(){
+  const users=getU();
+  document.getElementById('usr-cnt').textContent=`${users.length} usuario(s) registrado(s)`;
+  const list=document.getElementById('usr-list'), empty=document.getElementById('usr-empty');
+  if(!users.length){list.innerHTML='';empty.classList.remove('hidden');return;}
+  empty.classList.add('hidden');
+  list.innerHTML=users.map(u=>`
+    <div class="usr-row" style="${!u.active?'opacity:.6;background:#fafafa':''}">
+      <div><div style="font-weight:700;font-size:14px">${u.name}</div><div style="font-size:10px;color:#bbb">${new Date(u.createdAt).toLocaleDateString('es-MX')}</div></div>
+      <div class="hide-sm" style="font-size:12px;color:#666;word-break:break-all">${u.email}</div>
+      <div><span class="badge ${u.isAdmin?'badge-red':'badge-blue'}">${u.isAdmin?'Admin':'Usuario'}</span></div>
+      <div><button class="tog-btn ${u.active?'tog-on':'tog-off'}" onclick="toggleU('${u.id}')">${u.active?'Activo':'Inactivo'}</button></div>
+      <div style="text-align:right">${u.email!==CU.email?`<button class="btn-sm-red" onclick="delUser('${u.id}')">🗑</button>`:''}</div>
+    </div>`).join('');
+}
+
+function toggleUF(hide){
+  const c=document.getElementById('uf-card'), b=document.getElementById('nw-btn');
+  if(hide||!c.classList.contains('hidden')){c.classList.add('hidden');b.textContent='+ Nuevo usuario';b.className='btn btn-primary';}
+  else{c.classList.remove('hidden');b.textContent='✕ Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
+}
+
+async function crearUsuario(){
+  const name=document.getElementById('uf-nm').value.trim();
+  const email=document.getElementById('uf-em').value.trim().toLowerCase();
+  const pass=document.getElementById('uf-pw').value.trim();
+  const isAdm=document.getElementById('uf-adm').checked;
+  const errEl=document.getElementById('uf-err'), btn=document.getElementById('uf-sv');
+  errEl.classList.add('hidden');
+  if(!name||!email||!pass){errEl.textContent='⚠ Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='⚠ Correo inválido.';errEl.classList.remove('hidden');return;}
+  if(getU().find(u=>u.email===email)){errEl.textContent='⚠ Ya existe ese correo.';errEl.classList.remove('hidden');return;}
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
+  const hash=await h256(pass);
+  const nu={id:Date.now().toString(),name,email,hash,isAdmin:isAdm,active:true,createdAt:new Date().toISOString()};
+  setU([...getU(),nu]); toggleUF(true); renderUsers();
+  btn.disabled=false; btn.innerHTML='💾 Crear usuario';
+  ['uf-nm','uf-em','uf-pw'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('uf-adm').checked=false;
+  toast(`✅ Usuario ${email} creado`,'success');
+}
+
+function toggleU(id){
+  setU(getU().map(u=>u.id===id?{...u,active:!u.active}:u)); renderUsers(); toast('Estado actualizado','info');
+}
+function delUser(id){
+  const u=getU().find(x=>x.id===id);
+  if(!u||!confirm(`¿Eliminar "${u.email}"?`))return;
+  setU(getU().filter(x=>x.id!==id)); renderUsers(); toast('Usuario eliminado','info');
+}
+</script>
+
+<!-- jsPDF y html2canvas: carga diferida para no bloquear la página -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </body>
 </html>
