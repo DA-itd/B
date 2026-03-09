@@ -353,8 +353,12 @@
                 </label>
                 <div style="display:flex;align-items:center;gap:4px" id="qr-size-wrap">
                   <label style="font-size:11px;font-weight:700;color:#555">QR tamaño</label>
-                  <input type="number" id="f-qrsize" value="90" min="40" max="200"
-                    style="width:52px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
+                  <select id="f-qrsize"
+                    style="width:70px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fff">
+                    <option value="30">30 pt</option>
+                    <option value="40" selected>40 pt</option>
+                    <option value="50">50 pt</option>
+                  </select>
                   <label style="font-size:11px;color:#888">pt</label>
                 </div>
               </div>
@@ -471,7 +475,7 @@ async function h256(s){
 
 /* ═══ QR ═══════════════════════════════════════ */
 const isoToday = () => new Date().toISOString().split('T')[0];
-const qrData   = (n,f) => `DA+${n}+${f||isoToday()}`;
+const qrData   = (n,f) => `DA ${n} ${f||isoToday()}`;
 const qrUrl    = (n,f) => `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData(n,f))}`;
 
 /* ═══ TOAST ═══════════════════════════════════════ */
@@ -625,7 +629,7 @@ function guardarEvento(){
     fontFamily:document.getElementById('f-fontfamily').value||'Georgia, serif',
     fontItalic:document.getElementById('f-italic').checked,
     fontBold:document.getElementById('f-bold').checked,
-    qrSizePt:parseFloat(document.getElementById('f-qrsize').value)||90};
+    qrSizePt:parseFloat(document.getElementById('f-qrsize').value)||40};
   if(!isNaN(idx)&&idx>=0&&idx<evts.length){ evts[idx]=entry; }
   else { evts.push(entry); }
   setEvts(evts);
@@ -947,7 +951,7 @@ async function superponerNombreQR(nombre, fecha){
   const isItalic    = document.getElementById('f-italic').checked;
   const isBold      = document.getElementById('f-bold').checked;
   const fontStyle   = `${isBold?'bold ':''} ${isItalic?'italic ':''}`.trim()||'normal';
-  const qrSizePt    = parseFloat(document.getElementById('f-qrsize').value)||90;
+  const qrSizePt    = parseFloat(document.getElementById('f-qrsize').value)||40;
   const qrOn        = document.getElementById('f-qr-on').checked;
 
   const binary=atob(pdfBase64);
@@ -1026,15 +1030,6 @@ async function superponerNombreQR(nombre, fecha){
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.fillText('Verificación ITD', qx, qy + qSize + 4);
-    // QR data string (small, wrapped)
-    const qd = qrData(nombre, fecha);
-    const smallPx = Math.round(5.5 * SCALE);
-    ctx.font = `${smallPx}px monospace`;
-    ctx.fillStyle = '#aaaaaa';
-    let line='', lines2=[], maxW=qSize;
-    for(const ch of qd){ line+=ch; if(ctx.measureText(line).width>maxW){lines2.push(line.slice(0,-1));line=ch;} }
-    if(line) lines2.push(line);
-    lines2.forEach((l,i) => ctx.fillText(l, qx, qy + qSize + lblPx + 6 + i*(smallPx+2)));
     ctx.restore();
   }
 
