@@ -199,25 +199,41 @@
     <!-- TAB GENERAR -->
     <div id="tab-generar">
       <div class="gen-hdr">
-        <div><div class="gen-h2">Generar Constancias</div><div class="gen-sub">Plantilla oficial ITD · QR de verificación incluido</div></div>
+        <div><div class="gen-h2">Generar Constancias</div><div class="gen-sub">PDF base + nombre y QR superpuestos · Múltiples plantillas</div></div>
         <span class="badge badge-blue">📄 PDF + QR</span>
       </div>
       <div class="gen-grid">
 
         <!-- FORM -->
         <div class="form-col">
+
+          <!-- PLANTILLA -->
           <div class="card">
-            <div class="card-title">⚙️ Configuración</div>
-            <div style="display:flex;flex-direction:column;gap:12px">
-              <div class="field"><label>Tipo</label>
-                <select id="f-tipo" onchange="updatePrev()">
-                  <option value="constancia">📜 Constancia</option>
-                  <option value="reconocimiento">🏅 Reconocimiento</option>
-                </select>
+            <div class="card-title">🖼 Plantilla del evento</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div class="field">
+                <label>Evento / Plantilla guardada</label>
+                <div style="display:flex;gap:8px">
+                  <select id="f-evento" style="flex:1" onchange="cargarEvento()">
+                    <option value="">— Nueva plantilla —</option>
+                  </select>
+                  <button class="btn-sm-red" id="del-evt-btn" onclick="eliminarEvento()" title="Eliminar evento" style="display:none">🗑</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Nombre del evento <span style="color:#e05050">*</span></label>
+                <input type="text" id="f-evento-nombre" placeholder="Ej: ExpoTecno 2026"/>
+              </div>
+              <div class="field">
+                <label>PDF de la plantilla <span style="color:#e05050">*</span></label>
+                <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="cargarPDF(this)"/>
+                <button class="btn btn-ghost btn-full" onclick="document.getElementById('pdf-input').click()">📂 Seleccionar PDF</button>
+                <div id="pdf-ok" class="hidden" style="margin-top:6px;font-size:12px;color:#14532d;font-weight:700"></div>
               </div>
             </div>
           </div>
 
+          <!-- DESTINATARIO -->
           <div class="card">
             <div class="card-title">👤 Destinatario(s)</div>
             <div style="display:flex;gap:8px;margin-bottom:14px">
@@ -248,27 +264,42 @@
           <button class="btn btn-primary btn-full" id="gen-btn" onclick="generar()">🚀 Generar Constancia(s)</button>
         </div>
 
-        <!-- PREVIEW + RESULTADOS -->
+        <!-- CALIBRADOR + RESULTADOS -->
         <div class="right-col">
-          <div class="card">
-            <div class="card-title">👁 Vista previa</div>
-            <div class="prev-box">
-              <div class="prev-ibdr"></div>
-              <div class="prev-qrw" id="pv-qrw" style="display:none">
-                <div class="prev-qrf"><img id="pv-qri" src="" width="26" height="26" alt="QR"/></div>
+          <!-- CALIBRADOR -->
+          <div class="card" id="calib-card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div class="card-title" style="margin:0">📍 Calibrar posición</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn-sm-blue" id="calib-nom-btn" onclick="setCalibMode('nombre')" title="Clic en el PDF para marcar donde va el nombre">✍️ Nombre</button>
+                <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">⬛ QR</button>
+                <button class="btn-sm-yel"  onclick="guardarEvento()">💾 Guardar</button>
               </div>
-              <div style="font-size:9px;letter-spacing:.2em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin-bottom:5px">Otorga la presente</div>
-              <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#3D0A14;margin-bottom:8px" id="pv-tipo">Constancia</div>
-              <div style="font-size:10px;color:#777;margin-bottom:5px">a</div>
-              <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:#1B396A;font-weight:700;border-bottom:1px solid #C49A35;padding-bottom:6px;margin-bottom:8px" id="pv-nom">Nombre del destinatario</div>
-              <div style="font-size:9px;color:#aaa;margin:10px 0 4px">Plantilla oficial Google Docs</div>
-              <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:10px auto 3px"></div>
-              <div style="font-size:8px;font-weight:700;color:#3D0A14">Dr. Alejandro Calderón Rentería</div>
-              <div style="font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.03em">Coordinación de Actualización Docente</div>
             </div>
-            <p class="prev-note">El PDF incluye bordes decorativos, sello y QR</p>
+            <div id="calib-hint" style="font-size:11px;color:#888;margin-bottom:8px;min-height:16px"></div>
+            <!-- Canvas calibrador -->
+            <div style="position:relative;border:2px dashed #e0e0e0;border-radius:8px;overflow:hidden;background:#f5f5f5;min-height:320px;cursor:crosshair" id="calib-wrap">
+              <canvas id="calib-canvas" style="display:block;width:100%;height:auto"></canvas>
+              <!-- Marcadores -->
+              <div id="mk-nombre" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
+                <div style="background:#1B396Acc;color:#F5E4A8;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">✍️ NOMBRE</div>
+              </div>
+              <div id="mk-qr" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
+                <div style="background:#14532dcc;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">⬛ QR</div>
+              </div>
+              <div id="calib-placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#bbb;gap:8px">
+                <div style="font-size:32px">📄</div>
+                <div style="font-size:12px;font-weight:700">Selecciona un PDF para calibrar</div>
+                <div style="font-size:11px">Luego haz clic en donde va el nombre y el QR</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#666">
+              <span id="pos-nombre-lbl">✍️ Nombre: —</span>
+              <span id="pos-qr-lbl">⬛ QR: —</span>
+            </div>
           </div>
 
+          <!-- RESULTADOS -->
           <div class="card hidden" id="res-card">
             <div class="card-title" id="res-title">✅ Generadas</div>
             <div id="res-list" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -338,11 +369,13 @@ const SCRIPT_URL= "https://script.google.com/macros/s/AKfycbxNM7h4yZfUlippABCr9g
 document.getElementById('yr').textContent = new Date().getFullYear();
 
 /* ═══ STORAGE ═══════════════════════════════════════ */
-const getU  = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_u')||'[]')}catch{return[]} };
-const setU  = (u) => localStorage.setItem('itd_oc_u', JSON.stringify(u));
-const getSS = ()  => { try{return JSON.parse(sessionStorage.getItem('itd_oc_s'))}catch{return null} };
-const setSS = (u) => sessionStorage.setItem('itd_oc_s', JSON.stringify(u));
-const delSS = ()  => sessionStorage.removeItem('itd_oc_s');
+const getU      = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_u')||'[]')}catch{return[]} };
+const setU      = (u) => localStorage.setItem('itd_oc_u', JSON.stringify(u));
+const getEvts   = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_evts')||'[]')}catch{return[]} };
+const setEvts   = (e) => localStorage.setItem('itd_oc_evts', JSON.stringify(e));
+const getSS     = ()  => { try{return JSON.parse(sessionStorage.getItem('itd_oc_s'))}catch{return null} };
+const setSS     = (u) => sessionStorage.setItem('itd_oc_s', JSON.stringify(u));
+const delSS     = ()  => sessionStorage.removeItem('itd_oc_s');
 
 /* ═══ HASH ═══════════════════════════════════════ */
 async function h256(s){
@@ -353,7 +386,7 @@ async function h256(s){
 /* ═══ QR ═══════════════════════════════════════ */
 const isoToday = () => new Date().toISOString().split('T')[0];
 const qrData   = (n,f) => `DA+${n}+${f||isoToday()}`;
-const qrUrl    = (n,f) => `https://api.qrserver.com/v1/create-qr-code/?size=100x100&margin=4&data=${encodeURIComponent(qrData(n,f))}`;
+const qrUrl    = (n,f) => `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData(n,f))}`;
 
 /* ═══ TOAST ═══════════════════════════════════════ */
 let tTimer;
@@ -366,22 +399,25 @@ function toast(msg,type='info'){
 
 /* ═══ STATE ═══════════════════════════════════════ */
 let CU=null, XL=[], mode='manual', GEN=[];
+// Calibrador
+let calibMode=null;           // 'nombre' | 'qr'
+let calibScale=1;             // canvas display scale vs PDF pts
+let pdfPageW=0, pdfPageH=0;  // PDF page size in pts
+let pdfBase64='';             // base64 of loaded PDF
+let coords={ nombre:{x:0,y:0,set:false}, qr:{x:0,y:0,set:false} };
 
 /* ═══ INIT ═══════════════════════════════════════ */
 (async()=>{
-  // crear admin si no existe
   const users=getU();
   if(!users.find(u=>u.email===ADM_EMAIL)){
     const hash=await h256('Xela1615');
     users.push({id:'adm0',name:'Dr. Alejandro Calderón Rentería',email:ADM_EMAIL,hash,isAdmin:true,active:true,createdAt:new Date().toISOString()});
     setU(users);
   }
-  // enter en login
   document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
-  // sesión activa
   const s=getSS(); if(s){CU=s;showApp();}
-  updatePrev();
+  renderEventoSelect();
 })();
 
 /* ═══ LOGIN ═══════════════════════════════════════ */
@@ -401,7 +437,6 @@ async function doLogin(){
     else{errEl.textContent='⚠ Credenciales incorrectas o usuario inactivo.';errEl.classList.remove('hidden');}
   }finally{btn.disabled=false;btn.innerHTML='🔐 Iniciar sesión';}
 }
-
 function doLogout(){
   delSS();CU=null;
   document.getElementById('page-app').classList.add('hidden');
@@ -409,7 +444,6 @@ function doLogout(){
   document.getElementById('li-pass').value='';
   document.getElementById('li-err').classList.add('hidden');
 }
-
 function showApp(){
   document.getElementById('page-login').style.display='none';
   document.getElementById('page-app').classList.remove('hidden');
@@ -439,7 +473,193 @@ function setMode(m){
   document.getElementById('pnl-excel').classList.toggle('hidden',m!=='excel');
   document.getElementById('mb-manual').classList.toggle('active',m==='manual');
   document.getElementById('mb-excel').classList.toggle('active',m==='excel');
-  updatePrev();
+}
+
+/* ═══ EVENTOS (plantillas guardadas) ═══════════════ */
+function renderEventoSelect(){
+  const sel=document.getElementById('f-evento');
+  const evts=getEvts();
+  sel.innerHTML='<option value="">— Nueva plantilla —</option>';
+  evts.forEach((e,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=e.nombre; sel.appendChild(o); });
+}
+
+function cargarEvento(){
+  const idx=document.getElementById('f-evento').value;
+  document.getElementById('del-evt-btn').style.display=idx!==''?'':'none';
+  if(idx===''){
+    // reset
+    pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false}};
+    limpiarCalibrador(); return;
+  }
+  const evt=getEvts()[parseInt(idx)];
+  if(!evt) return;
+  document.getElementById('f-evento-nombre').value=evt.nombre;
+  coords=JSON.parse(JSON.stringify(evt.coords));
+  pdfBase64=evt.pdfBase64||'';
+  pdfPageW=evt.pdfPageW||0; pdfPageH=evt.pdfPageH||0;
+  if(pdfBase64) renderPDFCanvas(pdfBase64, true);
+  actualizarPosLabels();
+  toast('✅ Plantilla cargada: '+evt.nombre,'success');
+}
+
+function eliminarEvento(){
+  const idx=parseInt(document.getElementById('f-evento').value);
+  if(isNaN(idx)) return;
+  const evts=getEvts();
+  const nombre=evts[idx]?.nombre||'';
+  if(!confirm(`¿Eliminar la plantilla "${nombre}"?`)) return;
+  evts.splice(idx,1);
+  setEvts(evts);
+  renderEventoSelect();
+  document.getElementById('f-evento').value='';
+  document.getElementById('del-evt-btn').style.display='none';
+  pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false}};
+  limpiarCalibrador();
+  toast('Plantilla eliminada','info');
+}
+
+function guardarEvento(){
+  const nombre=document.getElementById('f-evento-nombre').value.trim();
+  if(!nombre){ toast('⚠ Escribe un nombre para el evento','warn'); return; }
+  if(!pdfBase64){ toast('⚠ Carga el PDF de la plantilla primero','warn'); return; }
+  if(!coords.nombre.set){ toast('⚠ Marca la posición del nombre en el calibrador','warn'); return; }
+  if(!coords.qr.set){ toast('⚠ Marca la posición del QR en el calibrador','warn'); return; }
+  const evts=getEvts();
+  const idx=parseInt(document.getElementById('f-evento').value);
+  const entry={nombre,coords:JSON.parse(JSON.stringify(coords)),pdfBase64,pdfPageW,pdfPageH};
+  if(!isNaN(idx)&&idx>=0&&idx<evts.length){ evts[idx]=entry; }
+  else { evts.push(entry); }
+  setEvts(evts);
+  renderEventoSelect();
+  // Select the saved one
+  const sel=document.getElementById('f-evento');
+  sel.value=evts.indexOf(entry)>=0?evts.indexOf(entry):evts.length-1;
+  document.getElementById('del-evt-btn').style.display='';
+  toast('💾 Plantilla guardada: '+nombre,'success');
+}
+
+/* ═══ CARGA PDF ═══════════════════════════════════ */
+function cargarPDF(inp){
+  const file=inp.files[0]; if(!file) return;
+  if(file.type!=='application/pdf'&&!file.name.endsWith('.pdf')){
+    toast('⚠ Selecciona un archivo PDF','warn'); return;
+  }
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const b64=e.target.result.split(',')[1];
+    pdfBase64=b64;
+    document.getElementById('pdf-ok').textContent='✅ '+file.name;
+    document.getElementById('pdf-ok').classList.remove('hidden');
+    renderPDFCanvas(b64, false);
+    toast('PDF cargado — ahora calibra las posiciones','info');
+  };
+  reader.readAsDataURL(file);
+  inp.value='';
+}
+
+async function renderPDFCanvas(b64, keepMarkers){
+  // Use PDF.js from CDN (loaded dynamically)
+  if(!window.pdfjsLib){
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+  try{
+    const binary=atob(b64);
+    const bytes=new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+    const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
+    const page=await pdf.getPage(1);
+    const vp=page.getViewport({scale:1});
+    pdfPageW=vp.width; pdfPageH=vp.height;
+    // Render at 1.5x for display quality
+    const scale=1.5;
+    const vp2=page.getViewport({scale});
+    const canvas=document.getElementById('calib-canvas');
+    canvas.width=vp2.width; canvas.height=vp2.height;
+    calibScale=scale;
+    document.getElementById('calib-placeholder').style.display='none';
+    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp2}).promise;
+    // Setup click handler
+    canvas.onclick=onCalibClick;
+    canvas.style.cursor='crosshair';
+    if(keepMarkers) redrawMarkers();
+  }catch(err){
+    toast('⚠ Error al leer el PDF: '+err.message,'error');
+  }
+}
+
+function limpiarCalibrador(){
+  const canvas=document.getElementById('calib-canvas');
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  canvas.width=0; canvas.height=0;
+  document.getElementById('calib-placeholder').style.display='flex';
+  ['mk-nombre','mk-qr'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('pos-nombre-lbl').textContent='✍️ Nombre: —';
+  document.getElementById('pos-qr-lbl').textContent='⬛ QR: —';
+  document.getElementById('pdf-ok').classList.add('hidden');
+}
+
+/* ═══ CALIBRADOR ═══════════════════════════════════ */
+function setCalibMode(m){
+  calibMode=m;
+  const hint=document.getElementById('calib-hint');
+  if(m==='nombre') hint.textContent='👆 Haz clic donde quieres centrar el NOMBRE en la constancia';
+  else             hint.textContent='👆 Haz clic en la esquina SUPERIOR-IZQUIERDA donde va el QR';
+  document.getElementById('calib-nom-btn').style.outline=m==='nombre'?'2px solid #1B396A':'';
+  document.getElementById('calib-qr-btn').style.outline=m==='qr'?'2px solid #14532d':'';
+}
+
+function onCalibClick(e){
+  if(!calibMode){ toast('⚠ Selecciona primero qué calibrar (Nombre o QR)','warn'); return; }
+  const canvas=document.getElementById('calib-canvas');
+  const rect=canvas.getBoundingClientRect();
+  // Display coords → canvas coords → PDF coords (pts)
+  const displayScale=canvas.width/rect.width;
+  const cx=(e.clientX-rect.left)*displayScale;  // canvas px
+  const cy=(e.clientY-rect.top)*displayScale;
+  // Convert to PDF pts
+  const px=cx/calibScale;
+  const py=cy/calibScale;  // y from top of PDF
+  coords[calibMode]={x:Math.round(px), y:Math.round(py), set:true};
+  redrawMarkers();
+  actualizarPosLabels();
+  calibMode=null;
+  document.getElementById('calib-hint').textContent='✅ Posición guardada. Calibra el otro elemento o guarda el evento.';
+  document.getElementById('calib-nom-btn').style.outline='';
+  document.getElementById('calib-qr-btn').style.outline='';
+}
+
+function redrawMarkers(){
+  const canvas=document.getElementById('calib-canvas');
+  const rect=canvas.getBoundingClientRect();
+  const wrap=document.getElementById('calib-wrap');
+  const wRect=wrap.getBoundingClientRect();
+  const cRect=canvas.getBoundingClientRect();
+  const offsetX=cRect.left-wRect.left;
+  const offsetY=cRect.top-wRect.top;
+  // canvas display scale
+  const ds=rect.width/canvas.width;
+
+  if(coords.nombre.set){
+    const mk=document.getElementById('mk-nombre');
+    const px=coords.nombre.x*calibScale*ds+offsetX;
+    const py=coords.nombre.y*calibScale*ds+offsetY;
+    mk.style.left=px+'px'; mk.style.top=py+'px'; mk.style.display='block';
+  }
+  if(coords.qr.set){
+    const mk=document.getElementById('mk-qr');
+    const px=coords.qr.x*calibScale*ds+offsetX;
+    const py=coords.qr.y*calibScale*ds+offsetY;
+    mk.style.left=px+'px'; mk.style.top=py+'px'; mk.style.display='block';
+  }
+}
+
+function actualizarPosLabels(){
+  document.getElementById('pos-nombre-lbl').textContent=
+    coords.nombre.set?`✍️ Nombre: (${coords.nombre.x}, ${coords.nombre.y})pts`:'✍️ Nombre: —';
+  document.getElementById('pos-qr-lbl').textContent=
+    coords.qr.set?`⬛ QR: (${coords.qr.x}, ${coords.qr.y})pts`:'⬛ QR: —';
 }
 
 /* ═══ EXCEL ═══════════════════════════════════════ */
@@ -470,7 +690,6 @@ function loadExcel(inp){
       if(XL.length>6) pv.innerHTML+=`<span style="color:#888">…y ${XL.length-6} más</span>`;
       document.getElementById('xl-ok').classList.remove('hidden');
       toast(`✅ ${XL.length} nombre(s) cargados`,'success');
-      updatePrev();
     }catch(err){
       document.getElementById('xl-err').textContent='⚠ '+err.message;
       document.getElementById('xl-err').classList.remove('hidden');
@@ -480,20 +699,13 @@ function loadExcel(inp){
   reader.readAsArrayBuffer(file);
 }
 
-/* ═══ PREVIEW ═══════════════════════════════════════ */
-function updatePrev(){
-  const tipo=document.getElementById('f-tipo').value;
-  const nom =mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
-  document.getElementById('pv-tipo').textContent=tipo==='reconocimiento'?'Reconocimiento':'Constancia';
-  document.getElementById('pv-nom').textContent=nom||'Nombre del destinatario';
-  const qw=document.getElementById('pv-qrw');
-  if(nom){document.getElementById('pv-qri').src=qrUrl(nom,isoToday());qw.style.display='flex';}
-  else qw.style.display='none';
-}
-
 /* ═══ GENERAR ═══════════════════════════════════════ */
 async function generar(){
-  const tipo=document.getElementById('f-tipo').value;
+  // Validar plantilla
+  if(!pdfBase64){ toast('⚠ Carga y calibra una plantilla PDF primero','warn'); return; }
+  if(!coords.nombre.set){ toast('⚠ Calibra la posición del nombre','warn'); return; }
+  if(!coords.qr.set){ toast('⚠ Calibra la posición del QR','warn'); return; }
+  // Validar destinatarios
   let noms;
   if(mode==='manual'){
     const n=document.getElementById('f-nom').value.trim();
@@ -503,31 +715,107 @@ async function generar(){
     if(!XL.length){toast('⚠ Carga un archivo Excel primero.','warn');return;}
     noms=XL;
   }
+
   const btn=document.getElementById('gen-btn');
   btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Generando…';
   const fc=isoToday(); GEN=[];
   const total=noms.length;
+
+  // Esperar PDF.js y libs
+  await waitLibs();
+
   for(let i=0;i<total;i++){
     const item=noms[i];
     if(total>1) btn.innerHTML=`<div class="spinner"></div> ${i+1}/${total} — ${item.nombre.split(' ')[0]}…`;
-    let driveUrl=null;
     try{
-      const _p=new URLSearchParams({action:'generarConstancia',nombre:item.nombre,tipo,folderId:FOLDER_ID});
-      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),15000);
-      const r=await fetch(`${SCRIPT_URL}?${_p.toString()}`,{signal:ctrl.signal});
-      const d=await r.json();
-      driveUrl=d.url||d.downloadUrl||null;
-      if(d.error) console.warn('Apps Script error:',d.error);
-    }catch(e){console.warn('Apps Script no disponible, PDF local como respaldo:',e);}
-    GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,fc,tipo});
+      const pdfBytes=await superponerNombreQR(item.nombre, fc);
+      const blob=new Blob([pdfBytes],{type:'application/pdf'});
+      const url=URL.createObjectURL(blob);
+      GEN.push({nombre:item.nombre,correo:item.correo,fc,blobUrl:url,pdfBytes});
+    }catch(err){
+      console.error('Error generando:',item.nombre,err);
+      GEN.push({nombre:item.nombre,correo:item.correo,fc,blobUrl:null,error:err.message});
+    }
   }
+
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
-  const ok=GEN.filter(g=>g.driveUrl).length;
-  toast(ok===total?`🎉 ${total} constancia(s) lista(s) en Drive`:`⚠ ${ok}/${total} subidas a Drive`
-       ,ok===total?'success':'warn');
+  const ok=GEN.filter(g=>g.blobUrl).length;
+  toast(ok===total?`🎉 ${total} constancia(s) generada(s)`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
 }
 
+/* ═══ SUPERPOSICIÓN PDF ═══════════════════════════════════════ */
+async function superponerNombreQR(nombre, fecha){
+  // 1. Load the base PDF with PDF.js to render page as canvas
+  if(!window.pdfjsLib){
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  }
+
+  const binary=atob(pdfBase64);
+  const bytes=new Uint8Array(binary.length);
+  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+
+  const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
+  const page=await pdf.getPage(1);
+  // Render at 2x for quality
+  const SCALE=2;
+  const vp=page.getViewport({scale:SCALE});
+  const canvas=document.createElement('canvas');
+  canvas.width=vp.width; canvas.height=vp.height;
+  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+
+  const ctx=canvas.getContext('2d');
+
+  // 2. Draw nombre
+  const nx=coords.nombre.x*SCALE;
+  const ny=coords.nombre.y*SCALE;
+  // Italic serif font matching the plantilla style
+  const fontSize=Math.round(36*SCALE*(pdfPageW/1088));  // scale font relative to page width
+  ctx.save();
+  ctx.font=`italic ${fontSize}px "Georgia", serif`;
+  ctx.fillStyle='#1a1a1a';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(nombre, nx, ny);
+  ctx.restore();
+
+  // 3. Draw QR
+  const qx=coords.qr.x*SCALE;
+  const qy=coords.qr.y*SCALE;
+  const qSize=Math.round(90*SCALE*(pdfPageW/1088));
+  const qrImg=await loadImage(qrUrl(nombre,fecha));
+  ctx.save();
+  ctx.drawImage(qrImg, qx, qy, qSize, qSize);
+  // Label under QR
+  const lblSize=Math.round(7*SCALE*(pdfPageW/1088));
+  ctx.font=`bold ${lblSize}px sans-serif`;
+  ctx.fillStyle='#8B1A2A';
+  ctx.textAlign='left';
+  ctx.fillText('Verificación ITD', qx, qy+qSize+lblSize+2);
+  const qd=qrData(nombre,fecha);
+  ctx.font=`${Math.round(lblSize*0.8)}px monospace`;
+  ctx.fillStyle='#aaaaaa';
+  // Wrap qd text
+  const maxW=qSize;
+  let line='', lines2=[];
+  for(const ch of qd){line+=ch;if(ctx.measureText(line).width>maxW){lines2.push(line.slice(0,-1));line=ch;}}
+  if(line) lines2.push(line);
+  lines2.forEach((l,i)=>ctx.fillText(l,qx,qy+qSize+lblSize*2+(i*(lblSize*0.9))+4));
+  ctx.restore();
+
+  // 4. Convert canvas → PDF via jsPDF
+  await waitLibs();
+  const {jsPDF}=window.jspdf;
+  // Use original PDF page size in pts
+  const W=pdfPageW, H=pdfPageH;
+  const doc=new jsPDF({orientation:W>H?'landscape':'portrait',unit:'pt',format:[W,H],compress:true});
+  const imgData=canvas.toDataURL('image/jpeg',0.95);
+  doc.addImage(imgData,'JPEG',0,0,W,H);
+  return doc.output('arraybuffer');
+}
+
+/* ═══ RENDER RESULTS ═══════════════════════════════ */
 function renderResults(){
   const list=document.getElementById('res-list');
   document.getElementById('res-title').textContent=`✅ Generadas (${GEN.length})`;
@@ -544,10 +832,10 @@ function renderResults(){
         </div>
       </div>
       <div class="result-acts">
-        ${g.driveUrl
-          ?`<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir en Drive</a>
-            <a class="btn-sm-grn" href="https://drive.google.com/uc?export=download&id=${g.driveUrl.match(/[-\w]{25,}/)?.[0]||''}" target="_blank">⬇ Descargar</a>`
-          :`<button class="btn-sm-grn" id="lpdf-${i}" onclick="pdfLocal(${i})">⬇ Descargar PDF</button>`}
+        ${g.blobUrl
+          ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank">👁 Ver PDF</a>
+            <button class="btn-sm-grn" onclick="dlPDF(${i})">⬇ Descargar</button>`
+          :`<span style="font-size:11px;color:#e05050">⚠ ${g.error||'Error'}</span>`}
         <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
       </div>`;
     list.appendChild(div);
@@ -555,155 +843,46 @@ function renderResults(){
   document.getElementById('res-card').classList.remove('hidden');
 }
 
-/* ═══ PRINT / PDF / EMAIL ═══════════════════════════════════════ */
-function imprimir(i){
-  const win=window.open('','_blank','width=900,height=750');
-  if(!win){alert('Permite ventanas emergentes para imprimir.');return;}
-  win.document.write(GEN[i].html); win.document.close(); win.focus();
-  setTimeout(()=>win.print(),700);
-}
-
-async function dlPDF(i){
-  if(window.html2canvas&&window.jspdf){
-    const btns=document.querySelectorAll('.result-item')[i].querySelectorAll('button');
-    btns[0].textContent='⏳…'; btns[0].disabled=true;
-    try{
-      const iframe=document.createElement('iframe');
-      iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;';
-      document.body.appendChild(iframe);
-      iframe.contentDocument.open(); iframe.contentDocument.write(GEN[i].html); iframe.contentDocument.close();
-      await new Promise(r=>setTimeout(r,900));
-      const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,allowTaint:true,width:794,height:1123});
-      document.body.removeChild(iframe);
-      const {jsPDF}=window.jspdf;
-      const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[794,1123]});
-      pdf.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,794,1123);
-      pdf.save(`Constancia_${GEN[i].nombre.replace(/\s+/g,'_')}.pdf`);
-    }finally{btns[0].textContent='⬇ PDF'; btns[0].disabled=false;}
-  }else{ imprimir(i); }
+function dlPDF(i){
+  const g=GEN[i]; if(!g.pdfBytes) return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([g.pdfBytes],{type:'application/pdf'}));
+  a.download=`Constancia_${g.nombre.replace(/\s+/g,'_')}.pdf`;
+  a.click();
 }
 
 function correo(i){
   const g=GEN[i];
   const s=`Constancia ITD — ${g.nombre}`;
-  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su constancia de participación.${g.driveUrl?'\n\nPuede verla en: '+g.driveUrl:''}\n\nAtentamente,\nDr. Alejandro Calderón Rentería\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
+  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su constancia de participación.\n\nAtentamente,\nDr. Alejandro Calderón Rentería\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
   window.location.href=`mailto:${g.correo||''}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
 }
 
-/* ═══ BUILD HTML — réplica fiel de la plantilla oficial ITD ════ */
-function buildHTML({nombre,tipo,fechaCreacion}){
-  const qu=qrUrl(nombre,fechaCreacion), qd=qrData(nombre,fechaCreacion);
-  const hoy=new Date();
-  const fechaLarga=hoy.toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
-  const tipoTxt=(tipo||'constancia')==='reconocimiento'?'RECONOCIMIENTO':'CONSTANCIA';
-  const cuerpoTxt=tipoTxt==='RECONOCIMIENTO'
-    ?'Por su destacada participación y valiosa contribución a las actividades académicas e institucionales del Instituto Tecnológico de Durango.'
-    :'Por su valiosa participación como integrante del staff de organización de la <strong>ExpoTecno Open House 2026</strong>, llevada a cabo del 23 al 27 de febrero, destacando su compromiso y responsabilidad en el desarrollo exitoso de este evento.';
-  return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
-<style>
-@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@700;900&family=Lato:wght@300;400;700&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:816px;height:1056px;background:#fff;font-family:'Lato',sans-serif;overflow:hidden;position:relative}
-/* Fondo con motivo floral tenue (SVG inline) */
-.bg-pattern{position:absolute;inset:0;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='60' cy='60' r='50' stroke='%238B1A2A' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='60' cy='60' r='35' stroke='%238B1A2A' stroke-width='1' fill='none'/%3E%3Ccircle cx='60' cy='60' r='20' stroke='%238B1A2A' stroke-width='.8' fill='none'/%3E%3C/svg%3E");background-size:120px 120px;}
-/* Borde exterior doble línea rojo+oro */
-.border-outer{position:absolute;inset:14px;border:3px solid #8B1A2A;}
-.border-inner{position:absolute;inset:20px;border:1.2px solid #C49A35;}
-/* Esquinas decorativas */
-.corner{position:absolute;width:52px;height:52px;}
-.corner svg{width:52px;height:52px;}
-.c-tl{top:10px;left:10px;} .c-tr{top:10px;right:10px;transform:scaleX(-1);}
-.c-bl{bottom:10px;left:10px;transform:scaleY(-1);} .c-br{bottom:10px;right:10px;transform:scale(-1,-1);}
-/* Sello fantasma ITD centro */
-.watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:.04;font-size:180px;font-family:'Cinzel',serif;color:#8B1A2A;font-weight:900;letter-spacing:.1em;white-space:nowrap;pointer-events:none;}
-/* Contenido */
-.content{position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding:30px 72px 96px;}
-/* Logos */
-.logos{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:6px;}
-.logo-sep{height:52px;} .logo-tecnm{height:46px;} .logo-itd{height:52px;}
-.logo-div{width:1px;height:44px;background:#ccc;}
-/* Línea roja decorativa */
-.red-rule{width:100%;height:3px;background:linear-gradient(90deg,transparent,#8B1A2A 15%,#8B1A2A 85%,transparent);margin:8px 0 16px;}
-/* Institución */
-.inst-name{font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:#1a1a1a;letter-spacing:.08em;text-align:center;line-height:1.5;}
-.inst-sub{font-size:11px;color:#555;text-align:center;margin-top:2px;letter-spacing:.04em;}
-.otorga{font-size:13px;color:#555;text-align:center;margin:14px 0 2px;letter-spacing:.04em;}
-/* Título */
-.titulo{font-family:'Cinzel',serif;font-size:64px;font-weight:900;color:#8B1A2A;letter-spacing:.06em;text-align:center;line-height:1;margin:2px 0 14px;text-shadow:1px 1px 0 rgba(139,26,42,.15);}
-.a-lbl{font-size:13px;color:#555;text-align:center;margin-bottom:10px;letter-spacing:.05em;}
-/* Nombre */
-.nombre-wrap{width:100%;text-align:center;border-bottom:1.5px solid #8B1A2A;padding-bottom:10px;margin-bottom:14px;}
-.nombre{font-family:'IM Fell English',serif;font-size:36px;font-style:italic;color:#1a1a1a;letter-spacing:.02em;}
-/* Cuerpo texto */
-.body-txt{font-size:13.5px;color:#333;text-align:center;line-height:1.8;max-width:560px;margin:0 auto;}
-/* Firma */
-.firma-section{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.fecha-txt{font-size:12.5px;color:#8B1A2A;font-weight:700;letter-spacing:.04em;margin-bottom:22px;text-align:center;}
-.firma-line{width:260px;height:1.5px;background:linear-gradient(90deg,transparent,#333,transparent);margin-bottom:4px;}
-.firma-nombre{font-size:13.5px;font-weight:700;color:#1a1a1a;letter-spacing:.04em;text-align:center;}
-.firma-cargo{font-size:11px;color:#666;letter-spacing:.04em;text-transform:uppercase;text-align:center;margin-top:1px;}
-/* QR — abajo izquierda, encima de la banda del pie, sin tocar los logos */
-.qr-block{position:absolute;bottom:88px;left:48px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;z-index:20;}
-.qr-frame{padding:4px;background:#fff;border:1.5px solid #C49A35;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,.1);}
-.qr-frame img{width:72px;height:72px;display:block;}
-.qr-label{font-size:6.5px;font-weight:700;color:#8B1A2A;letter-spacing:.08em;text-transform:uppercase;}
-.qr-data{font-size:5.5px;color:#aaa;max-width:86px;word-break:break-all;line-height:1.4;}
-/* Banda de logos del pie — replica la franja inferior de la plantilla */
-.pie-band{position:absolute;bottom:0;left:0;right:0;height:82px;background:linear-gradient(180deg,#f9f0f2 0%,#f0e0e4 100%);border-top:2px solid #8B1A2A;display:flex;align-items:center;justify-content:center;gap:28px;padding:0 60px;z-index:15;}
-.pie-band img{height:52px;object-fit:contain;}
-.pie-band .maza-txt{text-align:center;line-height:1.2;}
-.pie-band .maza-yr{font-size:22px;font-weight:900;color:#8B1A2A;font-family:'Cinzel',serif;}
-.pie-band .maza-sub{font-size:8px;color:#8B1A2A;letter-spacing:.06em;text-transform:uppercase;}
-</style></head><body>
-<div class="bg-pattern"></div>
-<div class="border-outer"></div>
-<div class="border-inner"></div>
-<!-- Esquinas SVG decorativas -->
-<div class="corner c-tl"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
-<div class="corner c-tr"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
-<div class="corner c-bl"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
-<div class="corner c-br"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
-<div class="watermark">ITD</div>
-<!-- QR abajo izquierda — encima de la banda de logos -->
-<div class="qr-block">
-  <div class="qr-frame"><img src="${qu}" alt="QR" onerror="this.parentElement.style.display='none'"/></div>
-  <div class="qr-label">Verificación ITD</div>
-  <div class="qr-data">${qd}</div>
-</div>
-<!-- Banda pie con logos — réplica de la plantilla oficial -->
-<div class="pie-band">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Logo_100_libre_de_pl%C3%A1stico.svg/200px-Logo_100_libre_de_pl%C3%A1stico.svg.png" alt="100% libre plástico" onerror="this.style.display='none'"/>
-  <div class="maza-txt">
-    <div class="maza-yr">2026</div>
-    <div class="maza-sub">año de<br><strong>Margarita<br>Maza</strong></div>
-  </div>
-  <img src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD" onerror="this.style.display='none'"/>
-</div>
-<!-- Contenido principal -->
-<div class="content">
-  <div class="logos">
-    <img class="logo-sep" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/SEP_logo.svg/320px-SEP_logo.svg.png" alt="SEP" onerror="this.style.display='none'"/>
-    <div class="logo-div"></div>
-    <img class="logo-tecnm" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Tecnm.svg/320px-Tecnm.svg.png" alt="TecNM" onerror="this.style.display='none'"/>
-    <div class="logo-div"></div>
-    <img class="logo-itd" src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD" onerror="this.style.display='none'"/>
-  </div>
-  <div class="red-rule"></div>
-  <div class="inst-name">El Tecnológico Nacional de México<br>a través del Instituto Tecnológico de Durango</div>
-  <div class="otorga">otorga la presente</div>
-  <div class="titulo">${tipoTxt}</div>
-  <div class="a-lbl">A</div>
-  <div class="nombre-wrap"><span class="nombre">${nombre}</span></div>
-  <p class="body-txt">${cuerpoTxt}</p>
-  <div class="firma-section">
-    <div class="fecha-txt">Victoria de Durango, Durango, a ${fechaLarga}</div>
-    <div class="firma-line"></div>
-    <div class="firma-nombre">Dr. Guillermo de Anda Rodríguez</div>
-    <div class="firma-cargo">Director del Instituto Tecnológico de Durango</div>
-  </div>
-</div>
-</body></html>`;
+/* ═══ UTILS ═══════════════════════════════════════ */
+function loadImage(src){
+  return new Promise((res,rej)=>{
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>res(img); img.onerror=rej; img.src=src;
+  });
 }
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)){res();return;}
+    const s=document.createElement('script'); s.src=src;
+    s.onload=res; s.onerror=rej; document.head.appendChild(s);
+  });
+}
+function waitLibs(ms=12000){
+  return new Promise((res,rej)=>{
+    const t=Date.now();
+    const chk=()=>{
+      if(window.jspdf) return res();
+      if(Date.now()-t>ms) return rej(new Error('jsPDF no cargó. Recarga la página.'));
+      setTimeout(chk,200);
+    };chk();
+  });
+}
+function updatePrev(){ /* kept for compat */ }
 
 /* ═══ USUARIOS ═══════════════════════════════════════ */
 function renderUsers(){
@@ -721,13 +900,11 @@ function renderUsers(){
       <div style="text-align:right">${u.email!==CU.email?`<button class="btn-sm-red" onclick="delUser('${u.id}')">🗑</button>`:''}</div>
     </div>`).join('');
 }
-
 function toggleUF(hide){
   const c=document.getElementById('uf-card'), b=document.getElementById('nw-btn');
   if(hide||!c.classList.contains('hidden')){c.classList.add('hidden');b.textContent='+ Nuevo usuario';b.className='btn btn-primary';}
   else{c.classList.remove('hidden');b.textContent='✕ Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
 }
-
 async function crearUsuario(){
   const name=document.getElementById('uf-nm').value.trim();
   const _ue=document.getElementById('uf-em').value.trim().toLowerCase();
@@ -748,50 +925,11 @@ async function crearUsuario(){
   document.getElementById('uf-adm').checked=false;
   toast(`✅ Usuario ${email} creado`,'success');
 }
-
-function toggleU(id){
-  setU(getU().map(u=>u.id===id?{...u,active:!u.active}:u)); renderUsers(); toast('Estado actualizado','info');
-}
+function toggleU(id){setU(getU().map(u=>u.id===id?{...u,active:!u.active}:u));renderUsers();toast('Estado actualizado','info');}
 function delUser(id){
   const u=getU().find(x=>x.id===id);
   if(!u||!confirm(`¿Eliminar "${u.email}"?`))return;
-  setU(getU().filter(x=>x.id!==id)); renderUsers(); toast('Usuario eliminado','info');
-}
-
-/* ═══ PDF LOCAL ═════════════════════════════════════ */
-async function pdfLocal(i){
-  const g=GEN[i];
-  const btn=document.getElementById(`lpdf-${i}`);
-  if(btn){btn.textContent='⏳ Generando…';btn.disabled=true;}
-  try{
-    // Esperar libs (scripts defer)
-    await new Promise((res,rej)=>{
-      const t=Date.now();
-      const chk=()=>{
-        if(window.html2canvas&&window.jspdf)return res();
-        if(Date.now()-t>10000)return rej(new Error('Librerías no cargaron. Recarga la página.'));
-        setTimeout(chk,200);
-      };chk();
-    });
-    const html=buildHTML({nombre:g.nombre,tipo:g.tipo||'constancia',fechaCreacion:g.fc});
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:816px;height:1056px;border:none;visibility:hidden;';
-    document.body.appendChild(iframe);
-    iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
-    await new Promise(r=>setTimeout(r,1600)); // esperar fonts + render
-    const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,allowTaint:true,width:816,height:1056,backgroundColor:'#ffffff'});
-    document.body.removeChild(iframe);
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[816,1056],compress:true});
-    pdf.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,816,1056);
-    pdf.save(`Constancia_${g.nombre.replace(/\s+/g,'_')}.pdf`);
-    if(btn){btn.textContent='✅ Descargado';}
-    toast('✅ PDF descargado','success');
-  }catch(err){
-    if(btn){btn.textContent='⬇ Descargar PDF';btn.disabled=false;}
-    toast('⚠ '+err.message,'error');
-    console.error(err);
-  }
+  setU(getU().filter(x=>x.id!==id));renderUsers();toast('Usuario eliminado','info');
 }
 </script>
 
