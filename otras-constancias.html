@@ -512,12 +512,14 @@ async function generar(){
     if(total>1) btn.innerHTML=`<div class="spinner"></div> ${i+1}/${total} — ${item.nombre.split(' ')[0]}…`;
     let driveUrl=null;
     try{
-      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'generarConstancia',nombre:item.nombre,tipo,folderId:FOLDER_ID})});
+      // ✅ GET en lugar de POST evita el bloqueo CORS del navegador.
+      // Apps Script desplegado como "Anyone" permite CORS en doGet automáticamente.
+      const _p=new URLSearchParams({action:'generarConstancia',nombre:item.nombre,tipo,folderId:FOLDER_ID});
+      const r=await fetch(`${SCRIPT_URL}?${_p.toString()}`);
       const d=await r.json();
       driveUrl=d.url||d.downloadUrl||null;
-      if(d.error) console.warn('Apps Script:',d.error);
-    }catch(e){console.warn('Fetch error:',e);}
+      if(d.error) console.warn('Apps Script error:',d.error);
+    }catch(e){console.warn('Fetch error (revisa despliegue del script):',e);toast('⚠ Error al conectar con el servidor. Revisa la consola.','error');}
     GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,fc});
   }
   renderResults();
