@@ -15,6 +15,20 @@
     @keyframes fadeUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideIn { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
     @keyframes toastIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes progAnim{ from{width:0} }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #c0c8d0; border-radius: 3px; }
+    /* PROGRESS BAR */
+    .prog-wrap { background:#e8ecf5; border-radius:20px; height:8px; overflow:hidden; margin-top:8px; }
+    .prog-bar  { height:100%; background:linear-gradient(90deg,#1B396A,#2B5580); border-radius:20px; transition:width .3s ease; }
+    .prog-lbl  { font-size:11px; color:#888; margin-top:4px; text-align:center; }
+    /* ORTOGRAFÍA */
+    .orto-item { display:flex; align-items:flex-start; gap:8px; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:7px 10px; font-size:12px; }
+    .orto-item.ok { background:#f0fdf4; border-color:#86efac; }
+    .orto-word { font-weight:700; color:#92400e; text-decoration:underline wavy #f59e0b; }
+    .orto-sug  { color:#555; font-size:11px; }
+    .orto-fix  { background:#1B396A; color:#F5E4A8; border:none; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; white-space:nowrap; flex-shrink:0; }
+    .orto-fix:hover { opacity:.85; }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #c0c8d0; border-radius: 3px; }
 
@@ -241,8 +255,12 @@
               <button class="mode-btn" id="mb-excel" onclick="setMode('excel')">📊 Excel</button>
             </div>
             <div id="pnl-manual">
-              <div class="field"><label>Nombre completo <span style="color:#e05050">*</span></label>
-                <input type="text" id="f-nom" placeholder="Ej: Dra. María García López" oninput="updatePrev()"/>
+              <div class="field">
+                <label>Nombre completo <span style="color:#e05050">*</span></label>
+                <input type="text" id="f-nom" placeholder="Ej: Dra. María García López"
+                  oninput="updatePrev(); ortografiaManual()"
+                  style="text-transform:uppercase"/>
+                <div id="orto-manual" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
               </div>
             </div>
             <div id="pnl-excel" class="hidden">
@@ -258,10 +276,15 @@
                 <strong style="font-size:13px;color:#14532d" id="xl-cnt">0 cargados</strong>
                 <div id="xl-prev" style="margin-top:6px;font-size:12px;color:#166534;display:flex;flex-direction:column;gap:2px;max-height:100px;overflow-y:auto"></div>
               </div>
+              <div id="orto-excel" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
             </div>
           </div>
 
           <button class="btn btn-primary btn-full" id="gen-btn" onclick="generar()">🚀 Generar Constancia(s)</button>
+          <div id="prog-wrap" class="hidden">
+            <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
+            <div class="prog-lbl" id="prog-lbl">Preparando…</div>
+          </div>
         </div>
 
         <!-- CALIBRADOR + RESULTADOS -->
@@ -275,6 +298,26 @@
                 <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">⬛ QR</button>
                 <button class="btn-sm-yel"  onclick="guardarEvento()">💾 Guardar</button>
               </div>
+            </div>
+            <!-- Opciones de texto -->
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px">
+                <label style="font-size:11px;font-weight:700;color:#555">Tamaño fuente</label>
+                <input type="number" id="f-fontsize" value="36" min="8" max="120" style="width:60px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
+                <label style="font-size:11px;color:#888">pt</label>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <label style="font-size:11px;font-weight:700;color:#555">Color</label>
+                <input type="color" id="f-fontcolor" value="#1a1a1a" style="width:32px;height:28px;padding:2px;border:1.5px solid #e0e0e0;border-radius:6px;cursor:pointer"/>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px" id="qr-size-wrap">
+                <label style="font-size:11px;font-weight:700;color:#555">QR tamaño</label>
+                <input type="number" id="f-qrsize" value="90" min="40" max="200" style="width:60px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
+                <label style="font-size:11px;color:#888">pt</label>
+              </div>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;font-weight:700;color:#555;user-select:none">
+                <input type="checkbox" id="f-qr-on" checked onchange="toggleQROptions()"/> Incluir QR
+              </label>
             </div>
             <div id="calib-hint" style="font-size:11px;color:#888;margin-bottom:8px;min-height:16px"></div>
             <!-- Canvas calibrador -->
@@ -301,7 +344,10 @@
 
           <!-- RESULTADOS -->
           <div class="card hidden" id="res-card">
-            <div class="card-title" id="res-title">✅ Generadas</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div class="card-title" id="res-title" style="margin:0">✅ Generadas</div>
+              <button class="btn-sm-grn" id="dl-all-btn" onclick="dlTodos()" style="display:none">⬇ Descargar todos (ZIP)</button>
+            </div>
             <div id="res-list" style="display:flex;flex-direction:column;gap:10px"></div>
           </div>
         </div>
@@ -497,6 +543,9 @@ function cargarEvento(){
   coords=JSON.parse(JSON.stringify(evt.coords));
   pdfBase64=evt.pdfBase64||'';
   pdfPageW=evt.pdfPageW||0; pdfPageH=evt.pdfPageH||0;
+  if(evt.fontSizePt) document.getElementById('f-fontsize').value=evt.fontSizePt;
+  if(evt.fontColor)  document.getElementById('f-fontcolor').value=evt.fontColor;
+  if(evt.qrSizePt)   document.getElementById('f-qrsize').value=evt.qrSizePt;
   if(pdfBase64) renderPDFCanvas(pdfBase64, true);
   actualizarPosLabels();
   toast('✅ Plantilla cargada: '+evt.nombre,'success');
@@ -526,7 +575,10 @@ function guardarEvento(){
   if(!coords.qr.set){ toast('⚠ Marca la posición del QR en el calibrador','warn'); return; }
   const evts=getEvts();
   const idx=parseInt(document.getElementById('f-evento').value);
-  const entry={nombre,coords:JSON.parse(JSON.stringify(coords)),pdfBase64,pdfPageW,pdfPageH};
+  const entry={nombre,coords:JSON.parse(JSON.stringify(coords)),pdfBase64,pdfPageW,pdfPageH,
+    fontSizePt:parseFloat(document.getElementById('f-fontsize').value)||36,
+    fontColor:document.getElementById('f-fontcolor').value||'#1a1a1a',
+    qrSizePt:parseFloat(document.getElementById('f-qrsize').value)||90};
   if(!isNaN(idx)&&idx>=0&&idx<evts.length){ evts[idx]=entry; }
   else { evts.push(entry); }
   setEvts(evts);
@@ -690,6 +742,7 @@ function loadExcel(inp){
       if(XL.length>6) pv.innerHTML+=`<span style="color:#888">…y ${XL.length-6} más</span>`;
       document.getElementById('xl-ok').classList.remove('hidden');
       toast(`✅ ${XL.length} nombre(s) cargados`,'success');
+      ortografiaExcel();
     }catch(err){
       document.getElementById('xl-err').textContent='⚠ '+err.message;
       document.getElementById('xl-err').classList.remove('hidden');
@@ -699,12 +752,23 @@ function loadExcel(inp){
   reader.readAsArrayBuffer(file);
 }
 
+/* ═══ QR TOGGLE ══════════════════════════════════════ */
+function toggleQROptions(){
+  const on=document.getElementById('f-qr-on').checked;
+  document.getElementById('qr-size-wrap').style.opacity=on?'1':'.35';
+  document.getElementById('qr-size-wrap').style.pointerEvents=on?'':'none';
+  document.getElementById('calib-qr-btn').style.opacity=on?'1':'.4';
+  document.getElementById('calib-qr-btn').disabled=!on;
+  document.getElementById('pos-qr-lbl').style.opacity=on?'1':'.4';
+}
+
 /* ═══ GENERAR ═══════════════════════════════════════ */
 async function generar(){
   // Validar plantilla
   if(!pdfBase64){ toast('⚠ Carga y calibra una plantilla PDF primero','warn'); return; }
   if(!coords.nombre.set){ toast('⚠ Calibra la posición del nombre','warn'); return; }
-  if(!coords.qr.set){ toast('⚠ Calibra la posición del QR','warn'); return; }
+  const qrOn=document.getElementById('f-qr-on').checked;
+  if(qrOn&&!coords.qr.set){ toast('⚠ Calibra la posición del QR (o desmarca "Incluir QR")','warn'); return; }
   // Validar destinatarios
   let noms;
   if(mode==='manual'){
@@ -717,16 +781,21 @@ async function generar(){
   }
 
   const btn=document.getElementById('gen-btn');
+  const progWrap=document.getElementById('prog-wrap');
+  const progBar=document.getElementById('prog-bar');
+  const progLbl=document.getElementById('prog-lbl');
   btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Generando…';
+  progWrap.classList.remove('hidden');
   const fc=isoToday(); GEN=[];
   const total=noms.length;
 
-  // Esperar PDF.js y libs
   await waitLibs();
 
   for(let i=0;i<total;i++){
     const item=noms[i];
-    if(total>1) btn.innerHTML=`<div class="spinner"></div> ${i+1}/${total} — ${item.nombre.split(' ')[0]}…`;
+    const pct=Math.round((i/total)*100);
+    progBar.style.width=pct+'%';
+    progLbl.textContent=`${i+1} / ${total} — ${item.nombre}`;
     try{
       const pdfBytes=await superponerNombreQR(item.nombre, fc);
       const blob=new Blob([pdfBytes],{type:'application/pdf'});
@@ -737,20 +806,28 @@ async function generar(){
       GEN.push({nombre:item.nombre,correo:item.correo,fc,blobUrl:null,error:err.message});
     }
   }
+  progBar.style.width='100%';
+  progLbl.textContent=`✅ ${total} constancia(s) lista(s)`;
 
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
+  setTimeout(()=>progWrap.classList.add('hidden'),2500);
   const ok=GEN.filter(g=>g.blobUrl).length;
   toast(ok===total?`🎉 ${total} constancia(s) generada(s)`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
 }
 
 /* ═══ SUPERPOSICIÓN PDF ═══════════════════════════════════════ */
 async function superponerNombreQR(nombre, fecha){
-  // 1. Load the base PDF with PDF.js to render page as canvas
   if(!window.pdfjsLib){
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
+
+  // Read user settings
+  const fontSizePt = parseFloat(document.getElementById('f-fontsize').value)||36;
+  const fontColor  = document.getElementById('f-fontcolor').value||'#1a1a1a';
+  const qrSizePt   = parseFloat(document.getElementById('f-qrsize').value)||90;
+  const qrOn       = document.getElementById('f-qr-on').checked;
 
   const binary=atob(pdfBase64);
   const bytes=new Uint8Array(binary.length);
@@ -758,7 +835,6 @@ async function superponerNombreQR(nombre, fecha){
 
   const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
   const page=await pdf.getPage(1);
-  // Render at 2x for quality
   const SCALE=2;
   const vp=page.getViewport({scale:SCALE});
   const canvas=document.createElement('canvas');
@@ -767,58 +843,102 @@ async function superponerNombreQR(nombre, fecha){
 
   const ctx=canvas.getContext('2d');
 
-  // 2. Draw nombre
-  const nx=coords.nombre.x*SCALE;
-  const ny=coords.nombre.y*SCALE;
-  // Italic serif font matching the plantilla style
-  const fontSize=Math.round(36*SCALE*(pdfPageW/1088));  // scale font relative to page width
-  ctx.save();
-  ctx.font=`italic ${fontSize}px "Georgia", serif`;
-  ctx.fillStyle='#1a1a1a';
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.fillText(nombre, nx, ny);
-  ctx.restore();
+  // ── Nombre: auto-fit y multi-línea si es muy largo ──
+  const nx      = coords.nombre.x * SCALE;
+  const ny      = coords.nombre.y * SCALE;
+  // Ancho máximo disponible = 70% del ancho de la página (en px de canvas)
+  const maxNameW = pdfPageW * SCALE * 0.70;
+  const lineH    = Math.round(fontSizePt * SCALE * 1.25);
 
-  // 3. Draw QR
-  const qx=coords.qr.x*SCALE;
-  const qy=coords.qr.y*SCALE;
-  const qSize=Math.round(90*SCALE*(pdfPageW/1088));
-  const qrImg=await loadImage(qrUrl(nombre,fecha));
-  ctx.save();
-  ctx.drawImage(qrImg, qx, qy, qSize, qSize);
-  // Label under QR
-  const lblSize=Math.round(7*SCALE*(pdfPageW/1088));
-  ctx.font=`bold ${lblSize}px sans-serif`;
-  ctx.fillStyle='#8B1A2A';
-  ctx.textAlign='left';
-  ctx.fillText('Verificación ITD', qx, qy+qSize+lblSize+2);
-  const qd=qrData(nombre,fecha);
-  ctx.font=`${Math.round(lblSize*0.8)}px monospace`;
-  ctx.fillStyle='#aaaaaa';
-  // Wrap qd text
-  const maxW=qSize;
-  let line='', lines2=[];
-  for(const ch of qd){line+=ch;if(ctx.measureText(line).width>maxW){lines2.push(line.slice(0,-1));line=ch;}}
-  if(line) lines2.push(line);
-  lines2.forEach((l,i)=>ctx.fillText(l,qx,qy+qSize+lblSize*2+(i*(lblSize*0.9))+4));
-  ctx.restore();
+  function drawNombre(ctx, text, baseFont, color){
+    ctx.save();
+    ctx.textAlign   = 'center';
+    ctx.textBaseline= 'middle';
+    ctx.fillStyle   = color;
 
-  // 4. Convert canvas → PDF via jsPDF
+    // Prueba si cabe en una línea con el tamaño original
+    let fs = Math.round(baseFont);
+    ctx.font = `italic ${fs}px "Georgia", "Times New Roman", serif`;
+
+    if(ctx.measureText(text).width <= maxNameW){
+      // Cabe en una línea
+      ctx.fillText(text, nx, ny);
+    } else {
+      // Intentar partir en 2 líneas por el espacio más cercano al centro
+      const words = text.split(' ');
+      let best = null, bestDiff = Infinity;
+      for(let i=1;i<words.length;i++){
+        const l1=words.slice(0,i).join(' ');
+        const l2=words.slice(i).join(' ');
+        const diff=Math.abs(l1.length-l2.length);
+        if(diff<bestDiff){bestDiff=diff;best={l1,l2};}
+      }
+      if(best){
+        // Reducir fuente si alguna línea sigue siendo muy ancha
+        const longer=[best.l1,best.l2].reduce((a,b)=>a.length>b.length?a:b);
+        while(fs>8 && ctx.measureText(longer).width > maxNameW){
+          fs -= 1;
+          ctx.font=`italic ${fs}px "Georgia","Times New Roman",serif`;
+        }
+        const gap = Math.round(fs*1.3);
+        ctx.fillText(best.l1, nx, ny - gap/2);
+        ctx.fillText(best.l2, nx, ny + gap/2);
+      } else {
+        // Una sola palabra muy larga — reducir fuente hasta que quepa
+        while(fs>8 && ctx.measureText(text).width > maxNameW){ fs-=1; ctx.font=`italic ${fs}px "Georgia","Times New Roman",serif`; }
+        ctx.fillText(text, nx, ny);
+      }
+    }
+    ctx.restore();
+  }
+
+  drawNombre(ctx, nombre, fontSize, fontColor);
+
+  // ── QR (top-left at calibrated point) ──
+  if(qrOn && coords.qr.set){
+    const qx = coords.qr.x * SCALE;
+    const qy = coords.qr.y * SCALE;
+    const qSize = Math.round(qrSizePt * SCALE);
+    const qrImg = await loadImage(qrUrl(nombre, fecha));
+    ctx.save();
+    ctx.drawImage(qrImg, qx, qy, qSize, qSize);
+    // "Verificación ITD" label
+    const lblPx = Math.round(7 * SCALE);
+    ctx.font = `bold ${lblPx}px sans-serif`;
+    ctx.fillStyle = '#8B1A2A';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText('Verificación ITD', qx, qy + qSize + 4);
+    // QR data string (small, wrapped)
+    const qd = qrData(nombre, fecha);
+    const smallPx = Math.round(5.5 * SCALE);
+    ctx.font = `${smallPx}px monospace`;
+    ctx.fillStyle = '#aaaaaa';
+    let line='', lines2=[], maxW=qSize;
+    for(const ch of qd){ line+=ch; if(ctx.measureText(line).width>maxW){lines2.push(line.slice(0,-1));line=ch;} }
+    if(line) lines2.push(line);
+    lines2.forEach((l,i) => ctx.fillText(l, qx, qy + qSize + lblPx + 6 + i*(smallPx+2)));
+    ctx.restore();
+  }
+
+  // ── Canvas → PDF (original page size) ──
   await waitLibs();
-  const {jsPDF}=window.jspdf;
-  // Use original PDF page size in pts
-  const W=pdfPageW, H=pdfPageH;
-  const doc=new jsPDF({orientation:W>H?'landscape':'portrait',unit:'pt',format:[W,H],compress:true});
-  const imgData=canvas.toDataURL('image/jpeg',0.95);
-  doc.addImage(imgData,'JPEG',0,0,W,H);
+  const {jsPDF} = window.jspdf;
+  const W = pdfPageW, H = pdfPageH;
+  const doc = new jsPDF({orientation: W>H?'landscape':'portrait', unit:'pt', format:[W,H], compress:true});
+  doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, W, H);
   return doc.output('arraybuffer');
 }
 
 /* ═══ RENDER RESULTS ═══════════════════════════════ */
 function renderResults(){
   const list=document.getElementById('res-list');
-  document.getElementById('res-title').textContent=`✅ Generadas (${GEN.length})`;
+  const ok=GEN.filter(g=>g.blobUrl).length;
+  document.getElementById('res-title').textContent=`✅ Generadas (${ok}/${GEN.length})`;
+  // Show "Download All" button only when there are 2+ successful PDFs
+  const dlAllBtn=document.getElementById('dl-all-btn');
+  dlAllBtn.style.display=ok>1?'':'none';
+  dlAllBtn.textContent=`⬇ Descargar todos (${ok}) ZIP`;
   list.innerHTML='';
   GEN.forEach((g,i)=>{
     const div=document.createElement('div');
@@ -833,8 +953,8 @@ function renderResults(){
       </div>
       <div class="result-acts">
         ${g.blobUrl
-          ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank">👁 Ver PDF</a>
-            <button class="btn-sm-grn" onclick="dlPDF(${i})">⬇ Descargar</button>`
+          ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank">👁 Ver</a>
+            <button class="btn-sm-grn" onclick="dlPDF(${i})">⬇ PDF</button>`
           :`<span style="font-size:11px;color:#e05050">⚠ ${g.error||'Error'}</span>`}
         <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
       </div>`;
@@ -849,6 +969,38 @@ function dlPDF(i){
   a.href=URL.createObjectURL(new Blob([g.pdfBytes],{type:'application/pdf'}));
   a.download=`Constancia_${g.nombre.replace(/\s+/g,'_')}.pdf`;
   a.click();
+}
+
+async function dlTodos(){
+  const ok=GEN.filter(g=>g.pdfBytes);
+  if(!ok.length){ toast('⚠ No hay PDFs para descargar','warn'); return; }
+  const btn=document.getElementById('dl-all-btn');
+  btn.textContent='⏳ Empaquetando ZIP…'; btn.disabled=true;
+  try{
+    // Load JSZip dynamically
+    if(!window.JSZip){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    }
+    const zip=new JSZip();
+    const folder=zip.folder('Constancias');
+    ok.forEach(g=>{
+      const fname=`Constancia_${g.nombre.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g,'').trim().replace(/\s+/g,'_')}.pdf`;
+      folder.file(fname, g.pdfBytes);
+    });
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const a=document.createElement('a');
+    const evento=document.getElementById('f-evento-nombre').value.trim()||'Constancias';
+    a.download=`${evento.replace(/\s+/g,'_')}_${isoToday()}.zip`;
+    a.href=URL.createObjectURL(blob);
+    a.click();
+    toast(`✅ ZIP con ${ok.length} constancias descargado`,'success');
+  }catch(err){
+    toast('⚠ Error al crear ZIP: '+err.message,'error');
+    console.error(err);
+  }finally{
+    btn.textContent=`⬇ Descargar todos (${ok.length}) ZIP`;
+    btn.disabled=false;
+  }
 }
 
 function correo(i){
@@ -883,6 +1035,150 @@ function waitLibs(ms=12000){
   });
 }
 function updatePrev(){ /* kept for compat */ }
+
+/* ═══ ORTOGRAFÍA ════════════════════════════════════
+   Detecta errores comunes en nombres propios:
+   - Acento en mayúsculas faltante  (JOSE → JOSÉ)
+   - Preposiciones mal capitalizadas (DE, DEL, LAS → de, del, las)
+   - Abreviaturas de título mal escritas (DR., DRA., ING., etc.)
+   - Doble espacio, espacios inicio/fin
+   No intenta "corregir" apellidos desconocidos.
+══════════════════════════════════════════════════ */
+
+// Palabras que deben ir en minúscula en nombre propio compuesto
+const PREPOS = new Set(['DE','DEL','DE LA','DE LAS','DE LOS','Y','E','MC','MAC']);
+
+// Correcciones de acentuación comunes en nombres hispanohablantes
+const ACENTO_MAP = {
+  'JOSE':'JOSÉ','MARIA':'MARÍA','JESUS':'JESÚS','RAUL':'RAÚL',
+  'RUBEN':'RUBÉN','CESAR':'CÉSAR','ANGEL':'ÁNGEL','MONICA':'MÓNICA',
+  'VERONICA':'VERÓNICA','ANDRES':'ANDRÉS','RENE':'RENÉ','HECTOR':'HÉCTOR',
+  'VICTOR':'VÍCTOR','MARTIN':'MARTÍN','BELEN':'BELÉN','IVAN':'IVÁN',
+  'SEBASTIAN':'SEBASTIÁN','DARIO':'DARÍO','TOMAS':'TOMÁS','ADRIAN':'ADRIÁN',
+  'VALENTIN':'VALENTÍN','GERMAN':'GERMÁN','RAMON':'RAMÓN','SIMON':'SIMÓN',
+  'SERGIO':'SERGIO','CARLOS':'CARLOS','EDGAR':'EDGAR','OSCAR':'ÓSCAR',
+  'LAZARO':'LÁZARO','MOISES':'MOISÉS','NICOLAS':'NICOLÁS','FELIX':'FÉLIX',
+  'AGUSTIN':'AGUSTÍN','RUFINO':'RUFINO','BRIGIDA':'BRÍGIDA','CANDIDA':'CÁNDIDA',
+  'AURORA':'AURORA','LORENA':'LORENA','VERONICA':'VERÓNICA','PATRICIA':'PATRICIA',
+};
+
+// Títulos que deben ir con punto y mayúscula inicial
+const TITULOS = {
+  'DR':'Dr.','DRA':'Dra.','ING':'Ing.','INGA':'Ing.','LIC':'Lic.',
+  'LICA':'Lic.','MTR':'Mtr.','MTRA':'Mtra.','DR.':'Dr.','DRA.':'Dra.',
+  'ING.':'Ing.','LIC.':'Lic.',
+};
+
+function detectarErrores(texto){
+  if(!texto.trim()) return [];
+  const errores=[];
+  const upper=texto.toUpperCase().trim();
+
+  // 1. Espacios dobles o al inicio/fin
+  if(/\s{2,}/.test(texto)){
+    errores.push({tipo:'espacios', msg:'Espacios dobles detectados',
+      fix: ()=>{ return texto.replace(/\s{2,}/g,' ').trim(); }, global:true});
+  }
+
+  // 2. Tokenizar por palabras (respetando posición)
+  const tokens=texto.trim().split(/\s+/);
+  tokens.forEach((tok,idx)=>{
+    const up=tok.toUpperCase().replace(/[.,]/g,'');
+
+    // Acentuación
+    if(ACENTO_MAP[up] && tok.toUpperCase()!==tok){
+      // solo aplica si ya está en mayúsculas (all-caps)
+    }
+    if(ACENTO_MAP[up]){
+      const correcto = ACENTO_MAP[up];
+      if(tok !== correcto && tok.toUpperCase() === tok){
+        errores.push({tipo:'acento', palabra:tok, sugerencia:correcto, idx,
+          msg:`"${tok}" → debería ser "${correcto}"`,
+          fix:()=>aplicarCorreccion(idx, correcto)});
+      }
+    }
+
+    // Títulos
+    if(TITULOS[up] || TITULOS[tok.toUpperCase()]){
+      const correcto=TITULOS[up]||TITULOS[tok.toUpperCase()];
+      if(tok!==correcto){
+        errores.push({tipo:'titulo', palabra:tok, sugerencia:correcto, idx,
+          msg:`Título: "${tok}" → "${correcto}"`,
+          fix:()=>aplicarCorreccion(idx, correcto)});
+      }
+    }
+  });
+
+  return errores;
+}
+
+function aplicarCorreccion(tokenIdx, correcto){
+  const inp=document.getElementById('f-nom');
+  const tokens=inp.value.trim().split(/\s+/);
+  tokens[tokenIdx]=correcto;
+  inp.value=tokens.join(' ');
+  ortografiaManual();
+}
+
+function aplicarCorreccionExcel(nombreOriginal, correcto, idx){
+  // Reemplaza en el array XL
+  if(XL[idx]) XL[idx].nombre=correcto;
+  // Refresca el panel
+  ortografiaExcel();
+  // También actualiza la vista del excel preview
+  const pv=document.getElementById('xl-prev');
+  pv.innerHTML=XL.slice(0,6).map(n=>`<span>• ${n.nombre}${n.correo?' — '+n.correo:''}</span>`).join('');
+  if(XL.length>6) pv.innerHTML+=`<span style="color:#888">…y ${XL.length-6} más</span>`;
+}
+
+function renderErrores(errores, containerId, onFix){
+  const el=document.getElementById(containerId);
+  if(!errores.length){el.innerHTML='';return;}
+  el.innerHTML=errores.map((e,i)=>`
+    <div class="orto-item">
+      <div style="flex:1">
+        <span class="orto-word">${e.palabra||'⚠'}</span>
+        <span class="orto-sug"> — ${e.msg}</span>
+      </div>
+      ${e.fix?`<button class="orto-fix" onclick="(${onFix})(${i})">✔ Aplicar</button>`:''}
+    </div>`).join('');
+}
+
+// Guardamos los errores detectados para poder referenciarlos por índice
+let _errManual=[], _errExcel=[];
+
+function ortografiaManual(){
+  const val=document.getElementById('f-nom').value;
+  _errManual=detectarErrores(val);
+  renderErrores(_errManual,'orto-manual','(i)=>{ _errManual[i].fix&&_errManual[i].fix(); }');
+}
+
+function ortografiaExcel(){
+  if(!XL.length){document.getElementById('orto-excel').innerHTML='';return;}
+  // Revisa todos los nombres y agrupa errores
+  _errExcel=[];
+  XL.forEach((item,xi)=>{
+    const errs=detectarErrores(item.nombre);
+    errs.forEach(e=>{
+      _errExcel.push({...e,
+        xlIdx:xi,
+        msg:`Fila ${xi+1} "${item.nombre}" — ${e.msg}`,
+        fix:e.fix?()=>{
+          // Calcula el nuevo nombre aplicando la corrección
+          const tokens=item.nombre.trim().split(/\s+/);
+          if(e.idx!==undefined) tokens[e.idx]=e.sugerencia;
+          aplicarCorreccionExcel(item.nombre, tokens.join(' '), xi);
+        }:null
+      });
+    });
+  });
+  if(!_errExcel.length){
+    document.getElementById('orto-excel').innerHTML=
+      '<div class="orto-item ok">✅ Sin errores ortográficos detectados en los nombres</div>';
+    return;
+  }
+  renderErrores(_errExcel,'orto-excel','(i)=>{ _errExcel[i].fix&&_errExcel[i].fix(); }');
+}
 
 /* ═══ USUARIOS ═══════════════════════════════════════ */
 function renderUsers(){
