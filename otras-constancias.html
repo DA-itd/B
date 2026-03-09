@@ -111,7 +111,7 @@
     /* RESULT */
     .result-item { background:#f8faff; border-radius:10px; padding:12px 14px; border:1px solid #e0e8f5; display:flex; flex-direction:column; gap:8px; animation:slideIn .3s ease both; }
     .result-info { display:flex; align-items:center; gap:10px; }
-    .result-qr   { width:32px; height:32px; border-radius:5px; border:1.5px solid #C49A35; flex-shrink:0; background:#fff; padding:2px; }
+    .result-qr   { width:44px; height:44px; border-radius:6px; border:1.5px solid #C49A35; flex-shrink:0; background:#fff; padding:2px; }
     .result-acts { display:flex; flex-wrap:wrap; gap:6px; }
 
     /* USERS TABLE */
@@ -143,13 +143,13 @@
       <div class="login-body">
         <div class="field">
           <label>Usuario <span style="color:#e05050">*</span></label>
-          <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff;transition:border-color .15s" id="li-wrap">
+          <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff" id="li-wrap">
             <input type="text" id="li-email" placeholder="usuario"
               style="flex:1;padding:10px 0 10px 14px;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;background:transparent"
               autocomplete="username"
               onfocus="document.getElementById('li-wrap').style.borderColor='#1B396A'"
               onblur="document.getElementById('li-wrap').style.borderColor='#e0e0e0'"/>
-            <span style="padding:10px 14px 10px 0;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
+            <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
           </div>
         </div>
         <div class="field">
@@ -215,18 +215,6 @@
                   <option value="reconocimiento">🏅 Reconocimiento</option>
                 </select>
               </div>
-              <div class="field"><label>Descripción / Actividad <span style="color:#e05050">*</span></label>
-                <input type="text" id="f-desc" placeholder="Ej: Participación en Congreso ITD 2026" oninput="updatePrev()"/>
-              </div>
-              <div class="field"><label>Fecha de expedición</label>
-                <input type="text" id="f-fecha" oninput="updatePrev()"/>
-              </div>
-              <div class="field"><label>Firmante</label>
-                <input type="text" id="f-firm" value="Dr. Alejandro Calderón Rentería" oninput="updatePrev()"/>
-              </div>
-              <div class="field"><label>Cargo</label>
-                <input type="text" id="f-carg" value="Coordinación de Actualización Docente" oninput="updatePrev()"/>
-              </div>
             </div>
           </div>
 
@@ -273,11 +261,10 @@
               <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#3D0A14;margin-bottom:8px" id="pv-tipo">Constancia</div>
               <div style="font-size:10px;color:#777;margin-bottom:5px">a</div>
               <div style="font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:#1B396A;font-weight:700;border-bottom:1px solid #C49A35;padding-bottom:6px;margin-bottom:8px" id="pv-nom">Nombre del destinatario</div>
-              <div style="font-size:10px;color:#555;font-weight:700;margin-bottom:6px" id="pv-desc"></div>
-              <div style="font-size:9px;color:#aaa;margin-bottom:12px" id="pv-fch"></div>
-              <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:0 auto 3px"></div>
-              <div style="font-size:8px;font-weight:700;color:#3D0A14" id="pv-firm">Dr. Alejandro Calderón Rentería</div>
-              <div style="font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.03em" id="pv-carg">Coordinación de Actualización Docente</div>
+              <div style="font-size:9px;color:#aaa;margin:10px 0 4px">Plantilla oficial Google Docs</div>
+              <div style="width:80px;height:1px;background:linear-gradient(90deg,transparent,#3D0A14,transparent);margin:10px auto 3px"></div>
+              <div style="font-size:8px;font-weight:700;color:#3D0A14">Dr. Alejandro Calderón Rentería</div>
+              <div style="font-size:7px;color:#aaa;text-transform:uppercase;letter-spacing:.03em">Coordinación de Actualización Docente</div>
             </div>
             <p class="prev-note">El PDF incluye bordes decorativos, sello y QR</p>
           </div>
@@ -302,12 +289,12 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
           <div class="field"><label>Nombre completo *</label><input type="text" id="uf-nm" placeholder="Nombre Apellido"/></div>
           <div class="field"><label>Usuario *</label>
-            <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff;" id="uf-wrap">
+            <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff" id="uf-wrap">
               <input type="text" id="uf-em" placeholder="usuario"
                 style="flex:1;padding:10px 0 10px 14px;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;background:transparent"
                 onfocus="document.getElementById('uf-wrap').style.borderColor='#1B396A'"
                 onblur="document.getElementById('uf-wrap').style.borderColor='#e0e0e0'"/>
-              <span style="padding:10px 14px 10px 0;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
+              <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
             </div>
           </div>
           <div class="field"><label>Contraseña *</label><input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/></div>
@@ -389,8 +376,6 @@ let CU=null, XL=[], mode='manual', GEN=[];
     users.push({id:'adm0',name:'Dr. Alejandro Calderón Rentería',email:ADM_EMAIL,hash,isAdmin:true,active:true,createdAt:new Date().toISOString()});
     setU(users);
   }
-  // fecha por defecto
-  document.getElementById('f-fecha').value=new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
   // enter en login
   document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
@@ -401,8 +386,8 @@ let CU=null, XL=[], mode='manual', GEN=[];
 
 /* ═══ LOGIN ═══════════════════════════════════════ */
 async function doLogin(){
-  const _user=document.getElementById('li-email').value.trim().toLowerCase();
-  const email=_user.includes('@')?_user:_user+'@itdurango.edu.mx';
+  const _u=document.getElementById('li-email').value.trim().toLowerCase();
+  const email=_u.includes('@')?_u:_u+'@itdurango.edu.mx';
   const pass =document.getElementById('li-pass').value.trim();
   const errEl=document.getElementById('li-err');
   const btn  =document.getElementById('li-btn');
@@ -497,18 +482,10 @@ function loadExcel(inp){
 
 /* ═══ PREVIEW ═══════════════════════════════════════ */
 function updatePrev(){
-  const tipo =document.getElementById('f-tipo').value;
-  const desc =document.getElementById('f-desc').value;
-  const fch  =document.getElementById('f-fecha').value;
-  const firm =document.getElementById('f-firm').value;
-  const carg =document.getElementById('f-carg').value;
-  const nom  =mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
+  const tipo=document.getElementById('f-tipo').value;
+  const nom =mode==='manual'?document.getElementById('f-nom').value:(XL[0]?.nombre||'');
   document.getElementById('pv-tipo').textContent=tipo==='reconocimiento'?'Reconocimiento':'Constancia';
   document.getElementById('pv-nom').textContent=nom||'Nombre del destinatario';
-  document.getElementById('pv-desc').textContent=desc;
-  document.getElementById('pv-fch').textContent=fch?'Durango, Dgo. a '+fch:'';
-  document.getElementById('pv-firm').textContent=firm;
-  document.getElementById('pv-carg').textContent=carg;
   const qw=document.getElementById('pv-qrw');
   if(nom){document.getElementById('pv-qri').src=qrUrl(nom,isoToday());qw.style.display='flex';}
   else qw.style.display='none';
@@ -516,12 +493,7 @@ function updatePrev(){
 
 /* ═══ GENERAR ═══════════════════════════════════════ */
 async function generar(){
-  const tipo = document.getElementById('f-tipo').value;
-  const desc = document.getElementById('f-desc').value.trim();
-  const fch  = document.getElementById('f-fecha').value.trim();
-  const firm = document.getElementById('f-firm').value.trim();
-  const carg = document.getElementById('f-carg').value.trim();
-
+  const tipo=document.getElementById('f-tipo').value;
   let noms;
   if(mode==='manual'){
     const n=document.getElementById('f-nom').value.trim();
@@ -531,47 +503,29 @@ async function generar(){
     if(!XL.length){toast('⚠ Carga un archivo Excel primero.','warn');return;}
     noms=XL;
   }
-
   const btn=document.getElementById('gen-btn');
-  btn.disabled=true;
-  btn.innerHTML='<div class="spinner"></div> Generando…';
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Generando…';
   const fc=isoToday(); GEN=[];
   const total=noms.length;
-
-  for(let idx=0;idx<total;idx++){
-    const item=noms[idx];
-    if(total>1) btn.innerHTML=`<div class="spinner"></div> ${idx+1}/${total} — ${item.nombre.split(' ')[0]}…`;
-
+  for(let i=0;i<total;i++){
+    const item=noms[i];
+    if(total>1) btn.innerHTML=`<div class="spinner"></div> ${i+1}/${total} — ${item.nombre.split(' ')[0]}…`;
     let driveUrl=null;
     try{
-      // Pedir al Apps Script que clone la plantilla, inserte el nombre y devuelva PDF en Drive
-      const r=await fetch(SCRIPT_URL,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          action:'generarConstancia',
-          nombre:item.nombre,
-          folderId:FOLDER_ID
-        })
-      });
+      const r=await fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'generarConstancia',nombre:item.nombre,tipo,folderId:FOLDER_ID})});
       const d=await r.json();
       driveUrl=d.url||d.downloadUrl||null;
-      if(d.error) console.warn('Apps Script error:',d.error);
+      if(d.error) console.warn('Apps Script:',d.error);
     }catch(e){console.warn('Fetch error:',e);}
-
     GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,fc});
   }
-
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
-  const subidas=GEN.filter(g=>g.driveUrl).length;
-  if(subidas===total){
-    toast(`🎉 ${total} constancia(s) generada(s) y guardada(s) en Drive`,'success');
-  }else{
-    toast(`⚠ ${total} generada(s), ${subidas} en Drive. Verifica el Apps Script.`,'warn');
-  }
+  const ok=GEN.filter(g=>g.driveUrl).length;
+  toast(ok===total?`🎉 ${total} constancia(s) lista(s) en Drive`:`⚠ ${ok}/${total} subidas a Drive`
+       ,ok===total?'success':'warn');
 }
-
 
 function renderResults(){
   const list=document.getElementById('res-list');
@@ -590,9 +544,9 @@ function renderResults(){
       </div>
       <div class="result-acts">
         ${g.driveUrl
-          ? `<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir PDF</a>
-             <a class="btn-sm-grn" href="${g.driveUrl.replace('open?','uc?export=download&')}" target="_blank">⬇ Descargar</a>`
-          : '<span style="font-size:12px;color:#e05050">⚠ Sin Drive</span>'}
+          ?`<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir PDF</a>
+            <a class="btn-sm-grn"  href="https://drive.google.com/uc?export=download&id=${g.driveUrl.match(/[-\w]{25,}/)?.[0]||''}" target="_blank">⬇ Descargar</a>`
+          :'<span style="font-size:12px;color:#e05050">⚠ Sin Drive</span>'}
         <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
       </div>`;
     list.appendChild(div);
@@ -600,8 +554,8 @@ function renderResults(){
   document.getElementById('res-card').classList.remove('hidden');
 }
 
-/* ═══ EMAIL ═══════════════════════════════════════ */
-function _imprimir_unused(i){
+/* ═══ PRINT / PDF / EMAIL ═══════════════════════════════════════ */
+function imprimir(i){
   const win=window.open('','_blank','width=900,height=750');
   if(!win){alert('Permite ventanas emergentes para imprimir.');return;}
   win.document.write(GEN[i].html); win.document.close(); win.focus();
@@ -630,8 +584,8 @@ async function dlPDF(i){
 
 function correo(i){
   const g=GEN[i];
-  const s=`Constancia ITD: ${g.descripcion}`;
-  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su ${g.tipo==='reconocimiento'?'reconocimiento':'constancia'} correspondiente a:\n\n${g.descripcion}\n\nExpedido el ${g.fecha}.\n\nAtentamente,\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
+  const s=`Constancia ITD — ${g.nombre}`;
+  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su constancia de participación.${g.driveUrl?'\n\nPuede verla en: '+g.driveUrl:''}\n\nAtentamente,\nDr. Alejandro Calderón Rentería\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
   window.location.href=`mailto:${g.correo||''}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
 }
 
@@ -656,9 +610,9 @@ body{width:794px;height:1123px;font-family:'Lato',sans-serif;background:#fff;pos
 .se span{font-size:8px;font-weight:700;color:#C49A35;text-transform:uppercase;letter-spacing:.08em;text-align:center}
 .qb{position:absolute;bottom:38px;left:58px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10}
 .qf{padding:5px;background:#fff;border:1.5px solid #C49A35;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.10)}
-.qf img{width:55px;height:55px;display:block}
-.ql{display:none}
-.qd{display:none}
+.qf img{width:80px;height:80px;display:block}
+.ql{font-size:7.5px;color:#8B1A2A;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.qd{font-size:6.5px;color:#aaa;text-align:center;max-width:92px;word-break:break-all;line-height:1.4}
 .ct{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;padding:55px 80px 50px}
 .lr{display:flex;align-items:center;gap:18px;margin-bottom:14px}
 .li{width:70px;height:70px;object-fit:contain}
@@ -683,6 +637,8 @@ body{width:794px;height:1123px;font-family:'Lato',sans-serif;background:#fff;pos
 <div class="se"><span>INSTITUTO<br>TECNOLÓGICO<br>DE DURANGO</span></div>
 <div class="qb">
   <div class="qf"><img src="${qu}" alt="QR" onerror="this.parentElement.style.display='none'"/></div>
+  <div class="ql">Verificación ITD</div>
+  <div class="qd">${qd}</div>
 </div>
 <div class="ct">
   <div class="lr">
@@ -731,8 +687,8 @@ function toggleUF(hide){
 
 async function crearUsuario(){
   const name=document.getElementById('uf-nm').value.trim();
-  const _uem=document.getElementById('uf-em').value.trim().toLowerCase();
-  const email=_uem.includes('@')?_uem:_uem+'@itdurango.edu.mx';
+  const _ue=document.getElementById('uf-em').value.trim().toLowerCase();
+  const email=_ue.includes('@')?_ue:_ue+'@itdurango.edu.mx';
   const pass=document.getElementById('uf-pw').value.trim();
   const isAdm=document.getElementById('uf-adm').checked;
   const errEl=document.getElementById('uf-err'), btn=document.getElementById('uf-sv');
