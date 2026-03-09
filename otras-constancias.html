@@ -470,12 +470,6 @@ const LOGO            = "https://github.com/DA-itd/B/blob/main/logo_itdurango.pn
 const ADM_EMAIL       = "alejandro.calderon@itdurango.edu.mx";
 const FOLDER_ID       = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
 const SCRIPT_URL      = "https://script.google.com/macros/s/AKfycbxNM7h4yZfUlippABCr9g3CLcPmDMOJWzaB664LLHimyREnRm8P2I7peecCygADmTLLbw/exec";
-// ── Google Picker ────────────────────────────────────────────────
-// Obtén estos valores en: console.cloud.google.com → tu proyecto de Apps Script
-// → APIs & Services → Credentials → OAuth 2.0 Client IDs
-// Tipo: "Aplicación web" — Origen autorizado: el dominio donde usas este HTML
-const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.googleusercontent.com"
-const GOOGLE_API_KEY   = "AIzaSyBwPxsXa08NOAeQ7W0iA6tgLnPiZKYlbmY"
 
 document.getElementById('yr').textContent = new Date().getFullYear();
 
@@ -682,130 +676,90 @@ function cargarPDF(inp){
 }
 
 /* ═══ GOOGLE DRIVE PICKER ════════════════════════════
-   Abre el selector de Drive para elegir un PDF
-   Usa Google Identity Services (GSI) — librería actual de Google
+   Lista los PDFs de la carpeta de constancias via Apps Script
+   Sin OAuth — igual para todos los usuarios
 ══════════════════════════════════════════════════ */
-let pickerAccessToken = null;
-let gsiTokenClient    = null;
-let gapiPickerReady   = false;
-
-// Inicializar GSI token client cuando cargue la página
-function initGSI(){
-  if(!window.google?.accounts?.oauth2) return;
-  gsiTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive.readonly',
-    callback: (resp) => {
-      const btn = document.getElementById('btn-drive-picker');
-      btn.disabled = false; btn.textContent = '☁ Drive';
-      if(resp.error){
-        toast('⚠ Error de autenticación: ' + resp.error, 'error');
-        return;
-      }
-      pickerAccessToken = resp.access_token;
-      mostrarPicker(pickerAccessToken);
-    }
-  });
-}
-
-function abrirDrivePicker(){
+async function abrirDrivePicker(){
   const btn = document.getElementById('btn-drive-picker');
-  btn.disabled = true; btn.textContent = '⏳ Conectando…';
+  btn.disabled = true; btn.textContent = '⏳ Cargando…';
 
-  // Cargar gapi (picker) y GSI en paralelo si aún no están
-  const gapiPromise = new Promise(res => {
-    if(window.gapi) { gapi.load('picker', res); return; }
-    const s = document.createElement('script');
-    s.src = 'https://apis.google.com/js/api.js';
-    s.onload = () => gapi.load('picker', res);
-    document.head.appendChild(s);
-  });
+  try{
+    const resp = await fetch(`${SCRIPT_URL}?action=listPDFs&folderId=${FOLDER_ID}`);
+    const data = await resp.json();
+    if(!data.ok) throw new Error(data.error || 'Error listando archivos');
 
-  const gsiPromise = new Promise(res => {
-    if(window.google?.accounts?.oauth2){ initGSI(); res(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://accounts.google.com/gsi/client';
-    s.onload = () => { initGSI(); res(); };
-    document.head.appendChild(s);
-  });
-
-  Promise.all([gapiPromise, gsiPromise]).then(() => {
-    gapiPickerReady = true;
-    if(!gsiTokenClient){
-      btn.disabled = false; btn.textContent = '☁ Drive';
-      toast('⚠ No se pudo inicializar Google Sign-In', 'error'); return;
-    }
-    // Si ya tenemos token válido, abrir picker directo
-    if(pickerAccessToken){ mostrarPicker(pickerAccessToken); return; }
-    // Si no, pedir token (abre popup de Google)
-    gsiTokenClient.requestAccessToken({ prompt: 'consent' });
-  }).catch(err => {
     btn.disabled = false; btn.textContent = '☁ Drive';
-    toast('⚠ Error cargando Google API: ' + err.message, 'error');
-  });
+
+    if(!data.files || data.files.length === 0){
+      toast('No hay PDFs en la carpeta de Drive', 'warn'); return;
+    }
+    mostrarModalDrive(data.files);
+  } catch(err){
+    btn.disabled = false; btn.textContent = '☁ Drive';
+    toast('⚠ ' + err.message, 'error');
+    console.error(err);
+  }
 }
 
-function mostrarPicker(token){
-  const btn = document.getElementById('btn-drive-picker');
-  btn.disabled = false; btn.textContent = '☁ Drive';
+function mostrarModalDrive(files){
+  // Quitar modal anterior si existe
+  document.getElementById('drive-modal')?.remove();
 
-  // Vista: carpeta de constancias (PDFs)
-  const viewFolder = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setMimeTypes('application/pdf')
-    .setMode(google.picker.DocsViewMode.LIST)
-    .setParent(FOLDER_ID)
-    .setIncludeFolders(true);
+  const modal = document.createElement('div');
+  modal.id = 'drive-modal';
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);
+    display:flex;align-items:center;justify-content:center;padding:16px`;
 
-  // Vista: todo Drive (para buscar en cualquier lugar)
-  const viewAll = new google.picker.DocsView(google.picker.ViewId.DOCS)
-    .setMimeTypes('application/pdf')
-    .setMode(google.picker.DocsViewMode.LIST);
+  const box = document.createElement('div');
+  box.style.cssText = `
+    background:#fff;border-radius:16px;width:100%;max-width:420px;
+    max-height:70vh;display:flex;flex-direction:column;
+    box-shadow:0 8px 40px rgba(0,0,0,.25);overflow:hidden`;
 
-  new google.picker.PickerBuilder()
-    .setTitle('Selecciona la plantilla PDF')
-    .setLocale('es')
-    .setOAuthToken(token)
-    .setDeveloperKey(GOOGLE_API_KEY)
-    .addView(viewFolder)
-    .addView(viewAll)
-    .setCallback(onPickerCallback)
-    .build()
-    .setVisible(true);
+  box.innerHTML = `
+    <div style="padding:16px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:800;font-size:15px;color:#1B396A">☁ Plantillas en Drive</span>
+      <button onclick="document.getElementById('drive-modal').remove()"
+        style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1">×</button>
+    </div>
+    <div style="overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+      ${files.map(f => `
+        <button onclick="seleccionarPDFDrive('${f.id}','${f.name.replace(/'/g,"\\'")}')"
+          style="text-align:left;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:10px;
+                 background:#fff;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;
+                 transition:background .15s;display:flex;align-items:center;gap:10px"
+          onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='#fff'">
+          <span style="font-size:18px">📄</span>
+          <span style="font-weight:600;color:#1B396A">${f.name}</span>
+        </button>`).join('')}
+    </div>`;
+
+  modal.appendChild(box);
+  // Cerrar al hacer clic fuera
+  modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
 }
 
-async function onPickerCallback(data){
-  if(data.action !== google.picker.Action.PICKED) return;
-  const { id: fileId, name: fileName } = data.docs[0];
-
+async function seleccionarPDFDrive(fileId, fileName){
+  document.getElementById('drive-modal')?.remove();
   const okEl = document.getElementById('pdf-ok');
-  okEl.textContent = '⏳ Descargando de Drive…';
+  okEl.textContent = '⏳ Descargando ' + fileName + '…';
   okEl.classList.remove('hidden');
 
   try{
-    const resp = await fetch(
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-      { headers: { Authorization: 'Bearer ' + pickerAccessToken } }
-    );
-    if(!resp.ok) throw new Error(`HTTP ${resp.status} — verifica permisos del archivo`);
+    const resp = await fetch(`${SCRIPT_URL}?action=downloadPDF&fileId=${fileId}`);
+    const data = await resp.json();
+    if(!data.ok) throw new Error(data.error || 'Error descargando');
 
-    const arrayBuf = await resp.arrayBuffer();
-    const uint8    = new Uint8Array(arrayBuf);
-    let bin = '';
-    const CHUNK = 8192;
-    for(let i = 0; i < uint8.length; i += CHUNK)
-      bin += String.fromCharCode(...uint8.subarray(i, i + CHUNK));
-    const b64 = btoa(bin);
-
-    pdfBase64 = b64;
+    pdfBase64 = data.pdfBase64;
     okEl.textContent = '✅ ☁ ' + fileName;
-    renderPDFCanvas(b64, false);
+    renderPDFCanvas(pdfBase64, false);
     toast('PDF de Drive cargado — calibra las posiciones', 'info');
   } catch(err){
     okEl.textContent = '⚠ Error al descargar';
     toast('⚠ ' + err.message, 'error');
     console.error(err);
-    // Token puede haber expirado — limpiar para pedir uno nuevo
-    pickerAccessToken = null;
   }
 }
 
