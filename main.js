@@ -601,25 +601,17 @@ const Login = ({ onLogin }) => {
           onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(107,26,42,.15)';}}
           onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}
         >
-          {/* Franja shimmer igual que tarjeta 1 */}
           <div style={S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)')}/>
-
           <div style={S.cardBody}>
             <div style={{display:'flex', alignItems:'center', gap:'.85rem', marginBottom:'.2rem'}}>
-              {/* Ícono con logo ITD SVG guinda */}
-              <div style={{
-                width:46, height:46, borderRadius:13, flexShrink:0,
-                background:'linear-gradient(135deg,#3D0A14,#922438)',
-                display:'flex', alignItems:'center', justifyContent:'center',
-                boxShadow:'0 3px 14px rgba(107,26,42,.28)'
-              }}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 38" width="26" height="26" aria-label="ITD">
-                  <path d="M19 1 L37 1 L37 29 Q28 37 19 32 Q10 37 1 29 L1 1 Z"
-                        fill="rgba(255,255,255,0.12)" stroke="#F5E4A8" strokeWidth="1.8" opacity="0.9"/>
-                  <circle cx="19" cy="18" r="6" fill="none" stroke="#F5E4A8" strokeWidth="1.5" opacity="0.85"/>
-                  <circle cx="19" cy="18" r="2.2" fill="#F5E4A8" opacity="0.95"/>
-                  <line x1="19" y1="5"  x2="19" y2="30" stroke="#F5E4A8" strokeWidth="1" opacity="0.4"/>
-                  <line x1="4"  y1="18" x2="34" y2="18" stroke="#F5E4A8" strokeWidth="1" opacity="0.4"/>
+              <div style={S.iconWrap('linear-gradient(135deg,#3D0A14,#922438)', '0 3px 14px rgba(107,26,42,.28)')}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 38" width="22" height="22" aria-label="ITD">
+                  <path d="M19 2 L36 2 L36 28 Q27.5 36 19 31 Q10.5 36 2 28 L2 2 Z"
+                        fill="rgba(255,255,255,0.15)" stroke="#F5E4A8" strokeWidth="1.8" opacity="0.9"/>
+                  <circle cx="19" cy="18" r="5.5" fill="none" stroke="#F5E4A8" strokeWidth="1.5" opacity="0.85"/>
+                  <circle cx="19" cy="18" r="2" fill="#F5E4A8" opacity="0.95"/>
+                  <line x1="19" y1="6"  x2="19" y2="29" stroke="#F5E4A8" strokeWidth="1" opacity="0.4"/>
+                  <line x1="5"  y1="18" x2="33" y2="18" stroke="#F5E4A8" strokeWidth="1" opacity="0.4"/>
                 </svg>
               </div>
               <div>
@@ -630,14 +622,7 @@ const Login = ({ onLogin }) => {
             <p style={S.desc}>
               Genera constancias y reconocimientos personalizados con la plantilla oficial ITD. Ingresa nombres manualmente o carga un Excel. Incluye QR de verificación.
             </p>
-            {/* Botón guinda */}
-            <div style={{
-              display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
-              padding:'.85rem 1rem', borderRadius:12,
-              background:'linear-gradient(135deg,#3D0A14,#922438)',
-              color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
-              boxShadow:'0 4px 18px rgba(107,26,42,.30)'
-            }}>
+            <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', padding:'.85rem 1rem', borderRadius:12, background:'linear-gradient(135deg,#3D0A14,#922438)', color:'#F5E4A8', fontWeight:700, fontSize:'.84rem', boxShadow:'0 4px 18px rgba(107,26,42,.30)'}}>
               📜 Acceder
             </div>
           </div>
