@@ -258,8 +258,7 @@
               <div class="field">
                 <label>Nombre completo <span style="color:#e05050">*</span></label>
                 <input type="text" id="f-nom" placeholder="Ej: Dra. María García López"
-                  oninput="updatePrev(); ortografiaManual()"
-                  style="text-transform:uppercase"/>
+                  oninput="this.value=titleCase(this.value); updatePrev(); ortografiaManual()"/>
                 <div id="orto-manual" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
               </div>
             </div>
@@ -781,7 +780,7 @@ function loadExcel(inp){
       const ei=hdrs.findIndex(h=>['correo','email','mail'].some(k=>h.includes(k)));
       XL=rows.slice(1).reduce((a,row)=>{
         if(!row||!row.length)return a;
-        const n=String(row[ni>=0?ni:0]||'').trim();
+        const n=titleCase(String(row[ni>=0?ni:0]||'').trim());
         const c=ei>=0?String(row[ei]||'').trim():'';
         if(n)a.push({nombre:n,correo:c});
         return a;
@@ -880,12 +879,12 @@ async function generar(){
     }
   }
   progBar.style.width='100%';
-  progLbl.textContent=`✅ ${total} constancia(s) generada(s) — subiendo a Drive…`;
+  progLbl.textContent=`✅ ${total} constancia(s) generada(s)`;
 
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
-  setTimeout(()=>progWrap.classList.add('hidden'),3500);
+  setTimeout(()=>progWrap.classList.add('hidden'),2500);
   const ok=GEN.filter(g=>g.blobUrl).length;
-  toast(ok===total?`🎉 ${total} constancia(s) listas — subiendo a Drive`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
+  toast(ok===total?`🎉 ${total} constancia(s) generada(s)`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
 }
 
 /* ═══ SUBIR A DRIVE ══════════════════════════════════════ */
@@ -1046,35 +1045,16 @@ async function superponerNombreQR(nombre, fecha){
 function renderResults(){
   const list=document.getElementById('res-list');
   const ok=GEN.filter(g=>g.blobUrl).length;
-  const driveOk=GEN.filter(g=>g.driveStatus==='ok').length;
-  const uploading=GEN.filter(g=>g.driveStatus==='uploading').length;
-  // Title
-  let titleExtra='';
-  if(uploading>0) titleExtra=` — ☁ subiendo ${uploading}…`;
-  else if(driveOk>0) titleExtra=` — ☁ ${driveOk} en Drive`;
-  document.getElementById('res-title').textContent=`✅ Generadas (${ok}/${GEN.length})${titleExtra}`;
-  // Download All button
+  document.getElementById('res-title').textContent=`✅ Generadas (${ok}/${GEN.length})`;
   const dlAllBtn=document.getElementById('dl-all-btn');
   dlAllBtn.style.display=ok>1?'':'none';
   dlAllBtn.textContent=`⬇ ZIP (${ok})`;
 
-  // Re-render items (preserve scroll position)
   const prevScroll=list.scrollTop;
   list.innerHTML='';
   GEN.forEach((g,i)=>{
     const div=document.createElement('div');
     div.className='result-item';
-
-    // Drive badge
-    let driveBadge='';
-    if(g.driveStatus==='uploading'){
-      driveBadge=`<span style="font-size:10px;color:#1B396A;display:flex;align-items:center;gap:4px"><div class="spinner" style="width:10px;height:10px;border-width:2px"></div> Subiendo…</span>`;
-    } else if(g.driveStatus==='ok'){
-      driveBadge=`<a href="${g.driveUrl}" target="_blank" class="btn-sm-prp" style="font-size:10px;padding:3px 8px">☁ Drive</a>`;
-    } else if(g.driveStatus==='error_drive'){
-      driveBadge=`<span style="font-size:10px;color:#e05050" title="${g.driveError||''}">⚠ Drive</span>`;
-    }
-
     div.innerHTML=`
       <div class="result-info">
         <img class="result-qr" src="${qrUrl(g.nombre,g.fc)}" alt="QR"/>
@@ -1088,7 +1068,6 @@ function renderResults(){
           ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank" style="font-size:10px;padding:3px 8px">👁 Ver</a>
             <button class="btn-sm-grn" onclick="dlPDF(${i})" style="font-size:10px;padding:3px 8px">⬇ PDF</button>`
           :`<span style="font-size:11px;color:#e05050">⚠ ${g.error||'Error'}</span>`}
-        ${driveBadge}
         <button class="btn-sm-yel" onclick="correo(${i})" style="font-size:10px;padding:3px 8px">📧</button>
       </div>`;
     list.appendChild(div);
@@ -1168,7 +1147,17 @@ function waitLibs(ms=12000){
     };chk();
   });
 }
-function updatePrev(){ /* kept for compat */ }
+/* ═══ TITLE CASE ═════════════════════════════════════
+   Capitaliza primer letra de cada palabra excepto
+   preposiciones internas: de, del, de la, las, los, y, e
+══════════════════════════════════════════════════ */
+function titleCase(str){
+  const MINUSCULAS=new Set(['de','del','la','las','los','y','e','mc','mac']);
+  return str.trim().toLowerCase().split(/\s+/).map((w,i)=>{
+    if(i>0 && MINUSCULAS.has(w)) return w;          // preposición interna → minúscula
+    return w.charAt(0).toUpperCase()+w.slice(1);    // primera letra mayúscula
+  }).join(' ');
+}
 
 /* ═══ ORTOGRAFÍA ════════════════════════════════════
    Detecta errores comunes en nombres propios:
