@@ -510,17 +510,17 @@ async function generar(){
   for(let i=0;i<total;i++){
     const item=noms[i];
     if(total>1) btn.innerHTML=`<div class="spinner"></div> ${i+1}/${total} — ${item.nombre.split(' ')[0]}…`;
-    let driveUrl=null;
+    let driveUrl=null, localPDF=false;
     try{
-      // ✅ GET en lugar de POST evita el bloqueo CORS del navegador.
-      // Apps Script desplegado como "Anyone" permite CORS en doGet automáticamente.
       const _p=new URLSearchParams({action:'generarConstancia',nombre:item.nombre,tipo,folderId:FOLDER_ID});
-      const r=await fetch(`${SCRIPT_URL}?${_p.toString()}`);
+      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),12000);
+      const r=await fetch(`${SCRIPT_URL}?${_p.toString()}`,{signal:ctrl.signal});
       const d=await r.json();
       driveUrl=d.url||d.downloadUrl||null;
       if(d.error) console.warn('Apps Script error:',d.error);
-    }catch(e){console.warn('Fetch error (revisa despliegue del script):',e);toast('⚠ Error al conectar con el servidor. Revisa la consola.','error');}
-    GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,fc});
+    }catch(e){console.warn('Apps Script no disponible, se usará PDF local:',e);}
+    if(!driveUrl) localPDF=true;
+    GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,localPDF,fc,tipo});
   }
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
@@ -546,9 +546,10 @@ function renderResults(){
       </div>
       <div class="result-acts">
         ${g.driveUrl
-          ?`<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir PDF</a>
-            <a class="btn-sm-grn"  href="https://drive.google.com/uc?export=download&id=${g.driveUrl.match(/[-\w]{25,}/)?.[0]||''}" target="_blank">⬇ Descargar</a>`
-          :'<span style="font-size:12px;color:#e05050">⚠ Sin Drive</span>'}
+          ?`<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir en Drive</a>
+            <a class="btn-sm-grn" href="https://drive.google.com/uc?export=download&id=${g.driveUrl.match(/[-\w]{25,}/)?.[0]||''}" target="_blank">⬇ Descargar</a>`
+          :`<button class="btn-sm-grn" id="pdf-btn-${i}" onclick="descargarPDFLocal(${i})">⬇ Descargar PDF</button>
+            <span style="font-size:10px;color:#999;align-self:center">📍 PDF local</span>`}
         <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
       </div>`;
     list.appendChild(div);
@@ -715,6 +716,67 @@ function delUser(id){
   const u=getU().find(x=>x.id===id);
   if(!u||!confirm(`¿Eliminar "${u.email}"?`))return;
   setU(getU().filter(x=>x.id!==id)); renderUsers(); toast('Usuario eliminado','info');
+}
+
+/* ═══ PDF LOCAL (fallback cuando Apps Script no responde) ════════════ */
+async function descargarPDFLocal(i){
+  const g=GEN[i];
+  const btn=document.getElementById(`pdf-btn-${i}`);
+  if(!btn)return;
+  btn.textContent='⏳ Generando…'; btn.disabled=true;
+
+  try{
+    // Esperar a que jsPDF y html2canvas carguen (scripts defer)
+    await waitLib();
+
+    // Construir HTML de la constancia en un iframe oculto
+    const html=buildHTML({
+      nombre:g.nombre, tipo:g.tipo||'constancia',
+      descripcion:'', fecha:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}),
+      firmante:'Dr. Alejandro Calderón Rentería',
+      cargo:'Coordinación de Actualización Docente',
+      fechaCreacion:g.fc
+    });
+
+    const iframe=document.createElement('iframe');
+    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;visibility:hidden;';
+    document.body.appendChild(iframe);
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(html);
+    iframe.contentDocument.close();
+
+    // Esperar render + fuentes
+    await new Promise(r=>setTimeout(r,1400));
+
+    const canvas=await html2canvas(iframe.contentDocument.body,{
+      scale:2, useCORS:true, allowTaint:true, width:794, height:1123,
+      logging:false, backgroundColor:'#ffffff'
+    });
+    document.body.removeChild(iframe);
+
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[794,1123],compress:true});
+    pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,794,1123);
+    pdf.save(`Constancia_${g.nombre.replace(/\s+/g,'_')}.pdf`);
+    btn.textContent='✅ Descargado'; 
+    toast('✅ PDF descargado correctamente','success');
+  }catch(err){
+    console.error('PDF local error:',err);
+    btn.textContent='⬇ Descargar PDF'; btn.disabled=false;
+    toast('⚠ Error al generar PDF: '+err.message,'error');
+  }
+}
+
+function waitLib(ms=8000){
+  return new Promise((res,rej)=>{
+    const t0=Date.now();
+    const check=()=>{
+      if(window.html2canvas&&window.jspdf) return res();
+      if(Date.now()-t0>ms) return rej(new Error('jsPDF/html2canvas no cargaron. Intenta recargar la página.'));
+      setTimeout(check,200);
+    };
+    check();
+  });
 }
 </script>
 
