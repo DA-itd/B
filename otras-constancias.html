@@ -515,50 +515,23 @@ function updatePrev(){
 }
 
 /* ═══ GENERAR ═══════════════════════════════════════ */
-// Convierte HTML a PDF base64 usando iframe + html2canvas + jsPDF
-async function htmlToPdfBase64(html){
-  return new Promise(async(resolve,reject)=>{
-    if(!window.html2canvas||!window.jspdf){resolve(null);return;}
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;visibility:hidden;';
-    document.body.appendChild(iframe);
-    try{
-      iframe.contentDocument.open();
-      iframe.contentDocument.write(html);
-      iframe.contentDocument.close();
-      await new Promise(r=>setTimeout(r,1200)); // esperar fuentes y QR
-      const canvas=await html2canvas(iframe.contentDocument.body,{
-        scale:2,useCORS:true,allowTaint:true,width:794,height:1123,
-        imageTimeout:8000,logging:false
-      });
-      document.body.removeChild(iframe);
-      const {jsPDF}=window.jspdf;
-      const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[794,1123],compress:true});
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,794,1123);
-      resolve(pdf.output('datauristring').split(',')[1]); // solo el base64
-    }catch(e){
-      try{document.body.removeChild(iframe);}catch{}
-      reject(e);
-    }
-  });
-}
-
 async function generar(){
-  const tipo=document.getElementById('f-tipo').value;
-  const desc=document.getElementById('f-desc').value.trim();
-  const fch =document.getElementById('f-fecha').value.trim();
-  const firm=document.getElementById('f-firm').value.trim();
-  const carg=document.getElementById('f-carg').value.trim();
-  if(!desc){toast('⚠ Ingresa la descripción / actividad.','warn');return;}
+  const tipo = document.getElementById('f-tipo').value;
+  const desc = document.getElementById('f-desc').value.trim();
+  const fch  = document.getElementById('f-fecha').value.trim();
+  const firm = document.getElementById('f-firm').value.trim();
+  const carg = document.getElementById('f-carg').value.trim();
+
   let noms;
   if(mode==='manual'){
     const n=document.getElementById('f-nom').value.trim();
-    if(!n){toast('⚠ Ingresa un nombre.','warn');return;}
+    if(!n){toast('⚠ Ingresa el nombre del destinatario.','warn');return;}
     noms=[{nombre:n,correo:''}];
   }else{
     if(!XL.length){toast('⚠ Carga un archivo Excel primero.','warn');return;}
     noms=XL;
   }
+
   const btn=document.getElementById('gen-btn');
   btn.disabled=true;
   btn.innerHTML='<div class="spinner"></div> Generando…';
@@ -568,30 +541,37 @@ async function generar(){
   for(let idx=0;idx<total;idx++){
     const item=noms[idx];
     if(total>1) btn.innerHTML=`<div class="spinner"></div> ${idx+1}/${total} — ${item.nombre.split(' ')[0]}…`;
-    const html=buildHTML({nombre:item.nombre,tipo,descripcion:desc,fecha:fch,firmante:firm,cargo:carg,fechaCreacion:fc});
+
     let driveUrl=null;
     try{
-      // Generar PDF en cliente
-      const pdfB64=await htmlToPdfBase64(html);
-      if(pdfB64){
-        // Subir a Drive vía Apps Script
-        const fname=`Constancia_${item.nombre.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g,'').replace(/\s+/g,'_')}_${fc}.pdf`;
-        const r=await fetch(SCRIPT_URL,{method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'uploadPDF',pdfBase64:pdfB64,filename:fname,folderId:FOLDER_ID})
-        });
-        const d=await r.json();
-        driveUrl=d.url||d.webViewLink||null;
-      }
-    }catch(e){console.warn('Drive upload error:',e);}
-    GEN.push({nombre:item.nombre,correo:item.correo,html,driveUrl,fc,tipo,descripcion:desc,fecha:fch});
+      // Pedir al Apps Script que clone la plantilla, inserte el nombre y devuelva PDF en Drive
+      const r=await fetch(SCRIPT_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          action:'generarConstancia',
+          nombre:item.nombre,
+          folderId:FOLDER_ID
+        })
+      });
+      const d=await r.json();
+      driveUrl=d.url||d.downloadUrl||null;
+      if(d.error) console.warn('Apps Script error:',d.error);
+    }catch(e){console.warn('Fetch error:',e);}
+
+    GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,fc});
   }
 
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
   const subidas=GEN.filter(g=>g.driveUrl).length;
-  toast(`🎉 ${GEN.length} constancia(s) generada(s)${subidas?` · ${subidas} subida(s) a Drive`:''}`,'success');
+  if(subidas===total){
+    toast(`🎉 ${total} constancia(s) generada(s) y guardada(s) en Drive`,'success');
+  }else{
+    toast(`⚠ ${total} generada(s), ${subidas} en Drive. Verifica el Apps Script.`,'warn');
+  }
 }
+
 
 function renderResults(){
   const list=document.getElementById('res-list');
@@ -609,18 +589,19 @@ function renderResults(){
         </div>
       </div>
       <div class="result-acts">
-        <button class="btn-sm-blue" onclick="dlPDF(${i})">⬇ PDF</button>
-        <button class="btn-sm-grn"  onclick="imprimir(${i})">🖨 Imprimir</button>
-        <button class="btn-sm-yel"  onclick="correo(${i})">📧 Correo</button>
-        ${g.driveUrl?`<a class="btn-sm-prp" href="${g.driveUrl}" target="_blank">☁ Drive</a>`:''}
+        ${g.driveUrl
+          ? `<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir PDF</a>
+             <a class="btn-sm-grn" href="${g.driveUrl.replace('open?','uc?export=download&')}" target="_blank">⬇ Descargar</a>`
+          : '<span style="font-size:12px;color:#e05050">⚠ Sin Drive</span>'}
+        <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
       </div>`;
     list.appendChild(div);
   });
   document.getElementById('res-card').classList.remove('hidden');
 }
 
-/* ═══ PRINT / PDF / EMAIL ═══════════════════════════════════════ */
-function imprimir(i){
+/* ═══ EMAIL ═══════════════════════════════════════ */
+function _imprimir_unused(i){
   const win=window.open('','_blank','width=900,height=750');
   if(!win){alert('Permite ventanas emergentes para imprimir.');return;}
   win.document.write(GEN[i].html); win.document.close(); win.focus();
