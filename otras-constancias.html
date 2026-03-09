@@ -510,17 +510,16 @@ async function generar(){
   for(let i=0;i<total;i++){
     const item=noms[i];
     if(total>1) btn.innerHTML=`<div class="spinner"></div> ${i+1}/${total} — ${item.nombre.split(' ')[0]}…`;
-    let driveUrl=null, localPDF=false;
+    let driveUrl=null;
     try{
       const _p=new URLSearchParams({action:'generarConstancia',nombre:item.nombre,tipo,folderId:FOLDER_ID});
-      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),12000);
+      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),15000);
       const r=await fetch(`${SCRIPT_URL}?${_p.toString()}`,{signal:ctrl.signal});
       const d=await r.json();
       driveUrl=d.url||d.downloadUrl||null;
       if(d.error) console.warn('Apps Script error:',d.error);
-    }catch(e){console.warn('Apps Script no disponible, se usará PDF local:',e);}
-    if(!driveUrl) localPDF=true;
-    GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,localPDF,fc,tipo});
+    }catch(e){console.warn('Apps Script no disponible, PDF local como respaldo:',e);}
+    GEN.push({nombre:item.nombre,correo:item.correo,driveUrl,fc,tipo});
   }
   renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
@@ -548,8 +547,7 @@ function renderResults(){
         ${g.driveUrl
           ?`<a class="btn-sm-blue" href="${g.driveUrl}" target="_blank">📄 Abrir en Drive</a>
             <a class="btn-sm-grn" href="https://drive.google.com/uc?export=download&id=${g.driveUrl.match(/[-\w]{25,}/)?.[0]||''}" target="_blank">⬇ Descargar</a>`
-          :`<button class="btn-sm-grn" id="pdf-btn-${i}" onclick="descargarPDFLocal(${i})">⬇ Descargar PDF</button>
-            <span style="font-size:10px;color:#999;align-self:center">📍 PDF local</span>`}
+          :`<button class="btn-sm-grn" id="lpdf-${i}" onclick="pdfLocal(${i})">⬇ Descargar PDF</button>`}
         <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
       </div>`;
     list.appendChild(div);
@@ -592,77 +590,119 @@ function correo(i){
   window.location.href=`mailto:${g.correo||''}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
 }
 
-/* ═══ BUILD HTML ═══════════════════════════════════════ */
-function buildHTML({nombre,tipo,descripcion,fecha,firmante,cargo,fechaCreacion}){
+/* ═══ BUILD HTML — réplica fiel de la plantilla oficial ITD ════ */
+function buildHTML({nombre,tipo,fechaCreacion}){
   const qu=qrUrl(nombre,fechaCreacion), qd=qrData(nombre,fechaCreacion);
-  const tx=tipo==='reconocimiento'?'Por su destacada participación y contribución a las actividades académicas e institucionales.':'Ha cumplido satisfactoriamente con los requisitos establecidos para el presente reconocimiento.';
+  const hoy=new Date();
+  const fechaLarga=hoy.toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'});
+  const tipoTxt=(tipo||'constancia')==='reconocimiento'?'RECONOCIMIENTO':'CONSTANCIA';
+  const cuerpoTxt=tipoTxt==='RECONOCIMIENTO'
+    ?'Por su destacada participación y valiosa contribución a las actividades académicas e institucionales del Instituto Tecnológico de Durango.'
+    :'Por su valiosa participación como integrante del staff de organización de la <strong>ExpoTecno Open House 2026</strong>, llevada a cabo del 23 al 27 de febrero, destacando su compromiso y responsabilidad en el desarrollo exitoso de este evento.';
   return `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Lato:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@700;900&family=Lato:wght@300;400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
-body{width:794px;height:1123px;font-family:'Lato',sans-serif;background:#fff;position:relative;overflow:hidden}
-.bo{position:absolute;inset:18px;border:3px solid #8B1A2A;border-radius:4px}
-.bi{position:absolute;inset:24px;border:1px solid #C49A35;border-radius:2px}
-.cr{position:absolute;width:40px;height:40px;background:linear-gradient(135deg,#8B1A2A,#C49A35)}
-.tl{top:14px;left:14px;clip-path:polygon(0 0,100% 0,0 100%)}
-.tr{top:14px;right:14px;clip-path:polygon(100% 0,100% 100%,0 0)}
-.bl{bottom:14px;left:14px;clip-path:polygon(0 0,100% 100%,0 100%)}
-.br{bottom:14px;right:14px;clip-path:polygon(100% 0,100% 100%,0 100%)}
-.wm{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);font-family:'Playfair Display',serif;font-size:90px;color:rgba(139,26,42,.04);font-weight:700;pointer-events:none;z-index:1;letter-spacing:.1em;white-space:nowrap}
-.se{position:absolute;bottom:100px;right:90px;width:90px;height:90px;opacity:.12;border:3px solid #C49A35;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2}
-.se span{font-size:8px;font-weight:700;color:#C49A35;text-transform:uppercase;letter-spacing:.08em;text-align:center}
-.qb{position:absolute;bottom:38px;left:58px;display:flex;flex-direction:column;align-items:center;gap:5px;z-index:10}
-.qf{padding:5px;background:#fff;border:1.5px solid #C49A35;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.10)}
-.qf img{width:80px;height:80px;display:block}
-.ql{font-size:7.5px;color:#8B1A2A;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:center}
-.qd{font-size:6.5px;color:#aaa;text-align:center;max-width:92px;word-break:break-all;line-height:1.4}
-.ct{position:relative;z-index:10;height:100%;display:flex;flex-direction:column;align-items:center;padding:55px 80px 50px}
-.lr{display:flex;align-items:center;gap:18px;margin-bottom:14px}
-.li{width:70px;height:70px;object-fit:contain}
-.in{font-size:13px;font-weight:700;color:#3D0A14;letter-spacing:.06em;text-transform:uppercase}
-.is{font-size:10px;color:#888;letter-spacing:.04em;text-transform:uppercase;margin-top:2px}
-.dv{width:100%;height:2px;background:linear-gradient(90deg,transparent,#C49A35,transparent);margin:10px 0}
-.dt{font-size:11px;letter-spacing:.3em;color:#8B1A2A;text-transform:uppercase;font-weight:700;margin:18px 0 8px}
-.tw{font-family:'Playfair Display',serif;font-size:52px;font-weight:700;color:#3D0A14;letter-spacing:.02em;line-height:1;margin-bottom:22px}
-.bt{text-align:center;font-size:14px;color:#444;line-height:1.85;max-width:580px}
-.rn{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;font-style:italic;color:#1B396A;display:block;margin:16px 0 6px;border-bottom:1.5px solid #C49A35;padding-bottom:8px;width:100%;text-align:center}
-.an{font-size:16px;font-weight:700;color:#3D0A14;margin:8px 0 4px;text-align:center}
-.ds{font-size:12.5px;color:#666;text-align:center;max-width:520px;line-height:1.7;margin-top:4px}
-.fa{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center}
-.ft{font-size:12px;color:#777;margin-bottom:28px;letter-spacing:.02em}
-.fl{width:220px;height:1.5px;background:linear-gradient(90deg,transparent,#3D0A14,transparent)}
-.fn{font-weight:700;color:#3D0A14;font-size:13px;letter-spacing:.03em;text-align:center}
-.fc{font-size:11px;color:#888;text-align:center;letter-spacing:.04em;text-transform:uppercase}
+html,body{width:816px;height:1056px;background:#fff;font-family:'Lato',sans-serif;overflow:hidden;position:relative}
+/* Fondo con motivo floral tenue (SVG inline) */
+.bg-pattern{position:absolute;inset:0;opacity:.045;background-image:url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='60' cy='60' r='50' stroke='%238B1A2A' stroke-width='1.5' fill='none'/%3E%3Ccircle cx='60' cy='60' r='35' stroke='%238B1A2A' stroke-width='1' fill='none'/%3E%3Ccircle cx='60' cy='60' r='20' stroke='%238B1A2A' stroke-width='.8' fill='none'/%3E%3C/svg%3E");background-size:120px 120px;}
+/* Borde exterior doble línea rojo+oro */
+.border-outer{position:absolute;inset:14px;border:3px solid #8B1A2A;}
+.border-inner{position:absolute;inset:20px;border:1.2px solid #C49A35;}
+/* Esquinas decorativas */
+.corner{position:absolute;width:52px;height:52px;}
+.corner svg{width:52px;height:52px;}
+.c-tl{top:10px;left:10px;} .c-tr{top:10px;right:10px;transform:scaleX(-1);}
+.c-bl{bottom:10px;left:10px;transform:scaleY(-1);} .c-br{bottom:10px;right:10px;transform:scale(-1,-1);}
+/* Sello fantasma ITD centro */
+.watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:.04;font-size:180px;font-family:'Cinzel',serif;color:#8B1A2A;font-weight:900;letter-spacing:.1em;white-space:nowrap;pointer-events:none;}
+/* Contenido */
+.content{position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding:30px 72px 96px;}
+/* Logos */
+.logos{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:6px;}
+.logo-sep{height:52px;} .logo-tecnm{height:46px;} .logo-itd{height:52px;}
+.logo-div{width:1px;height:44px;background:#ccc;}
+/* Línea roja decorativa */
+.red-rule{width:100%;height:3px;background:linear-gradient(90deg,transparent,#8B1A2A 15%,#8B1A2A 85%,transparent);margin:8px 0 16px;}
+/* Institución */
+.inst-name{font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:#1a1a1a;letter-spacing:.08em;text-align:center;line-height:1.5;}
+.inst-sub{font-size:11px;color:#555;text-align:center;margin-top:2px;letter-spacing:.04em;}
+.otorga{font-size:13px;color:#555;text-align:center;margin:14px 0 2px;letter-spacing:.04em;}
+/* Título */
+.titulo{font-family:'Cinzel',serif;font-size:64px;font-weight:900;color:#8B1A2A;letter-spacing:.06em;text-align:center;line-height:1;margin:2px 0 14px;text-shadow:1px 1px 0 rgba(139,26,42,.15);}
+.a-lbl{font-size:13px;color:#555;text-align:center;margin-bottom:10px;letter-spacing:.05em;}
+/* Nombre */
+.nombre-wrap{width:100%;text-align:center;border-bottom:1.5px solid #8B1A2A;padding-bottom:10px;margin-bottom:14px;}
+.nombre{font-family:'IM Fell English',serif;font-size:36px;font-style:italic;color:#1a1a1a;letter-spacing:.02em;}
+/* Cuerpo texto */
+.body-txt{font-size:13.5px;color:#333;text-align:center;line-height:1.8;max-width:560px;margin:0 auto;}
+/* Firma */
+.firma-section{margin-top:auto;width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.fecha-txt{font-size:12.5px;color:#8B1A2A;font-weight:700;letter-spacing:.04em;margin-bottom:22px;text-align:center;}
+.firma-line{width:260px;height:1.5px;background:linear-gradient(90deg,transparent,#333,transparent);margin-bottom:4px;}
+.firma-nombre{font-size:13.5px;font-weight:700;color:#1a1a1a;letter-spacing:.04em;text-align:center;}
+.firma-cargo{font-size:11px;color:#666;letter-spacing:.04em;text-transform:uppercase;text-align:center;margin-top:1px;}
+/* QR — abajo izquierda, encima de la banda del pie, sin tocar los logos */
+.qr-block{position:absolute;bottom:88px;left:48px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;z-index:20;}
+.qr-frame{padding:4px;background:#fff;border:1.5px solid #C49A35;border-radius:5px;box-shadow:0 2px 6px rgba(0,0,0,.1);}
+.qr-frame img{width:72px;height:72px;display:block;}
+.qr-label{font-size:6.5px;font-weight:700;color:#8B1A2A;letter-spacing:.08em;text-transform:uppercase;}
+.qr-data{font-size:5.5px;color:#aaa;max-width:86px;word-break:break-all;line-height:1.4;}
+/* Banda de logos del pie — replica la franja inferior de la plantilla */
+.pie-band{position:absolute;bottom:0;left:0;right:0;height:82px;background:linear-gradient(180deg,#f9f0f2 0%,#f0e0e4 100%);border-top:2px solid #8B1A2A;display:flex;align-items:center;justify-content:center;gap:28px;padding:0 60px;z-index:15;}
+.pie-band img{height:52px;object-fit:contain;}
+.pie-band .maza-txt{text-align:center;line-height:1.2;}
+.pie-band .maza-yr{font-size:22px;font-weight:900;color:#8B1A2A;font-family:'Cinzel',serif;}
+.pie-band .maza-sub{font-size:8px;color:#8B1A2A;letter-spacing:.06em;text-transform:uppercase;}
 </style></head><body>
-<div class="bo"></div><div class="bi"></div>
-<div class="cr tl"></div><div class="cr tr"></div><div class="cr bl"></div><div class="cr br"></div>
-<div class="wm">ITD</div>
-<div class="se"><span>INSTITUTO<br>TECNOLÓGICO<br>DE DURANGO</span></div>
-<div class="qb">
-  <div class="qf"><img src="${qu}" alt="QR" onerror="this.parentElement.style.display='none'"/></div>
-  <div class="ql">Verificación ITD</div>
-  <div class="qd">${qd}</div>
+<div class="bg-pattern"></div>
+<div class="border-outer"></div>
+<div class="border-inner"></div>
+<!-- Esquinas SVG decorativas -->
+<div class="corner c-tl"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
+<div class="corner c-tr"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
+<div class="corner c-bl"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
+<div class="corner c-br"><svg viewBox="0 0 52 52"><path d="M2 2 L50 2 L2 50 Z" fill="#8B1A2A"/><path d="M6 2 L50 2" stroke="#C49A35" stroke-width="1.5" fill="none"/><path d="M2 6 L2 50" stroke="#C49A35" stroke-width="1.5" fill="none"/></svg></div>
+<div class="watermark">ITD</div>
+<!-- QR abajo izquierda — encima de la banda de logos -->
+<div class="qr-block">
+  <div class="qr-frame"><img src="${qu}" alt="QR" onerror="this.parentElement.style.display='none'"/></div>
+  <div class="qr-label">Verificación ITD</div>
+  <div class="qr-data">${qd}</div>
 </div>
-<div class="ct">
-  <div class="lr">
-    <img src="${LOGO}" class="li" alt="ITD" onerror="this.style.display='none'"/>
-    <div><div class="in">Instituto Tecnológico de Durango</div><div class="is">Tecnológico Nacional de México</div></div>
+<!-- Banda pie con logos — réplica de la plantilla oficial -->
+<div class="pie-band">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Logo_100_libre_de_pl%C3%A1stico.svg/200px-Logo_100_libre_de_pl%C3%A1stico.svg.png" alt="100% libre plástico" onerror="this.style.display='none'"/>
+  <div class="maza-txt">
+    <div class="maza-yr">2026</div>
+    <div class="maza-sub">año de<br><strong>Margarita<br>Maza</strong></div>
   </div>
-  <div class="dv"></div>
-  <div class="dt">Otorga la presente</div>
-  <div class="tw">${tipo==='reconocimiento'?'Reconocimiento':'Constancia'}</div>
-  <p class="bt">El Instituto Tecnológico de Durango hace constar que
-    <span class="rn">${nombre}</span><span class="an">${descripcion||''}</span>
-  </p>
-  <p class="ds">${tx}</p>
-  <div class="fa">
-    <div class="ft">Durango, Dgo. a ${fecha}</div>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-      <div class="fl"></div><div class="fn">${firmante||'Dr. Alejandro Calderón Rentería'}</div>
-      <div class="fc">${cargo||'Coordinación de Actualización Docente'}</div>
-    </div>
+  <img src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD" onerror="this.style.display='none'"/>
+</div>
+<!-- Contenido principal -->
+<div class="content">
+  <div class="logos">
+    <img class="logo-sep" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/SEP_logo.svg/320px-SEP_logo.svg.png" alt="SEP" onerror="this.style.display='none'"/>
+    <div class="logo-div"></div>
+    <img class="logo-tecnm" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Tecnm.svg/320px-Tecnm.svg.png" alt="TecNM" onerror="this.style.display='none'"/>
+    <div class="logo-div"></div>
+    <img class="logo-itd" src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD" onerror="this.style.display='none'"/>
   </div>
-</div></body></html>`;
+  <div class="red-rule"></div>
+  <div class="inst-name">El Tecnológico Nacional de México<br>a través del Instituto Tecnológico de Durango</div>
+  <div class="otorga">otorga la presente</div>
+  <div class="titulo">${tipoTxt}</div>
+  <div class="a-lbl">A</div>
+  <div class="nombre-wrap"><span class="nombre">${nombre}</span></div>
+  <p class="body-txt">${cuerpoTxt}</p>
+  <div class="firma-section">
+    <div class="fecha-txt">Victoria de Durango, Durango, a ${fechaLarga}</div>
+    <div class="firma-line"></div>
+    <div class="firma-nombre">Dr. Guillermo de Anda Rodríguez</div>
+    <div class="firma-cargo">Director del Instituto Tecnológico de Durango</div>
+  </div>
+</div>
+</body></html>`;
 }
 
 /* ═══ USUARIOS ═══════════════════════════════════════ */
@@ -718,65 +758,40 @@ function delUser(id){
   setU(getU().filter(x=>x.id!==id)); renderUsers(); toast('Usuario eliminado','info');
 }
 
-/* ═══ PDF LOCAL (fallback cuando Apps Script no responde) ════════════ */
-async function descargarPDFLocal(i){
+/* ═══ PDF LOCAL ═════════════════════════════════════ */
+async function pdfLocal(i){
   const g=GEN[i];
-  const btn=document.getElementById(`pdf-btn-${i}`);
-  if(!btn)return;
-  btn.textContent='⏳ Generando…'; btn.disabled=true;
-
+  const btn=document.getElementById(`lpdf-${i}`);
+  if(btn){btn.textContent='⏳ Generando…';btn.disabled=true;}
   try{
-    // Esperar a que jsPDF y html2canvas carguen (scripts defer)
-    await waitLib();
-
-    // Construir HTML de la constancia en un iframe oculto
-    const html=buildHTML({
-      nombre:g.nombre, tipo:g.tipo||'constancia',
-      descripcion:'', fecha:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'long',year:'numeric'}),
-      firmante:'Dr. Alejandro Calderón Rentería',
-      cargo:'Coordinación de Actualización Docente',
-      fechaCreacion:g.fc
+    // Esperar libs (scripts defer)
+    await new Promise((res,rej)=>{
+      const t=Date.now();
+      const chk=()=>{
+        if(window.html2canvas&&window.jspdf)return res();
+        if(Date.now()-t>10000)return rej(new Error('Librerías no cargaron. Recarga la página.'));
+        setTimeout(chk,200);
+      };chk();
     });
-
+    const html=buildHTML({nombre:g.nombre,tipo:g.tipo||'constancia',fechaCreacion:g.fc});
     const iframe=document.createElement('iframe');
-    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:794px;height:1123px;border:none;visibility:hidden;';
+    iframe.style.cssText='position:fixed;left:-9999px;top:0;width:816px;height:1056px;border:none;visibility:hidden;';
     document.body.appendChild(iframe);
-    iframe.contentDocument.open();
-    iframe.contentDocument.write(html);
-    iframe.contentDocument.close();
-
-    // Esperar render + fuentes
-    await new Promise(r=>setTimeout(r,1400));
-
-    const canvas=await html2canvas(iframe.contentDocument.body,{
-      scale:2, useCORS:true, allowTaint:true, width:794, height:1123,
-      logging:false, backgroundColor:'#ffffff'
-    });
+    iframe.contentDocument.open();iframe.contentDocument.write(html);iframe.contentDocument.close();
+    await new Promise(r=>setTimeout(r,1600)); // esperar fonts + render
+    const canvas=await html2canvas(iframe.contentDocument.body,{scale:2,useCORS:true,allowTaint:true,width:816,height:1056,backgroundColor:'#ffffff'});
     document.body.removeChild(iframe);
-
     const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[794,1123],compress:true});
-    pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',0,0,794,1123);
+    const pdf=new jsPDF({orientation:'portrait',unit:'px',format:[816,1056],compress:true});
+    pdf.addImage(canvas.toDataURL('image/jpeg',.95),'JPEG',0,0,816,1056);
     pdf.save(`Constancia_${g.nombre.replace(/\s+/g,'_')}.pdf`);
-    btn.textContent='✅ Descargado'; 
-    toast('✅ PDF descargado correctamente','success');
+    if(btn){btn.textContent='✅ Descargado';}
+    toast('✅ PDF descargado','success');
   }catch(err){
-    console.error('PDF local error:',err);
-    btn.textContent='⬇ Descargar PDF'; btn.disabled=false;
-    toast('⚠ Error al generar PDF: '+err.message,'error');
+    if(btn){btn.textContent='⬇ Descargar PDF';btn.disabled=false;}
+    toast('⚠ '+err.message,'error');
+    console.error(err);
   }
-}
-
-function waitLib(ms=8000){
-  return new Promise((res,rej)=>{
-    const t0=Date.now();
-    const check=()=>{
-      if(window.html2canvas&&window.jspdf) return res();
-      if(Date.now()-t0>ms) return rej(new Error('jsPDF/html2canvas no cargaron. Intenta recargar la página.'));
-      setTimeout(check,200);
-    };
-    check();
-  });
 }
 </script>
 
