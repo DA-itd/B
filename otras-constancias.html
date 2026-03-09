@@ -300,24 +300,64 @@
               </div>
             </div>
             <!-- Opciones de texto -->
-            <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
-              <div style="display:flex;align-items:center;gap:6px">
-                <label style="font-size:11px;font-weight:700;color:#555">Tamaño fuente</label>
-                <input type="number" id="f-fontsize" value="36" min="8" max="120" style="width:60px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
-                <label style="font-size:11px;color:#888">pt</label>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
+              <!-- Fila 1: Fuente + Tamaño + Color -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px">
+                  <label style="font-size:11px;font-weight:700;color:#555;white-space:nowrap">Fuente</label>
+                  <select id="f-fontfamily" onchange="updateFontPreview()"
+                    style="flex:1;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:#fff">
+                    <option value="Georgia, 'Times New Roman', serif"            data-style="italic">Georgia (Cursiva serif)</option>
+                    <option value="'Times New Roman', Times, serif"              data-style="italic">'Times New Roman'</option>
+                    <option value="'Palatino Linotype', Palatino, serif"         data-style="italic">Palatino</option>
+                    <option value="Garamond, 'EB Garamond', serif"               data-style="italic">Garamond</option>
+                    <option value="'Book Antiqua', Palatino, serif"              data-style="italic">Book Antiqua</option>
+                    <option value="Arial, Helvetica, sans-serif"                 data-style="normal">Arial</option>
+                    <option value="'Arial Narrow', Arial, sans-serif"            data-style="normal">Arial Narrow</option>
+                    <option value="'Trebuchet MS', sans-serif"                   data-style="normal">Trebuchet MS</option>
+                    <option value="Verdana, Geneva, sans-serif"                  data-style="normal">Verdana</option>
+                    <option value="'Century Gothic', CenturyGothic, sans-serif"  data-style="normal">Century Gothic</option>
+                    <option value="'Segoe UI', Tahoma, sans-serif"               data-style="normal">Segoe UI</option>
+                    <option value="Calibri, Candara, sans-serif"                 data-style="normal">Calibri</option>
+                    <option value="'Courier New', Courier, monospace"            data-style="normal">Courier New</option>
+                  </select>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <label style="font-size:11px;font-weight:700;color:#555">Tam.</label>
+                  <input type="number" id="f-fontsize" value="36" min="8" max="120" onchange="updateFontPreview()"
+                    style="width:52px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
+                  <label style="font-size:11px;color:#888">pt</label>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <label style="font-size:11px;font-weight:700;color:#555">Color</label>
+                  <input type="color" id="f-fontcolor" value="#1a1a1a" onchange="updateFontPreview()"
+                    style="width:32px;height:28px;padding:2px;border:1.5px solid #e0e0e0;border-radius:6px;cursor:pointer"/>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
+                    <input type="checkbox" id="f-italic" checked onchange="updateFontPreview()"/> <em>I</em>
+                  </label>
+                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
+                    <input type="checkbox" id="f-bold" onchange="updateFontPreview()"/> <strong>B</strong>
+                  </label>
+                </div>
               </div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <label style="font-size:11px;font-weight:700;color:#555">Color</label>
-                <input type="color" id="f-fontcolor" value="#1a1a1a" style="width:32px;height:28px;padding:2px;border:1.5px solid #e0e0e0;border-radius:6px;cursor:pointer"/>
+              <!-- Fila 2: Preview de fuente -->
+              <div id="font-preview" style="background:#f8f4f0;border:1px solid #e8e0d0;border-radius:8px;padding:8px 14px;text-align:center;min-height:36px;transition:all .2s">
+                <span id="font-preview-text" style="font-family:'Georgia',serif;font-style:italic;font-size:18px;color:#1a1a1a">Nombre de Ejemplo</span>
               </div>
-              <div style="display:flex;align-items:center;gap:6px" id="qr-size-wrap">
-                <label style="font-size:11px;font-weight:700;color:#555">QR tamaño</label>
-                <input type="number" id="f-qrsize" value="90" min="40" max="200" style="width:60px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
-                <label style="font-size:11px;color:#888">pt</label>
+              <!-- Fila 3: QR opciones -->
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:700;color:#555;user-select:none">
+                  <input type="checkbox" id="f-qr-on" checked onchange="toggleQROptions()"/> Incluir QR
+                </label>
+                <div style="display:flex;align-items:center;gap:4px" id="qr-size-wrap">
+                  <label style="font-size:11px;font-weight:700;color:#555">QR tamaño</label>
+                  <input type="number" id="f-qrsize" value="90" min="40" max="200"
+                    style="width:52px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
+                  <label style="font-size:11px;color:#888">pt</label>
+                </div>
               </div>
-              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:11px;font-weight:700;color:#555;user-select:none">
-                <input type="checkbox" id="f-qr-on" checked onchange="toggleQROptions()"/> Incluir QR
-              </label>
             </div>
             <div id="calib-hint" style="font-size:11px;color:#888;margin-bottom:8px;min-height:16px"></div>
             <!-- Canvas calibrador -->
@@ -545,7 +585,11 @@ function cargarEvento(){
   pdfPageW=evt.pdfPageW||0; pdfPageH=evt.pdfPageH||0;
   if(evt.fontSizePt) document.getElementById('f-fontsize').value=evt.fontSizePt;
   if(evt.fontColor)  document.getElementById('f-fontcolor').value=evt.fontColor;
+  if(evt.fontFamily){ document.getElementById('f-fontfamily').value=evt.fontFamily; }
+  if(evt.fontItalic!==undefined) document.getElementById('f-italic').checked=evt.fontItalic;
+  if(evt.fontBold!==undefined)   document.getElementById('f-bold').checked=evt.fontBold;
   if(evt.qrSizePt)   document.getElementById('f-qrsize').value=evt.qrSizePt;
+  updateFontPreview();
   if(pdfBase64) renderPDFCanvas(pdfBase64, true);
   actualizarPosLabels();
   toast('✅ Plantilla cargada: '+evt.nombre,'success');
@@ -578,6 +622,9 @@ function guardarEvento(){
   const entry={nombre,coords:JSON.parse(JSON.stringify(coords)),pdfBase64,pdfPageW,pdfPageH,
     fontSizePt:parseFloat(document.getElementById('f-fontsize').value)||36,
     fontColor:document.getElementById('f-fontcolor').value||'#1a1a1a',
+    fontFamily:document.getElementById('f-fontfamily').value||'Georgia, serif',
+    fontItalic:document.getElementById('f-italic').checked,
+    fontBold:document.getElementById('f-bold').checked,
     qrSizePt:parseFloat(document.getElementById('f-qrsize').value)||90};
   if(!isNaN(idx)&&idx>=0&&idx<evts.length){ evts[idx]=entry; }
   else { evts.push(entry); }
@@ -762,6 +809,21 @@ function toggleQROptions(){
   document.getElementById('pos-qr-lbl').style.opacity=on?'1':'.4';
 }
 
+/* ═══ FONT PREVIEW ═══════════════════════════════════ */
+function updateFontPreview(){
+  const family  = document.getElementById('f-fontfamily').value||'Georgia, serif';
+  const size    = parseFloat(document.getElementById('f-fontsize').value)||36;
+  const color   = document.getElementById('f-fontcolor').value||'#1a1a1a';
+  const italic  = document.getElementById('f-italic').checked;
+  const bold    = document.getElementById('f-bold').checked;
+  const el      = document.getElementById('font-preview-text');
+  el.style.fontFamily  = family;
+  el.style.fontSize    = Math.min(Math.max(size*0.55, 12), 28)+'px';
+  el.style.color       = color;
+  el.style.fontStyle   = italic?'italic':'normal';
+  el.style.fontWeight  = bold?'700':'400';
+}
+
 /* ═══ GENERAR ═══════════════════════════════════════ */
 async function generar(){
   // Validar plantilla
@@ -788,32 +850,80 @@ async function generar(){
   progWrap.classList.remove('hidden');
   const fc=isoToday(); GEN=[];
   const total=noms.length;
+  const eventoNombre=document.getElementById('f-evento-nombre').value.trim()||'Constancias';
 
   await waitLibs();
 
   for(let i=0;i<total;i++){
     const item=noms[i];
-    const pct=Math.round((i/total)*100);
-    progBar.style.width=pct+'%';
+    progBar.style.width=Math.round((i/total)*100)+'%';
     progLbl.textContent=`${i+1} / ${total} — ${item.nombre}`;
     try{
       const pdfBytes=await superponerNombreQR(item.nombre, fc);
       const blob=new Blob([pdfBytes],{type:'application/pdf'});
       const url=URL.createObjectURL(blob);
-      GEN.push({nombre:item.nombre,correo:item.correo,fc,blobUrl:url,pdfBytes});
+      const entry={nombre:item.nombre,correo:item.correo,fc,blobUrl:url,pdfBytes,
+                   driveUrl:null,driveStatus:'uploading'};
+      GEN.push(entry);
+      renderResults();  // muestra estado inmediato con "subiendo…"
+      // Subir a Drive en segundo plano (no await — no bloquea el loop)
+      subirDrive(pdfBytes, item.nombre, fc, eventoNombre, i);
     }catch(err){
       console.error('Error generando:',item.nombre,err);
-      GEN.push({nombre:item.nombre,correo:item.correo,fc,blobUrl:null,error:err.message});
+      GEN.push({nombre:item.nombre,correo:item.correo,fc,
+                blobUrl:null,pdfBytes:null,driveUrl:null,driveStatus:'error_gen',error:err.message});
+      renderResults();
     }
   }
   progBar.style.width='100%';
-  progLbl.textContent=`✅ ${total} constancia(s) lista(s)`;
+  progLbl.textContent=`✅ ${total} constancia(s) generada(s) — subiendo a Drive…`;
 
-  renderResults();
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
-  setTimeout(()=>progWrap.classList.add('hidden'),2500);
+  setTimeout(()=>progWrap.classList.add('hidden'),3500);
   const ok=GEN.filter(g=>g.blobUrl).length;
-  toast(ok===total?`🎉 ${total} constancia(s) generada(s)`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
+  toast(ok===total?`🎉 ${total} constancia(s) listas — subiendo a Drive`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
+}
+
+/* ═══ SUBIR A DRIVE ══════════════════════════════════════ */
+async function subirDrive(pdfBytes, nombre, fecha, eventoNombre, genIdx){
+  try{
+    // Convertir ArrayBuffer → base64
+    const uint8=new Uint8Array(pdfBytes);
+    let bin='';
+    // Procesar en chunks para no saturar el stack
+    const CHUNK=8192;
+    for(let i=0;i<uint8.length;i+=CHUNK){
+      bin+=String.fromCharCode(...uint8.subarray(i,i+CHUNK));
+    }
+    const b64=btoa(bin);
+    const filename=`Constancia_${nombre.replace(/\s+/g,'_')}_${fecha}.pdf`;
+    const params=new URLSearchParams({
+      action:'uploadPDF',
+      filename,
+      nombreEvento:eventoNombre,
+      folderId:FOLDER_ID,
+      pdfBase64:b64
+    });
+    // Apps Script acepta POST para payloads grandes
+    const resp=await fetch(SCRIPT_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:params.toString()
+    });
+    const data=await resp.json();
+    if(data.ok){
+      GEN[genIdx].driveUrl=data.url;
+      GEN[genIdx].driveDownload=data.downloadUrl;
+      GEN[genIdx].driveStatus='ok';
+    } else {
+      GEN[genIdx].driveStatus='error_drive';
+      GEN[genIdx].driveError=data.error||'Error desconocido';
+    }
+  }catch(err){
+    GEN[genIdx].driveStatus='error_drive';
+    GEN[genIdx].driveError=err.message;
+  }
+  renderResults();  // re-renderiza la tarjeta con el nuevo estado
 }
 
 /* ═══ SUPERPOSICIÓN PDF ═══════════════════════════════════════ */
@@ -824,10 +934,14 @@ async function superponerNombreQR(nombre, fecha){
   }
 
   // Read user settings
-  const fontSizePt = parseFloat(document.getElementById('f-fontsize').value)||36;
-  const fontColor  = document.getElementById('f-fontcolor').value||'#1a1a1a';
-  const qrSizePt   = parseFloat(document.getElementById('f-qrsize').value)||90;
-  const qrOn       = document.getElementById('f-qr-on').checked;
+  const fontSizePt  = parseFloat(document.getElementById('f-fontsize').value)||36;
+  const fontColor   = document.getElementById('f-fontcolor').value||'#1a1a1a';
+  const fontFamily  = document.getElementById('f-fontfamily').value||'Georgia, serif';
+  const isItalic    = document.getElementById('f-italic').checked;
+  const isBold      = document.getElementById('f-bold').checked;
+  const fontStyle   = `${isBold?'bold ':''} ${isItalic?'italic ':''}`.trim()||'normal';
+  const qrSizePt    = parseFloat(document.getElementById('f-qrsize').value)||90;
+  const qrOn        = document.getElementById('f-qr-on').checked;
 
   const binary=atob(pdfBase64);
   const bytes=new Uint8Array(binary.length);
@@ -844,27 +958,26 @@ async function superponerNombreQR(nombre, fecha){
   const ctx=canvas.getContext('2d');
 
   // ── Nombre: auto-fit y multi-línea si es muy largo ──
-  const nx      = coords.nombre.x * SCALE;
-  const ny      = coords.nombre.y * SCALE;
-  // Ancho máximo disponible = 70% del ancho de la página (en px de canvas)
+  const nx       = coords.nombre.x * SCALE;
+  const ny       = coords.nombre.y * SCALE;
+  const fontSize = Math.round(fontSizePt * SCALE);   // ← fix: definido aquí
   const maxNameW = pdfPageW * SCALE * 0.70;
-  const lineH    = Math.round(fontSizePt * SCALE * 1.25);
 
-  function drawNombre(ctx, text, baseFont, color){
+  function mkFont(fs){ return `${fontStyle} ${fs}px ${fontFamily}`; }
+
+  function drawNombre(ctx, text, color){
     ctx.save();
     ctx.textAlign   = 'center';
     ctx.textBaseline= 'middle';
     ctx.fillStyle   = color;
 
-    // Prueba si cabe en una línea con el tamaño original
-    let fs = Math.round(baseFont);
-    ctx.font = `italic ${fs}px "Georgia", "Times New Roman", serif`;
+    let fs = fontSize;
+    ctx.font = mkFont(fs);
 
     if(ctx.measureText(text).width <= maxNameW){
-      // Cabe en una línea
       ctx.fillText(text, nx, ny);
     } else {
-      // Intentar partir en 2 líneas por el espacio más cercano al centro
+      // Partir en 2 líneas por el punto más cercano al centro
       const words = text.split(' ');
       let best = null, bestDiff = Infinity;
       for(let i=1;i<words.length;i++){
@@ -874,25 +987,22 @@ async function superponerNombreQR(nombre, fecha){
         if(diff<bestDiff){bestDiff=diff;best={l1,l2};}
       }
       if(best){
-        // Reducir fuente si alguna línea sigue siendo muy ancha
         const longer=[best.l1,best.l2].reduce((a,b)=>a.length>b.length?a:b);
         while(fs>8 && ctx.measureText(longer).width > maxNameW){
-          fs -= 1;
-          ctx.font=`italic ${fs}px "Georgia","Times New Roman",serif`;
+          fs--; ctx.font=mkFont(fs);
         }
-        const gap = Math.round(fs*1.3);
+        const gap=Math.round(fs*1.35);
         ctx.fillText(best.l1, nx, ny - gap/2);
         ctx.fillText(best.l2, nx, ny + gap/2);
       } else {
-        // Una sola palabra muy larga — reducir fuente hasta que quepa
-        while(fs>8 && ctx.measureText(text).width > maxNameW){ fs-=1; ctx.font=`italic ${fs}px "Georgia","Times New Roman",serif`; }
+        while(fs>8 && ctx.measureText(text).width > maxNameW){ fs--; ctx.font=mkFont(fs); }
         ctx.fillText(text, nx, ny);
       }
     }
     ctx.restore();
   }
 
-  drawNombre(ctx, nombre, fontSize, fontColor);
+  drawNombre(ctx, nombre, fontColor);
 
   // ── QR (top-left at calibrated point) ──
   if(qrOn && coords.qr.set){
@@ -934,32 +1044,54 @@ async function superponerNombreQR(nombre, fecha){
 function renderResults(){
   const list=document.getElementById('res-list');
   const ok=GEN.filter(g=>g.blobUrl).length;
-  document.getElementById('res-title').textContent=`✅ Generadas (${ok}/${GEN.length})`;
-  // Show "Download All" button only when there are 2+ successful PDFs
+  const driveOk=GEN.filter(g=>g.driveStatus==='ok').length;
+  const uploading=GEN.filter(g=>g.driveStatus==='uploading').length;
+  // Title
+  let titleExtra='';
+  if(uploading>0) titleExtra=` — ☁ subiendo ${uploading}…`;
+  else if(driveOk>0) titleExtra=` — ☁ ${driveOk} en Drive`;
+  document.getElementById('res-title').textContent=`✅ Generadas (${ok}/${GEN.length})${titleExtra}`;
+  // Download All button
   const dlAllBtn=document.getElementById('dl-all-btn');
   dlAllBtn.style.display=ok>1?'':'none';
-  dlAllBtn.textContent=`⬇ Descargar todos (${ok}) ZIP`;
+  dlAllBtn.textContent=`⬇ ZIP (${ok})`;
+
+  // Re-render items (preserve scroll position)
+  const prevScroll=list.scrollTop;
   list.innerHTML='';
   GEN.forEach((g,i)=>{
     const div=document.createElement('div');
     div.className='result-item';
+
+    // Drive badge
+    let driveBadge='';
+    if(g.driveStatus==='uploading'){
+      driveBadge=`<span style="font-size:10px;color:#1B396A;display:flex;align-items:center;gap:4px"><div class="spinner" style="width:10px;height:10px;border-width:2px"></div> Subiendo…</span>`;
+    } else if(g.driveStatus==='ok'){
+      driveBadge=`<a href="${g.driveUrl}" target="_blank" class="btn-sm-prp" style="font-size:10px;padding:3px 8px">☁ Drive</a>`;
+    } else if(g.driveStatus==='error_drive'){
+      driveBadge=`<span style="font-size:10px;color:#e05050" title="${g.driveError||''}">⚠ Drive</span>`;
+    }
+
     div.innerHTML=`
       <div class="result-info">
         <img class="result-qr" src="${qrUrl(g.nombre,g.fc)}" alt="QR"/>
-        <div>
-          <div style="font-weight:700;font-size:14px">${g.nombre}</div>
-          <div style="font-size:9px;color:#bbb;font-family:monospace;margin-top:2px">${qrData(g.nombre,g.fc)}</div>
+        <div style="min-width:0">
+          <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.nombre}</div>
+          <div style="font-size:9px;color:#bbb;font-family:monospace;margin-top:1px">${qrData(g.nombre,g.fc)}</div>
         </div>
       </div>
       <div class="result-acts">
         ${g.blobUrl
-          ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank">👁 Ver</a>
-            <button class="btn-sm-grn" onclick="dlPDF(${i})">⬇ PDF</button>`
+          ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank" style="font-size:10px;padding:3px 8px">👁 Ver</a>
+            <button class="btn-sm-grn" onclick="dlPDF(${i})" style="font-size:10px;padding:3px 8px">⬇ PDF</button>`
           :`<span style="font-size:11px;color:#e05050">⚠ ${g.error||'Error'}</span>`}
-        <button class="btn-sm-yel" onclick="correo(${i})">📧 Correo</button>
+        ${driveBadge}
+        <button class="btn-sm-yel" onclick="correo(${i})" style="font-size:10px;padding:3px 8px">📧</button>
       </div>`;
     list.appendChild(div);
   });
+  list.scrollTop=prevScroll;
   document.getElementById('res-card').classList.remove('hidden');
 }
 
