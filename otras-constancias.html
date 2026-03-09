@@ -887,43 +887,50 @@ async function generar(){
 /* ═══ SUBIR A DRIVE ══════════════════════════════════════ */
 async function subirDrive(pdfBytes, nombre, fecha, eventoNombre, genIdx){
   try{
-    // Convertir ArrayBuffer → base64
+    // Convertir ArrayBuffer → base64 en chunks para no saturar el stack
     const uint8=new Uint8Array(pdfBytes);
     let bin='';
-    // Procesar en chunks para no saturar el stack
     const CHUNK=8192;
     for(let i=0;i<uint8.length;i+=CHUNK){
       bin+=String.fromCharCode(...uint8.subarray(i,i+CHUNK));
     }
     const b64=btoa(bin);
     const filename=`Constancia_${nombre.replace(/\s+/g,'_')}_${fecha}.pdf`;
-    const params=new URLSearchParams({
+
+    // Enviar como JSON en el body — Apps Script lo lee con e.postData.contents
+    const payload=JSON.stringify({
       action:'uploadPDF',
       filename,
       nombreEvento:eventoNombre,
       folderId:FOLDER_ID,
       pdfBase64:b64
     });
-    // Apps Script acepta POST para payloads grandes
+
     const resp=await fetch(SCRIPT_URL,{
       method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:params.toString()
+      // Sin Content-Type header → Apps Script recibe como text/plain, sin preflight CORS
+      body:payload
     });
-    const data=await resp.json();
+
+    const text=await resp.text();
+    let data;
+    try{ data=JSON.parse(text); }
+    catch(e){ throw new Error('Respuesta inválida: '+text.substring(0,120)); }
+
     if(data.ok){
       GEN[genIdx].driveUrl=data.url;
       GEN[genIdx].driveDownload=data.downloadUrl;
       GEN[genIdx].driveStatus='ok';
     } else {
       GEN[genIdx].driveStatus='error_drive';
-      GEN[genIdx].driveError=data.error||'Error desconocido';
+      GEN[genIdx].driveError=data.error||'Error en Apps Script';
     }
   }catch(err){
     GEN[genIdx].driveStatus='error_drive';
     GEN[genIdx].driveError=err.message;
+    console.error('subirDrive error:',err);
   }
-  renderResults();  // re-renderiza la tarjeta con el nuevo estado
+  renderResults();
 }
 
 /* ═══ SUPERPOSICIÓN PDF ═══════════════════════════════════════ */
