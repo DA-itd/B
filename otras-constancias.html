@@ -6,6 +6,7 @@
   <title>Otras Constancias — ITD</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet"/>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://apis.google.com/js/api.js" async defer></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'DM Sans', sans-serif; background: #f4f6fa; color: #1a1a2e; min-height: 100vh; }
@@ -18,6 +19,9 @@
     @keyframes progAnim{ from{width:0} }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-thumb { background: #c0c8d0; border-radius: 3px; }
+    /* CASE BUTTONS */
+    .case-btn { flex:1; padding:6px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; border:1.5px solid #e0e0e0; font-family:'DM Sans',sans-serif; transition:all .15s; background:#f3f4f6; color:#555; }
+    .case-btn.active { background:#1B396A; color:#F5E4A8; border-color:#1B396A; }
     /* PROGRESS BAR */
     .prog-wrap { background:#e8ecf5; border-radius:20px; height:8px; overflow:hidden; margin-top:8px; }
     .prog-bar  { height:100%; background:linear-gradient(90deg,#1B396A,#2B5580); border-radius:20px; transition:width .3s ease; }
@@ -241,7 +245,14 @@
               <div class="field">
                 <label>PDF de la plantilla <span style="color:#e05050">*</span></label>
                 <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="cargarPDF(this)"/>
-                <button class="btn btn-ghost btn-full" onclick="document.getElementById('pdf-input').click()">📂 Seleccionar PDF</button>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('pdf-input').click()">
+                    💾 Local
+                  </button>
+                  <button class="btn btn-ghost" style="flex:1" id="btn-drive-picker" onclick="abrirDrivePicker()">
+                    ☁ Drive
+                  </button>
+                </div>
                 <div id="pdf-ok" class="hidden" style="margin-top:6px;font-size:12px;color:#14532d;font-weight:700"></div>
               </div>
             </div>
@@ -257,8 +268,14 @@
             <div id="pnl-manual">
               <div class="field">
                 <label>Nombre completo <span style="color:#e05050">*</span></label>
+                <div style="display:flex;gap:6px;margin-bottom:6px">
+                  <button type="button" class="case-btn active" id="cb-title" onclick="setCaseMode('title')"
+                    title="Ej: Dra. Gerardina de las Maravillas Valenciano">Aa Minúsculas</button>
+                  <button type="button" class="case-btn" id="cb-upper" onclick="setCaseMode('upper')"
+                    title="Ej: DRA. GERARDINA DE LAS MARAVILLAS VALENCIANO">AA Mayúsculas</button>
+                </div>
                 <input type="text" id="f-nom" placeholder="Ej: Dra. María García López"
-                  oninput="this.value=titleCase(this.value); updatePrev(); ortografiaManual()"/>
+                  oninput="ortografiaManual()"/>
                 <div id="orto-manual" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
               </div>
             </div>
@@ -450,10 +467,16 @@
 
 <script>
 /* ═══ CONFIG ═══════════════════════════════════════ */
-const LOGO      = "https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true";
-const ADM_EMAIL = "alejandro.calderon@itdurango.edu.mx";
-const FOLDER_ID = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
-const SCRIPT_URL= "https://script.google.com/macros/s/AKfycbxNM7h4yZfUlippABCr9g3CLcPmDMOJWzaB664LLHimyREnRm8P2I7peecCygADmTLLbw/exec";
+const LOGO            = "https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true";
+const ADM_EMAIL       = "alejandro.calderon@itdurango.edu.mx";
+const FOLDER_ID       = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
+const SCRIPT_URL      = "https://script.google.com/macros/s/AKfycbxNM7h4yZfUlippABCr9g3CLcPmDMOJWzaB664LLHimyREnRm8P2I7peecCygADmTLLbw/exec";
+// ── Google Picker ────────────────────────────────────────────────
+// Obtén estos valores en: console.cloud.google.com → tu proyecto de Apps Script
+// → APIs & Services → Credentials → OAuth 2.0 Client IDs
+// Tipo: "Aplicación web" — Origen autorizado: el dominio donde usas este HTML
+const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.googleusercontent.com"
+const GOOGLE_API_KEY   = "AIzaSyBwPxsXa08NOAeQ7W0iA6tgLnPiZKYlbmY"
 
 document.getElementById('yr').textContent = new Date().getFullYear();
 
@@ -659,6 +682,105 @@ function cargarPDF(inp){
   inp.value='';
 }
 
+/* ═══ GOOGLE DRIVE PICKER ════════════════════════════
+   Abre el selector de Drive para elegir un PDF
+   Requiere: GOOGLE_CLIENT_ID y GOOGLE_API_KEY en CONFIG
+══════════════════════════════════════════════════ */
+let pickerAccessToken = null;
+let gapiReady = false;
+
+function abrirDrivePicker(){
+  // Verificar que estén configurados los IDs
+  if(GOOGLE_CLIENT_ID.startsWith('TU_') || GOOGLE_API_KEY.startsWith('TU_')){
+    toast('⚠ Configura GOOGLE_CLIENT_ID y GOOGLE_API_KEY en el código','warn');
+    return;
+  }
+  const btn=document.getElementById('btn-drive-picker');
+  btn.disabled=true; btn.textContent='⏳ Conectando…';
+
+  if(!window.gapi){
+    toast('⚠ Google API no cargó. Verifica tu conexión.','error');
+    btn.disabled=false; btn.textContent='☁ Drive'; return;
+  }
+
+  gapi.load('auth2:picker', ()=>{
+    gapiReady=true;
+    gapi.auth2.authorize({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: 'https://www.googleapis.com/auth/drive.readonly',
+      immediate: false
+    }, (authResult)=>{
+      btn.disabled=false; btn.textContent='☁ Drive';
+      if(authResult && !authResult.error){
+        pickerAccessToken=authResult.access_token;
+        mostrarPicker(pickerAccessToken);
+      } else {
+        toast('⚠ No se pudo autenticar con Google Drive','error');
+      }
+    });
+  });
+}
+
+function mostrarPicker(token){
+  gapi.load('picker', ()=>{
+    const view = new google.picker.DocsView(google.picker.ViewId.DOCS)
+      .setMimeTypes('application/pdf')
+      .setMode(google.picker.DocsViewMode.LIST)
+      .setParent(FOLDER_ID)   // abre directo en tu carpeta de constancias
+      .setIncludeFolders(true);
+
+    // Vista adicional para buscar en todo Drive
+    const viewAll = new google.picker.DocsView(google.picker.ViewId.DOCS)
+      .setMimeTypes('application/pdf')
+      .setMode(google.picker.DocsViewMode.LIST);
+
+    const picker = new google.picker.PickerBuilder()
+      .setTitle('Selecciona la plantilla PDF')
+      .setLocale('es')
+      .setOAuthToken(token)
+      .setDeveloperKey(GOOGLE_API_KEY)
+      .addView(view)
+      .addView(viewAll)
+      .setCallback(onPickerCallback)
+      .build();
+    picker.setVisible(true);
+  });
+}
+
+async function onPickerCallback(data){
+  if(data.action !== google.picker.Action.PICKED) return;
+  const doc = data.docs[0];
+  const fileId = doc.id;
+  const fileName = doc.name;
+
+  document.getElementById('pdf-ok').textContent='⏳ Descargando de Drive…';
+  document.getElementById('pdf-ok').classList.remove('hidden');
+
+  try{
+    // Descargar el PDF via Drive API con el access token
+    const resp = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+      { headers:{ Authorization: 'Bearer '+pickerAccessToken } }
+    );
+    if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const arrayBuf = await resp.arrayBuffer();
+    const uint8 = new Uint8Array(arrayBuf);
+    let bin='';
+    const CHUNK=8192;
+    for(let i=0;i<uint8.length;i+=CHUNK) bin+=String.fromCharCode(...uint8.subarray(i,i+CHUNK));
+    const b64 = btoa(bin);
+
+    pdfBase64 = b64;
+    document.getElementById('pdf-ok').textContent='✅ ☁ '+fileName;
+    renderPDFCanvas(b64, false);
+    toast('PDF de Drive cargado — calibra las posiciones','info');
+  } catch(err){
+    document.getElementById('pdf-ok').textContent='⚠ Error al descargar';
+    toast('⚠ No se pudo descargar el PDF: '+err.message,'error');
+    console.error(err);
+  }
+}
+
 async function renderPDFCanvas(b64, keepMarkers){
   // Use PDF.js from CDN (loaded dynamically)
   if(!window.pdfjsLib){
@@ -780,7 +902,7 @@ function loadExcel(inp){
       const ei=hdrs.findIndex(h=>['correo','email','mail'].some(k=>h.includes(k)));
       XL=rows.slice(1).reduce((a,row)=>{
         if(!row||!row.length)return a;
-        const n=titleCase(String(row[ni>=0?ni:0]||'').trim());
+        const n=applyCase(String(row[ni>=0?ni:0]||'').trim());
         const c=ei>=0?String(row[ei]||'').trim():'';
         if(n)a.push({nombre:n,correo:c});
         return a;
@@ -837,7 +959,7 @@ async function generar(){
   // Validar destinatarios
   let noms;
   if(mode==='manual'){
-    const n=document.getElementById('f-nom').value.trim();
+    const n=applyCase(document.getElementById('f-nom').value.trim());
     if(!n){toast('⚠ Ingresa el nombre del destinatario.','warn');return;}
     noms=[{nombre:n,correo:''}];
   }else{
@@ -1147,15 +1269,30 @@ function waitLibs(ms=12000){
     };chk();
   });
 }
-/* ═══ TITLE CASE ═════════════════════════════════════
-   Capitaliza primer letra de cada palabra excepto
-   preposiciones internas: de, del, de la, las, los, y, e
+/* ═══ CASE MODE ══════════════════════════════════════
+   'title' → Dra. Gerardina de las Maravillas Valenciano
+   'upper' → DRA. GERARDINA DE LAS MARAVILLAS VALENCIANO
 ══════════════════════════════════════════════════ */
-function titleCase(str){
-  const MINUSCULAS=new Set(['de','del','la','las','los','y','e','mc','mac']);
+let caseMode='title';
+
+function setCaseMode(m){
+  caseMode=m;
+  document.getElementById('cb-title').classList.toggle('active',m==='title');
+  document.getElementById('cb-upper').classList.toggle('active',m==='upper');
+  const inp=document.getElementById('f-nom');
+  if(inp.value.trim()) inp.value=applyCase(inp.value);
+}
+
+function applyCase(str){
+  if(!str.trim()) return str;
+  return caseMode==='upper' ? str.toUpperCase() : toTitleCase(str);
+}
+
+function toTitleCase(str){
+  const PREP=new Set(['de','del','la','las','los','y','e','a','al','con','en','por','sin','sobre']);
   return str.trim().toLowerCase().split(/\s+/).map((w,i)=>{
-    if(i>0 && MINUSCULAS.has(w)) return w;          // preposición interna → minúscula
-    return w.charAt(0).toUpperCase()+w.slice(1);    // primera letra mayúscula
+    if(i>0 && PREP.has(w)) return w;
+    return w.replace(/^./,c=>c.toUpperCase());
   }).join(' ');
 }
 
