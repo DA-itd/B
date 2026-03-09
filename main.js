@@ -596,26 +596,84 @@ const Login = ({ onLogin }) => {
         </div>
 
 
-        {/* Tarjeta 3: Otras Constancias */}
-        <a href="./otras-constancias.html" style={{...S.card('rgba(26,58,92,.1)'), cursor:'pointer', textDecoration:'none', transition:'transform .2s, box-shadow .2s'}}
-          onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(26,58,92,.15)';}}
+        {/* Tarjeta 3: Uso Interno — Desarrollo Académico */}
+        <a href="./otras-constancias.html" style={{...S.card('rgba(107,26,42,.13)'), cursor:'pointer', textDecoration:'none', transition:'transform .2s, box-shadow .2s'}}
+          onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(107,26,42,.18)';}}
           onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}
         >
-          <div style={S.stripe('linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)')}/>
+          {/* Encabezado guinda con logo ITD */}
+          <div style={{
+            background:'linear-gradient(135deg,#6B1020 0%,#922438 55%,#7B1428 100%)',
+            padding:'1.35rem 1.6rem 1.1rem',
+            display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
+            position:'relative', overflow:'hidden', gap:'.3rem'
+          }}>
+            {/* Textura diagonal sutil */}
+            <div style={{
+              position:'absolute', inset:0, pointerEvents:'none',
+              backgroundImage:'repeating-linear-gradient(45deg,transparent,transparent 16px,rgba(255,255,255,0.035) 16px,rgba(255,255,255,0.035) 32px)'
+            }}/>
+            {/* Logo SVG ITD blanco */}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 62" width="148" height="57"
+                 style={{filter:'drop-shadow(0 2px 7px rgba(0,0,0,0.32))', position:'relative', zIndex:1}}
+                 aria-label="Instituto Tecnológico de Durango">
+              {/* Escudo */}
+              <g transform="translate(5,6)">
+                <path d="M22 0 L44 0 L44 44 Q33 53 22 46 Q11 53 0 44 L0 0 Z"
+                      fill="rgba(255,255,255,0.13)" stroke="#fff" strokeWidth="2.2" opacity="0.92"/>
+                <line x1="22" y1="7"  x2="22" y2="39" stroke="#fff" strokeWidth="1.3" opacity="0.5"/>
+                <line x1="6"  y1="22" x2="38" y2="22" stroke="#fff" strokeWidth="1.3" opacity="0.5"/>
+                <circle cx="22" cy="22" r="7.5" fill="none" stroke="#fff" strokeWidth="1.9" opacity="0.88"/>
+                <circle cx="22" cy="22" r="3"   fill="#fff" opacity="0.96"/>
+                {/* Dientes engrane */}
+                {[0,45,90,135,180,225,270,315].map(deg => {
+                  const rad = deg * Math.PI / 180;
+                  const x1 = 22 + Math.cos(rad) * 7.5;
+                  const y1 = 22 + Math.sin(rad) * 7.5;
+                  const x2 = 22 + Math.cos(rad) * 10.5;
+                  const y2 = 22 + Math.sin(rad) * 10.5;
+                  return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#fff" strokeWidth="1.6" opacity="0.6"/>;
+                })}
+              </g>
+              {/* Texto ITD */}
+              <text x="60" y="28"
+                    fontFamily="'Playfair Display','Georgia',serif"
+                    fontSize="25" fontWeight="900"
+                    fill="#fff" letterSpacing="5" opacity="0.97">ITD</text>
+              {/* Subtexto */}
+              <text x="60" y="40"
+                    fontFamily="Inter,sans-serif"
+                    fontSize="7.2" fontWeight="500"
+                    fill="#fff" letterSpacing="1.5" opacity="0.78">TECNOLÓGICO DE DURANGO</text>
+              {/* Línea decorativa */}
+              <rect x="60" y="45" width="90" height="1.3" rx="1" fill="#fff" opacity="0.25"/>
+            </svg>
+          </div>
+
+          {/* Franja shimmer guinda */}
+          <div style={S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)')}/>
+
           <div style={S.cardBody}>
             <div style={{display:'flex', alignItems:'center', gap:'.85rem', marginBottom:'.2rem'}}>
-              <div style={S.iconWrap('linear-gradient(135deg,#1B396A,#2B5580)', '0 3px 14px rgba(26,58,92,.25)')}>
+              <div style={S.iconWrap('linear-gradient(135deg,#6B1020,#922438)', '0 3px 14px rgba(107,26,42,.30)')}>
                 <span style={{fontSize:21}}>📋</span>
               </div>
               <div>
-                <div style={S.cardTitle}>Otras Constancias</div>
-                <div style={S.cardSub}>Generar documentos PDF</div>
+                <div style={S.cardTitle}>Uso Interno</div>
+                <div style={S.cardSub}>Desarrollo Académico</div>
               </div>
             </div>
             <p style={S.desc}>
               Genera constancias y reconocimientos personalizados con la plantilla oficial ITD. Ingresa nombres manualmente o carga un Excel. Incluye QR de verificación.
             </p>
-            <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', padding:'.85rem 1rem', borderRadius:12, background:'linear-gradient(135deg,#1B396A,#2B5580)', color:'#F5E4A8', fontWeight:700, fontSize:'.84rem', boxShadow:'0 4px 18px rgba(26,58,92,.3)'}}>
+            {/* Botón guinda */}
+            <div style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
+              padding:'.85rem 1rem', borderRadius:12,
+              background:'linear-gradient(135deg,#6B1020,#922438)',
+              color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
+              boxShadow:'0 4px 18px rgba(107,26,42,.32)'
+            }}>
               📜 Acceder
             </div>
           </div>
