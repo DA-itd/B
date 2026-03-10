@@ -417,14 +417,7 @@
     <div id="tab-usuarios" class="hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
         <div><div class="gen-h2">Gestión de Usuarios</div><div class="gen-sub" id="usr-cnt">—</div></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <button onclick="exportarUsuarios()" title="Exportar usuarios" style="background:none;border:none;cursor:pointer;font-size:11px;color:#bbb;padding:4px 6px;border-radius:6px;transition:color .15s" onmouseover="this.style.color='#666'" onmouseout="this.style.color='#bbb'">↑ exportar</button>
-          <label title="Importar usuarios" style="background:none;border:none;cursor:pointer;font-size:11px;color:#bbb;padding:4px 6px;border-radius:6px;transition:color .15s;margin:0" onmouseover="this.style.color='#666'" onmouseout="this.style.color='#bbb'">
-            ↓ importar
-            <input type="file" accept=".json" style="display:none" onchange="importarUsuarios(this)"/>
-          </label>
-          <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
-        </div>
+        <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
       </div>
 
       <div class="card hidden" id="uf-card" style="margin-top:14px;border:2px solid #1B396A18">
@@ -519,14 +512,7 @@ let pdfBase64='';             // base64 of loaded PDF
 let coords={ nombre:{x:0,y:0,set:false}, qr:{x:0,y:0,set:false} };
 
 /* ═══ INIT ═══════════════════════════════════════ */
-(async()=>{
-  const users=getU();
-  if(!users.find(u=>u.email===ADM_EMAIL)){
-    const hash=await h256('Xela1615');
-    users.push({id:'adm0',name:'Dr. Alejandro Calderón Rentería',email:ADM_EMAIL,hash,isAdmin:true,active:true,createdAt:new Date().toISOString()});
-    setU(users);
-  }
-  document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+(async()=>{\n  document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
   const s=getSS(); if(s){CU=s;showApp();}
   renderEventoSelect();
@@ -544,9 +530,19 @@ async function doLogin(){
   btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Verificando…';
   try{
     const hash=await h256(pass);
-    const found=getU().find(u=>u.email===email&&u.hash===hash&&u.active);
-    if(found){CU={email:found.email,name:found.name,isAdmin:found.isAdmin};setSS(CU);showApp();}
-    else{errEl.textContent='⚠ Credenciales incorrectas o usuario inactivo.';errEl.classList.remove('hidden');}
+    const url=`${SCRIPT_URL}?action=login&email=${encodeURIComponent(email)}&hash=${encodeURIComponent(hash)}`;
+    const resp=await fetch(url);
+    const data=await resp.json();
+    if(data.ok){
+      CU={email:data.email,name:data.name,isAdmin:data.isAdmin};
+      setSS(CU);showApp();
+    } else {
+      errEl.textContent='⚠ '+(data.error||'Credenciales incorrectas o usuario inactivo.');
+      errEl.classList.remove('hidden');
+    }
+  }catch(err){
+    errEl.textContent='⚠ Error de conexión: '+err.message;
+    errEl.classList.remove('hidden');
   }finally{btn.disabled=false;btn.innerHTML='🔐 Iniciar sesión';}
 }
 function doLogout(){
@@ -1429,26 +1425,34 @@ function ortografiaExcel(){
   renderErrores(_errExcel,'orto-excel','(i)=>{ _errExcel[i].fix&&_errExcel[i].fix(); }');
 }
 
-/* ═══ USUARIOS ═══════════════════════════════════════ */
-function renderUsers(){
-  const users=getU();
-  document.getElementById('usr-cnt').textContent=`${users.length} usuario(s) registrado(s)`;
+/* ═══ USUARIOS (via Apps Script) ═══════════════════════════════════════ */
+async function renderUsers(){
   const list=document.getElementById('usr-list'), empty=document.getElementById('usr-empty');
-  if(!users.length){list.innerHTML='';empty.classList.remove('hidden');return;}
-  empty.classList.add('hidden');
-  list.innerHTML=users.map(u=>`
-    <div class="usr-row" style="${!u.active?'opacity:.6;background:#fafafa':''}">
-      <div><div style="font-weight:700;font-size:14px">${u.name}</div><div style="font-size:10px;color:#bbb">${new Date(u.createdAt).toLocaleDateString('es-MX')}</div></div>
-      <div class="hide-sm" style="font-size:12px;color:#666;word-break:break-all">${u.email}</div>
-      <div><span class="badge ${u.isAdmin?'badge-red':'badge-blue'}">${u.isAdmin?'Admin':'Usuario'}</span></div>
-      <div><button class="tog-btn ${u.active?'tog-on':'tog-off'}" onclick="toggleU('${u.id}')">${u.active?'Activo':'Inactivo'}</button></div>
-      <div style="text-align:right">${u.email!==CU.email?`<button class="btn-sm-red" onclick="delUser('${u.id}')">🗑</button>`:''}</div>
-    </div>`).join('');
+  list.innerHTML='<div style="padding:20px;text-align:center;color:#aaa">Cargando…</div>';
+  try{
+    const resp=await fetch(`${SCRIPT_URL}?action=listUsers`);
+    const data=await resp.json();
+    if(!data.ok) throw new Error(data.error);
+    const users=data.users;
+    document.getElementById('usr-cnt').textContent=`${users.length} usuario(s) registrado(s)`;
+    if(!users.length){list.innerHTML='';empty.classList.remove('hidden');return;}
+    empty.classList.add('hidden');
+    list.innerHTML=users.map(u=>`
+      <div class="usr-row" style="${!u.active?'opacity:.6;background:#fafafa':''}">
+        <div><div style="font-weight:700;font-size:14px">${u.name}</div><div style="font-size:10px;color:#bbb">${new Date(u.createdAt).toLocaleDateString('es-MX')}</div></div>
+        <div class="hide-sm" style="font-size:12px;color:#666;word-break:break-all">${u.email}</div>
+        <div><span class="badge ${u.isAdmin?'badge-red':'badge-blue'}">${u.isAdmin?'Admin':'Usuario'}</span></div>
+        <div><button class="tog-btn ${u.active?'tog-on':'tog-off'}" onclick="toggleU('${u.id}')">${u.active?'Activo':'Inactivo'}</button></div>
+        <div style="text-align:right">${u.email!==CU.email?`<button class="btn-sm-red" onclick="delUser('${u.id}')">&#128465;</button>`:''}</div>
+      </div>`).join('');
+  }catch(err){
+    list.innerHTML=`<div style="padding:20px;text-align:center;color:#e05050">&#9888; Error al cargar usuarios: ${err.message}</div>`;
+  }
 }
 function toggleUF(hide){
   const c=document.getElementById('uf-card'), b=document.getElementById('nw-btn');
   if(hide||!c.classList.contains('hidden')){c.classList.add('hidden');b.textContent='+ Nuevo usuario';b.className='btn btn-primary';}
-  else{c.classList.remove('hidden');b.textContent='✕ Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
+  else{c.classList.remove('hidden');b.textContent='&#x2715; Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
 }
 async function crearUsuario(){
   const name=document.getElementById('uf-nm').value.trim();
@@ -1458,66 +1462,44 @@ async function crearUsuario(){
   const isAdm=document.getElementById('uf-adm').checked;
   const errEl=document.getElementById('uf-err'), btn=document.getElementById('uf-sv');
   errEl.classList.add('hidden');
-  if(!name||!email||!pass){errEl.textContent='⚠ Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='⚠ Correo inválido.';errEl.classList.remove('hidden');return;}
-  if(getU().find(u=>u.email===email)){errEl.textContent='⚠ Ya existe ese correo.';errEl.classList.remove('hidden');return;}
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
-  const hash=await h256(pass);
-  const nu={id:Date.now().toString(),name,email,hash,isAdmin:isAdm,active:true,createdAt:new Date().toISOString()};
-  setU([...getU(),nu]); toggleUF(true); renderUsers();
-  btn.disabled=false; btn.innerHTML='💾 Crear usuario';
-  ['uf-nm','uf-em','uf-pw'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('uf-adm').checked=false;
-  toast(`✅ Usuario ${email} creado`,'success');
+  if(!name||!email||!pass){errEl.textContent='&#9888; Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='&#9888; Correo inválido.';errEl.classList.remove('hidden');return;}
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando&#8230;';
+  try{
+    const hash=await h256(pass);
+    const resp=await fetch(SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'createUser',name,email,hash,isAdmin:isAdm})
+    });
+    const data=await resp.json();
+    if(!data.ok) throw new Error(data.error||'Error al crear usuario');
+    toggleUF(true); renderUsers();
+    ['uf-nm','uf-em','uf-pw'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('uf-adm').checked=false;
+    toast(`&#x2705; Usuario ${email} creado`,'success');
+  }catch(err){
+    errEl.textContent='&#9888; '+err.message;
+    errEl.classList.remove('hidden');
+  }finally{btn.disabled=false;btn.innerHTML='&#128190; Crear usuario';}
 }
-function toggleU(id){setU(getU().map(u=>u.id===id?{...u,active:!u.active}:u));renderUsers();toast('Estado actualizado','info');}
-function delUser(id){
-  const u=getU().find(x=>x.id===id);
-  if(!u||!confirm(`¿Eliminar "${u.email}"?`))return;
-  setU(getU().filter(x=>x.id!==id));renderUsers();toast('Usuario eliminado','info');
+async function toggleU(id){
+  try{
+    const resp=await fetch(`${SCRIPT_URL}?action=toggleUser&id=${encodeURIComponent(id)}`);
+    const data=await resp.json();
+    if(!data.ok) throw new Error(data.error);
+    renderUsers(); toast('Estado actualizado','info');
+  }catch(err){ toast('&#10060; '+err.message,'error'); }
+}
+async function delUser(id){
+  if(!confirm('&#191;Eliminar este usuario?')) return;
+  try{
+    const resp=await fetch(`${SCRIPT_URL}?action=deleteUser&id=${encodeURIComponent(id)}`);
+    const data=await resp.json();
+    if(!data.ok) throw new Error(data.error);
+    renderUsers(); toast('Usuario eliminado','info');
+  }catch(err){ toast('&#10060; '+err.message,'error'); }
 }
 
-/* ═══ EXPORTAR / IMPORTAR USUARIOS ═══════════════════ */
-function exportarUsuarios(){
-  const users=getU();
-  if(!users.length){toast('⚠ No hay usuarios para exportar','info');return;}
-  const data=JSON.stringify(users,null,2);
-  const blob=new Blob([data],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;
-  a.download='itd_usuarios_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast(`✅ ${users.length} usuario(s) exportado(s)`,'success');
-}
-
-function importarUsuarios(input){
-  const file=input.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const imported=JSON.parse(e.target.result);
-      if(!Array.isArray(imported))throw new Error('Formato inválido');
-      const existing=getU();
-      let agregados=0, omitidos=0;
-      imported.forEach(u=>{
-        if(!u.email||!u.hash){omitidos++;return;}
-        if(existing.find(x=>x.email===u.email)){omitidos++;return;}
-        existing.push({...u, id:u.id||Date.now().toString()+Math.random().toString(36).slice(2)});
-        agregados++;
-      });
-      setU(existing);
-      renderUsers();
-      toast(`✅ ${agregados} usuario(s) importado(s)${omitidos?' · '+omitidos+' omitido(s) (ya existían)':''}`, agregados?'success':'info');
-    }catch(err){
-      toast('❌ Error al leer el archivo: '+err.message,'error');
-    }
-    input.value='';
-  };
-  reader.readAsText(file);
-}
 </script>
 
 <!-- jsPDF y html2canvas: carga diferida para no bloquear la página -->
