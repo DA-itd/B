@@ -5,7 +5,7 @@ import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, F
 // ==========================================
 // CONFIGURACIÓN DE GOOGLE (OBLIGATORIO)
 // ==========================================
-const GOOGLE_CLIENT_ID = "916349562772-08j3sv7m57d3a1ni3u69oufhhlp14g7o.apps.googleusercontent.com"; 
+const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
 
 // ==========================================
 // CONFIGURACIÓN LOCAL (GITHUB)
