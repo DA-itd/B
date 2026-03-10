@@ -531,7 +531,8 @@ let pdfBase64='';             // base64 of loaded PDF
 let coords={ nombre:{x:0,y:0,set:false}, qr:{x:0,y:0,set:false} };
 
 /* ═══ INIT ═══════════════════════════════════════ */
-(async()=>{\n  document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+(async()=>{
+  document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
   const s=getSS(); if(s){CU=s;showApp();}
   renderEventoSelect();
@@ -1462,16 +1463,16 @@ async function renderUsers(){
         <div class="hide-sm" style="font-size:12px;color:#666;word-break:break-all">${u.email}</div>
         <div><span class="badge ${u.isAdmin?'badge-red':'badge-blue'}">${u.isAdmin?'Admin':'Usuario'}</span></div>
         <div><button class="tog-btn ${u.active?'tog-on':'tog-off'}" onclick="toggleU('${u.id}')">${u.active?'Activo':'Inactivo'}</button></div>
-        <div style="text-align:right">${u.email!==CU.email?`<button class="btn-sm-red" onclick="delUser('${u.id}')">&#128465;</button>`:''}</div>
+        <div style="text-align:right">${u.email!==CU.email?'<button class="btn-sm-red" onclick="delUser(\''+u.id+'\')">🗑</button>':''}</div>
       </div>`).join('');
   }catch(err){
-    list.innerHTML=`<div style="padding:20px;text-align:center;color:#e05050">&#9888; Error al cargar usuarios: ${err.message}</div>`;
+    list.innerHTML=`<div style="padding:20px;text-align:center;color:#e05050">⚠ Error al cargar usuarios: ${err.message}</div>`;
   }
 }
 function toggleUF(hide){
   const c=document.getElementById('uf-card'), b=document.getElementById('nw-btn');
   if(hide||!c.classList.contains('hidden')){c.classList.add('hidden');b.textContent='+ Nuevo usuario';b.className='btn btn-primary';}
-  else{c.classList.remove('hidden');b.textContent='&#x2715; Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
+  else{c.classList.remove('hidden');b.textContent='✕ Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
 }
 async function crearUsuario(){
   const name=document.getElementById('uf-nm').value.trim();
@@ -1481,9 +1482,9 @@ async function crearUsuario(){
   const isAdm=document.getElementById('uf-adm').checked;
   const errEl=document.getElementById('uf-err'), btn=document.getElementById('uf-sv');
   errEl.classList.add('hidden');
-  if(!name||!email||!pass){errEl.textContent='&#9888; Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='&#9888; Correo inválido.';errEl.classList.remove('hidden');return;}
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando&#8230;';
+  if(!name||!email||!pass){errEl.textContent='⚠ Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='⚠ Correo inválido.';errEl.classList.remove('hidden');return;}
+  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
   try{
     const hash=await h256(pass);
     const resp=await fetch(SCRIPT_URL,{
@@ -1495,11 +1496,11 @@ async function crearUsuario(){
     toggleUF(true); renderUsers();
     ['uf-nm','uf-em','uf-pw'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('uf-adm').checked=false;
-    toast(`&#x2705; Usuario ${email} creado`,'success');
+    toast(`✅ Usuario ${email} creado`,'success');
   }catch(err){
-    errEl.textContent='&#9888; '+err.message;
+    errEl.textContent='⚠ '+err.message;
     errEl.classList.remove('hidden');
-  }finally{btn.disabled=false;btn.innerHTML='&#128190; Crear usuario';}
+  }finally{btn.disabled=false;btn.innerHTML='💾 Crear usuario';}
 }
 async function toggleU(id){
   try{
@@ -1507,7 +1508,7 @@ async function toggleU(id){
     const data=await resp.json();
     if(!data.ok) throw new Error(data.error);
     renderUsers(); toast('Estado actualizado','info');
-  }catch(err){ toast('&#10060; '+err.message,'error'); }
+  }catch(err){ toast('❌ '+err.message,'error'); }
 }
 async function delUser(id){
   if(!confirm('&#191;Eliminar este usuario?')) return;
@@ -1516,7 +1517,7 @@ async function delUser(id){
     const data=await resp.json();
     if(!data.ok) throw new Error(data.error);
     renderUsers(); toast('Usuario eliminado','info');
-  }catch(err){ toast('&#10060; '+err.message,'error'); }
+  }catch(err){ toast('❌ '+err.message,'error'); }
 }
 
 </script>
