@@ -60,6 +60,10 @@
     .field label { font-size:11px; font-weight:700; color:#555; letter-spacing:.04em; text-transform:uppercase; }
     .field input, .field select { padding:10px 14px; border-radius:10px; font-size:14px; border:1.5px solid #e0e0e0; outline:none; font-family:'DM Sans',sans-serif; background:#fff; transition:border-color .15s; width:100%; }
     .field input:focus, .field select:focus { border-color:#1B396A; }
+    .pass-wrap { position:relative; display:flex; align-items:center; }
+    .pass-wrap input { padding-right:44px !important; }
+    .pass-toggle { position:absolute; right:12px; background:none; border:none; cursor:pointer; font-size:16px; color:#bbb; padding:0; line-height:1; transition:color .15s; }
+    .pass-toggle:hover { color:#1B396A; }
 
     /* BADGES */
     .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
@@ -171,7 +175,10 @@
         </div>
         <div class="field">
           <label>Contraseña <span style="color:#e05050">*</span></label>
-          <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/>
+          <div class="pass-wrap">
+            <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/>
+            <button type="button" class="pass-toggle" onclick="togglePass('li-pass',this)" title="Mostrar/ocultar contraseña">👁</button>
+          </div>
         </div>
         <div id="li-err" class="err-box hidden"></div>
         <button class="btn btn-primary btn-full" id="li-btn" onclick="doLogin()">🔐 Iniciar sesión</button>
@@ -433,7 +440,12 @@
               <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
             </div>
           </div>
-          <div class="field"><label>Contraseña *</label><input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/></div>
+          <div class="field"><label>Contraseña *</label>
+            <div class="pass-wrap">
+              <input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/>
+              <button type="button" class="pass-toggle" onclick="togglePass('uf-pw',this)" title="Mostrar/ocultar contraseña">👁</button>
+            </div>
+          </div>
           <div class="field"><label>Rol</label>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:14px">
               <input type="checkbox" id="uf-adm"/> Administrador
@@ -472,6 +484,17 @@ const FOLDER_ID       = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
 const SCRIPT_URL      = "https://script.google.com/macros/s/AKfycbxNM7h4yZfUlippABCr9g3CLcPmDMOJWzaB664LLHimyREnRm8P2I7peecCygADmTLLbw/exec";
 
 document.getElementById('yr').textContent = new Date().getFullYear();
+
+function togglePass(inputId, btn) {
+  var input = document.getElementById(inputId);
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁';
+  }
+}
 
 /* ═══ STORAGE ═══════════════════════════════════════ */
 const getU      = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_u')||'[]')}catch{return[]} };
