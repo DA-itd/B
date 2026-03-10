@@ -60,10 +60,6 @@
     .field label { font-size:11px; font-weight:700; color:#555; letter-spacing:.04em; text-transform:uppercase; }
     .field input, .field select { padding:10px 14px; border-radius:10px; font-size:14px; border:1.5px solid #e0e0e0; outline:none; font-family:'DM Sans',sans-serif; background:#fff; transition:border-color .15s; width:100%; }
     .field input:focus, .field select:focus { border-color:#1B396A; }
-    .pass-wrap { position:relative; display:flex; align-items:center; }
-    .pass-wrap input { padding-right:44px !important; }
-    .pass-toggle { position:absolute; right:12px; background:none; border:none; cursor:pointer; font-size:16px; color:#bbb; padding:0; line-height:1; transition:color .15s; }
-    .pass-toggle:hover { color:#1B396A; }
 
     /* BADGES */
     .badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
@@ -175,10 +171,7 @@
         </div>
         <div class="field">
           <label>Contraseña <span style="color:#e05050">*</span></label>
-          <div class="pass-wrap">
-            <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/>
-            <button type="button" class="pass-toggle" onclick="togglePass('li-pass',this)" title="Mostrar/ocultar contraseña">👁</button>
-          </div>
+          <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/>
         </div>
         <div id="li-err" class="err-box hidden"></div>
         <button class="btn btn-primary btn-full" id="li-btn" onclick="doLogin()">🔐 Iniciar sesión</button>
@@ -424,7 +417,14 @@
     <div id="tab-usuarios" class="hidden">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
         <div><div class="gen-h2">Gestión de Usuarios</div><div class="gen-sub" id="usr-cnt">—</div></div>
-        <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button onclick="exportarUsuarios()" title="Exportar usuarios" style="background:none;border:none;cursor:pointer;font-size:11px;color:#bbb;padding:4px 6px;border-radius:6px;transition:color .15s" onmouseover="this.style.color='#666'" onmouseout="this.style.color='#bbb'">↑ exportar</button>
+          <label title="Importar usuarios" style="background:none;border:none;cursor:pointer;font-size:11px;color:#bbb;padding:4px 6px;border-radius:6px;transition:color .15s;margin:0" onmouseover="this.style.color='#666'" onmouseout="this.style.color='#bbb'">
+            ↓ importar
+            <input type="file" accept=".json" style="display:none" onchange="importarUsuarios(this)"/>
+          </label>
+          <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
+        </div>
       </div>
 
       <div class="card hidden" id="uf-card" style="margin-top:14px;border:2px solid #1B396A18">
@@ -440,12 +440,7 @@
               <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
             </div>
           </div>
-          <div class="field"><label>Contraseña *</label>
-            <div class="pass-wrap">
-              <input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/>
-              <button type="button" class="pass-toggle" onclick="togglePass('uf-pw',this)" title="Mostrar/ocultar contraseña">👁</button>
-            </div>
-          </div>
+          <div class="field"><label>Contraseña *</label><input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/></div>
           <div class="field"><label>Rol</label>
             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:14px">
               <input type="checkbox" id="uf-adm"/> Administrador
@@ -484,17 +479,6 @@ const FOLDER_ID       = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
 const SCRIPT_URL      = "https://script.google.com/macros/s/AKfycbxNM7h4yZfUlippABCr9g3CLcPmDMOJWzaB664LLHimyREnRm8P2I7peecCygADmTLLbw/exec";
 
 document.getElementById('yr').textContent = new Date().getFullYear();
-
-function togglePass(inputId, btn) {
-  var input = document.getElementById(inputId);
-  if (input.type === 'password') {
-    input.type = 'text';
-    btn.textContent = '🙈';
-  } else {
-    input.type = 'password';
-    btn.textContent = '👁';
-  }
-}
 
 /* ═══ STORAGE ═══════════════════════════════════════ */
 const getU      = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_u')||'[]')}catch{return[]} };
@@ -1491,6 +1475,48 @@ function delUser(id){
   const u=getU().find(x=>x.id===id);
   if(!u||!confirm(`¿Eliminar "${u.email}"?`))return;
   setU(getU().filter(x=>x.id!==id));renderUsers();toast('Usuario eliminado','info');
+}
+
+/* ═══ EXPORTAR / IMPORTAR USUARIOS ═══════════════════ */
+function exportarUsuarios(){
+  const users=getU();
+  if(!users.length){toast('⚠ No hay usuarios para exportar','info');return;}
+  const data=JSON.stringify(users,null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='itd_usuarios_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`✅ ${users.length} usuario(s) exportado(s)`,'success');
+}
+
+function importarUsuarios(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const imported=JSON.parse(e.target.result);
+      if(!Array.isArray(imported))throw new Error('Formato inválido');
+      const existing=getU();
+      let agregados=0, omitidos=0;
+      imported.forEach(u=>{
+        if(!u.email||!u.hash){omitidos++;return;}
+        if(existing.find(x=>x.email===u.email)){omitidos++;return;}
+        existing.push({...u, id:u.id||Date.now().toString()+Math.random().toString(36).slice(2)});
+        agregados++;
+      });
+      setU(existing);
+      renderUsers();
+      toast(`✅ ${agregados} usuario(s) importado(s)${omitidos?' · '+omitidos+' omitido(s) (ya existían)':''}`, agregados?'success':'info');
+    }catch(err){
+      toast('❌ Error al leer el archivo: '+err.message,'error');
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
 }
 </script>
 
