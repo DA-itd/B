@@ -311,10 +311,14 @@
           </div>
           <div class="step-item" id="st-3">
             <div class="step-circle"><span>3</span></div>
-            <div class="step-lbl">Calibrar</div>
+            <div class="step-lbl">Concepto</div>
           </div>
           <div class="step-item" id="st-4">
             <div class="step-circle"><span>4</span></div>
+            <div class="step-lbl">Calibrar</div>
+          </div>
+          <div class="step-item" id="st-5">
+            <div class="step-circle"><span>5</span></div>
             <div class="step-lbl">Generar</div>
           </div>
         </div>
@@ -404,10 +408,82 @@
             </div>
           </div>
 
-          <div class="step-card" id="sc-4" style="padding:0;overflow:hidden;border:none;box-shadow:none;background:transparent">
+          <!-- CONCEPTO -->
+          <div class="step-card" id="sc-3">
+            <div class="step-card-header">
+              <div class="step-num-badge">3</div>
+              <div class="step-card-title">📝 Concepto de la constancia</div>
+              <span class="step-done-badge">✓ Listo</span>
+            </div>
+            <!-- Toggle opcional -->
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;user-select:none">
+              <input type="checkbox" id="f-concepto-on" onchange="toggleConcepto()"/>
+              <span style="font-size:13px;font-weight:700;color:#555">Incluir texto de concepto en la constancia</span>
+              <span style="font-size:10px;color:#aaa;font-weight:400">(opcional)</span>
+            </label>
+            <!-- Panel concepto (oculto por defecto) -->
+            <div id="pnl-concepto" style="display:none;flex-direction:column;gap:10px">
+              <div class="field">
+                <label>Texto del concepto</label>
+                <textarea id="f-concepto-txt" rows="3"
+                  placeholder="Ej: por su participación como ponente en el..."
+                  oninput="updateConceptoPreview();updateStepper()"
+                  style="padding:10px 14px;border-radius:10px;font-size:14px;border:1.5px solid #e0e0e0;outline:none;font-family:'DM Sans',sans-serif;background:#fff;transition:border-color .15s;width:100%;resize:vertical"
+                  onfocus="this.style.borderColor='#1B396A'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
+              </div>
+              <!-- Controles de fuente del concepto -->
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px">
+                  <label style="font-size:11px;font-weight:700;color:#555;white-space:nowrap">Fuente</label>
+                  <select id="c-fontfamily" onchange="updateConceptoPreview()"
+                    style="flex:1;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:#fff">
+                    <option value="Georgia, 'Times New Roman', serif"           data-style="italic">Georgia (Cursiva serif)</option>
+                    <option value="'Times New Roman', Times, serif"             data-style="italic">Times New Roman</option>
+                    <option value="'Palatino Linotype', Palatino, serif"        data-style="italic">Palatino</option>
+                    <option value="Garamond, 'EB Garamond', serif"              data-style="italic">Garamond</option>
+                    <option value="Arial, Helvetica, sans-serif"                data-style="normal">Arial</option>
+                    <option value="'Trebuchet MS', sans-serif"                  data-style="normal">Trebuchet MS</option>
+                    <option value="Verdana, Geneva, sans-serif"                 data-style="normal">Verdana</option>
+                    <option value="Calibri, Candara, sans-serif"                data-style="normal">Calibri</option>
+                    <option value="'Century Gothic', CenturyGothic, sans-serif" data-style="normal">Century Gothic</option>
+                  </select>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <label style="font-size:11px;font-weight:700;color:#555">Tam.</label>
+                  <input type="number" id="c-fontsize" value="22" min="8" max="80" onchange="updateConceptoPreview()"
+                    style="width:52px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
+                  <label style="font-size:11px;color:#888">pt</label>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <label style="font-size:11px;font-weight:700;color:#555">Color</label>
+                  <input type="color" id="c-fontcolor" value="#1a1a1a" onchange="updateConceptoPreview()"
+                    style="width:32px;height:28px;padding:2px;border:1.5px solid #e0e0e0;border-radius:6px;cursor:pointer"/>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
+                    <input type="checkbox" id="c-italic" onchange="updateConceptoPreview()"/> <em>I</em>
+                  </label>
+                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
+                    <input type="checkbox" id="c-bold" onchange="updateConceptoPreview()"/> <strong>B</strong>
+                  </label>
+                </div>
+              </div>
+              <!-- Preview del concepto -->
+              <div id="concepto-preview" style="background:#f8f4f0;border:1px solid #e8e0d0;border-radius:8px;padding:10px 14px;text-align:center;min-height:36px;transition:all .2s">
+                <span id="concepto-preview-text" style="font-family:'Georgia',serif;font-size:14px;color:#555;font-style:italic">Vista previa del concepto…</span>
+              </div>
+              <!-- Botón para calibrar posición del concepto -->
+              <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;font-size:12px;color:#1B396A;display:flex;align-items:center;gap:8px">
+                <span>💡</span>
+                <span>Después calibra la posición del texto en el <strong>Paso 4 → botón "📝 Concepto"</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card" id="sc-5" style="padding:0;overflow:hidden;border:none;box-shadow:none;background:transparent">
           <button class="btn btn-full" id="gen-btn" onclick="generar()"
             style="font-size:15px;padding:14px 20px;background:linear-gradient(135deg,#0f7a4a,#15a05f);color:#fff;box-shadow:0 4px 18px rgba(15,122,74,.35);letter-spacing:.01em;">
-            🚀 Paso 4 — Generar Constancia(s)
+            🚀 Paso 5 — Generar Constancia(s)
           </button>
           </div>
           <div id="prog-wrap" class="hidden">
@@ -419,9 +495,9 @@
         <!-- CALIBRADOR + RESULTADOS -->
         <div class="right-col">
           <!-- CALIBRADOR -->
-          <div class="step-card" id="sc-3">
+          <div class="step-card" id="sc-4">
             <div class="step-card-header">
-              <div class="step-num-badge">3</div>
+              <div class="step-num-badge">4</div>
               <div class="step-card-title">📍 Calibrar posición</div>
               <span class="step-done-badge">✓ Listo</span>
             </div>
@@ -429,6 +505,7 @@
               <div style="display:flex;gap:6px">
                 <button class="btn-sm-blue" id="calib-nom-btn" onclick="setCalibMode('nombre')" title="Clic en el PDF para marcar donde va el nombre">✍️ Nombre</button>
                 <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">⬛ QR</button>
+                <button class="btn-sm-prp"  id="calib-concepto-btn" onclick="setCalibMode('concepto')" title="Clic para marcar donde va el concepto" style="display:none">📝 Concepto</button>
                 <button class="btn-sm-yel"  onclick="guardarEvento()">💾 Guardar</button>
               </div>
             </div>
@@ -507,15 +584,19 @@
               <div id="mk-qr" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
                 <div style="background:#14532dcc;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">⬛ QR</div>
               </div>
+              <div id="mk-concepto" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
+                <div style="background:#701a75cc;color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap">📝 CONCEPTO</div>
+              </div>
               <div id="calib-placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#bbb;gap:8px">
                 <div style="font-size:32px">📄</div>
                 <div style="font-size:12px;font-weight:700">Selecciona un PDF para calibrar</div>
                 <div style="font-size:11px">Luego haz clic en donde va el nombre y el QR</div>
               </div>
             </div>
-            <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#666">
+            <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:#666;flex-wrap:wrap">
               <span id="pos-nombre-lbl">✍️ Nombre: —</span>
               <span id="pos-qr-lbl">⬛ QR: —</span>
+              <span id="pos-concepto-lbl" style="display:none">📝 Concepto: —</span>
             </div>
           </div>
 
@@ -598,24 +679,29 @@ document.getElementById('yr').textContent = new Date().getFullYear();
 
 /* ═══ STEPPER ═══════════════════════════════════════ */
 function updateStepper(){
-  // Determina qué pasos están completos
   const s1done = !!(pdfBase64 && document.getElementById('f-evento-nombre').value.trim());
   const s2done = !!(mode==='excel' ? XL.length>0 : document.getElementById('f-nom').value.trim());
-  const s3done = !!(coords.nombre.set);
+  const conceptoOn = document.getElementById('f-concepto-on').checked;
+  const conceptoTxt = document.getElementById('f-concepto-txt').value.trim();
+  // Paso 3 (concepto): si está desactivado se considera "listo" automáticamente
+  const s3done = !conceptoOn || !!(conceptoTxt && coords.concepto.set);
+  const s4done = !!(coords.nombre.set);
+  const s5ready = s1done && s2done && s3done && s4done;
 
   const steps = [
-    {id:'st-1', card:'sc-1', done:s1done, active:!s1done},
-    {id:'st-2', card:'sc-2', done:s2done, active:s1done && !s2done},
-    {id:'st-3', card:'sc-3', done:s3done, active:s1done && s2done && !s3done},
-    {id:'st-4', card:'sc-4', done:false,  active:s1done && s2done && s3done},
+    {id:'st-1', card:'sc-1', done:s1done,  active:!s1done},
+    {id:'st-2', card:'sc-2', done:s2done,  active:s1done && !s2done},
+    {id:'st-3', card:'sc-3', done:s3done,  active:s1done && s2done && !s3done},
+    {id:'st-4', card:'sc-4', done:s4done,  active:s1done && s2done && s3done && !s4done},
+    {id:'st-5', card:'sc-5', done:false,   active:s5ready},
   ];
 
   steps.forEach(s => {
-    const el  = document.getElementById(s.id);
+    const el   = document.getElementById(s.id);
     const card = document.getElementById(s.card);
     if(!el || !card) return;
-    el.className  = 'step-item' + (s.done?' done': s.active?' active':'');
-    card.className = 'step-card' + (s.done?' done-step': s.active?' active-step':'');
+    el.className   = 'step-item' + (s.done?' done': s.active?' active':'');
+    card.className = 'step-card'  + (s.done?' done-step': s.active?' active-step':'');
   });
 }
 
@@ -657,11 +743,11 @@ function toast(msg,type='info'){
 /* ═══ STATE ═══════════════════════════════════════ */
 let CU=null, XL=[], mode='manual', GEN=[];
 // Calibrador
-let calibMode=null;           // 'nombre' | 'qr'
+let calibMode=null;           // 'nombre' | 'qr' | 'concepto'
 let calibScale=1;             // canvas display scale vs PDF pts
 let pdfPageW=0, pdfPageH=0;  // PDF page size in pts
 let pdfBase64='';             // base64 of loaded PDF
-let coords={ nombre:{x:0,y:0,set:false}, qr:{x:0,y:0,set:false} };
+let coords={ nombre:{x:0,y:0,set:false}, qr:{x:0,y:0,set:false}, concepto:{x:0,y:0,set:false} };
 
 /* ═══ INIT ═══════════════════════════════════════ */
 (async()=>{
@@ -727,7 +813,35 @@ function showTab(tab){
   if(tab==='usuarios') renderUsers();
 }
 
-/* ═══ MODE ═══════════════════════════════════════ */
+/* ═══ CONCEPTO ═══════════════════════════════════════ */
+function toggleConcepto(){
+  const on = document.getElementById('f-concepto-on').checked;
+  const pnl = document.getElementById('pnl-concepto');
+  pnl.style.display = on ? 'flex' : 'none';
+  // Mostrar/ocultar botón calibrar concepto y label posición
+  document.getElementById('calib-concepto-btn').style.display = on ? '' : 'none';
+  document.getElementById('pos-concepto-lbl').style.display   = on ? '' : 'none';
+  if(!on){ coords.concepto={x:0,y:0,set:false}; document.getElementById('mk-concepto').style.display='none'; }
+  updateStepper();
+}
+
+function updateConceptoPreview(){
+  const txt    = document.getElementById('f-concepto-txt').value || 'Vista previa del concepto…';
+  const family = document.getElementById('c-fontfamily').value || 'Georgia, serif';
+  const size   = Math.min(Math.max(parseFloat(document.getElementById('c-fontsize').value)||22, 8), 40);
+  const color  = document.getElementById('c-fontcolor').value || '#1a1a1a';
+  const italic = document.getElementById('c-italic').checked;
+  const bold   = document.getElementById('c-bold').checked;
+  const el = document.getElementById('concepto-preview-text');
+  el.style.fontFamily  = family;
+  el.style.fontSize    = (size * 0.65) + 'px';
+  el.style.color       = color;
+  el.style.fontStyle   = italic ? 'italic' : 'normal';
+  el.style.fontWeight  = bold   ? '700'    : '400';
+  el.textContent       = txt;
+}
+
+
 function setMode(m){
   mode=m;
   document.getElementById('pnl-manual').classList.toggle('hidden',m!=='manual');
@@ -750,7 +864,7 @@ function cargarEvento(){
   document.getElementById('del-evt-btn').style.display=idx!==''?'':'none';
   if(idx===''){
     // reset
-    pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false}};
+    pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false},concepto:{x:0,y:0,set:false}};
     limpiarCalibrador(); return;
   }
   const evt=getEvts()[parseInt(idx)];
@@ -783,7 +897,7 @@ function eliminarEvento(){
   renderEventoSelect();
   document.getElementById('f-evento').value='';
   document.getElementById('del-evt-btn').style.display='none';
-  pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false}};
+  pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false},concepto:{x:0,y:0,set:false}};
   limpiarCalibrador();
   toast('Plantilla eliminada','info');
 }
@@ -960,7 +1074,7 @@ function limpiarCalibrador(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   canvas.width=0; canvas.height=0;
   document.getElementById('calib-placeholder').style.display='flex';
-  ['mk-nombre','mk-qr'].forEach(id=>document.getElementById(id).style.display='none');
+  ['mk-nombre','mk-qr','mk-concepto'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('pos-nombre-lbl').textContent='✍️ Nombre: —';
   document.getElementById('pos-qr-lbl').textContent='⬛ QR: —';
   document.getElementById('pdf-ok').classList.add('hidden');
@@ -970,10 +1084,12 @@ function limpiarCalibrador(){
 function setCalibMode(m){
   calibMode=m;
   const hint=document.getElementById('calib-hint');
-  if(m==='nombre') hint.textContent='👆 Haz clic donde quieres centrar el NOMBRE en la constancia';
-  else             hint.textContent='👆 Haz clic en la esquina SUPERIOR-IZQUIERDA donde va el QR';
-  document.getElementById('calib-nom-btn').style.outline=m==='nombre'?'2px solid #1B396A':'';
-  document.getElementById('calib-qr-btn').style.outline=m==='qr'?'2px solid #14532d':'';
+  if(m==='nombre')   hint.textContent='👆 Haz clic donde quieres centrar el NOMBRE en la constancia';
+  else if(m==='qr')  hint.textContent='👆 Haz clic en la esquina SUPERIOR-IZQUIERDA donde va el QR';
+  else               hint.textContent='👆 Haz clic donde quieres centrar el CONCEPTO en la constancia';
+  document.getElementById('calib-nom-btn').style.outline      = m==='nombre'  ? '2px solid #1B396A' : '';
+  document.getElementById('calib-qr-btn').style.outline       = m==='qr'      ? '2px solid #14532d' : '';
+  document.getElementById('calib-concepto-btn').style.outline = m==='concepto'? '2px solid #701a75' : '';
 }
 
 function onCalibClick(e){
@@ -995,6 +1111,7 @@ function onCalibClick(e){
   document.getElementById('calib-hint').textContent='✅ Posición guardada. Calibra el otro elemento o guarda el evento.';
   document.getElementById('calib-nom-btn').style.outline='';
   document.getElementById('calib-qr-btn').style.outline='';
+  document.getElementById('calib-concepto-btn').style.outline='';
 }
 
 function redrawMarkers(){
@@ -1020,6 +1137,12 @@ function redrawMarkers(){
     const py=coords.qr.y*calibScale*ds+offsetY;
     mk.style.left=px+'px'; mk.style.top=py+'px'; mk.style.display='block';
   }
+  if(coords.concepto.set && document.getElementById('f-concepto-on').checked){
+    const mk=document.getElementById('mk-concepto');
+    const px=coords.concepto.x*calibScale*ds+offsetX;
+    const py=coords.concepto.y*calibScale*ds+offsetY;
+    mk.style.left=px+'px'; mk.style.top=py+'px'; mk.style.display='block';
+  }
 }
 
 function actualizarPosLabels(){
@@ -1027,6 +1150,8 @@ function actualizarPosLabels(){
     coords.nombre.set?`✍️ Nombre: (${coords.nombre.x}, ${coords.nombre.y})pts`:'✍️ Nombre: —';
   document.getElementById('pos-qr-lbl').textContent=
     coords.qr.set?`⬛ QR: (${coords.qr.x}, ${coords.qr.y})pts`:'⬛ QR: —';
+  document.getElementById('pos-concepto-lbl').textContent=
+    coords.concepto.set?`📝 Concepto: (${coords.concepto.x}, ${coords.concepto.y})pts`:'📝 Concepto: —';
 }
 
 /* ═══ EXCEL ═══════════════════════════════════════ */
@@ -1281,6 +1406,47 @@ async function superponerNombreQR(nombre, fecha){
   }
 
   drawNombre(ctx, nombre, fontColor);
+
+  // ── Concepto (opcional) ──
+  const conceptoOn = document.getElementById('f-concepto-on').checked;
+  if(conceptoOn && coords.concepto.set){
+    const cTxt    = document.getElementById('f-concepto-txt').value.trim();
+    const cFamily = document.getElementById('c-fontfamily').value || 'Georgia, serif';
+    const cSizePt = parseFloat(document.getElementById('c-fontsize').value) || 22;
+    const cColor  = document.getElementById('c-fontcolor').value || '#1a1a1a';
+    const cItalic = document.getElementById('c-italic').checked;
+    const cBold   = document.getElementById('c-bold').checked;
+    const cStyle  = `${cBold?'bold':''} ${cItalic?'italic':''}`.trim()||'normal';
+    const cx = coords.concepto.x * SCALE;
+    const cy = coords.concepto.y * SCALE;
+    const cFontPx = Math.round(cSizePt * SCALE);
+    const maxCW   = pdfPageW * SCALE * 0.80;
+
+    ctx.save();
+    ctx.textAlign    = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle    = cColor;
+    ctx.font         = `${cStyle} ${cFontPx}px ${cFamily}`;
+
+    // Partir en líneas si el texto es muy ancho
+    if(cTxt && ctx.measureText(cTxt).width <= maxCW){
+      ctx.fillText(cTxt, cx, cy);
+    } else if(cTxt) {
+      const words = cTxt.split(' ');
+      const lines = [];
+      let cur = '';
+      for(const w of words){
+        const test = cur ? cur+' '+w : w;
+        if(ctx.measureText(test).width > maxCW && cur){ lines.push(cur); cur=w; }
+        else cur = test;
+      }
+      if(cur) lines.push(cur);
+      const lineH = Math.round(cFontPx * 1.35);
+      const startY = cy - ((lines.length-1)/2) * lineH;
+      lines.forEach((line, li) => ctx.fillText(line, cx, startY + li * lineH));
+    }
+    ctx.restore();
+  }
 
   // ── QR (top-left at calibrated point) ──
   if(qrOn && coords.qr.set){
