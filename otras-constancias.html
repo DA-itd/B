@@ -405,7 +405,10 @@
           </div>
 
           <div class="step-card" id="sc-4" style="padding:0;overflow:hidden;border:none;box-shadow:none;background:transparent">
-          <button class="btn btn-primary btn-full" id="gen-btn" onclick="generar()" style="font-size:15px;padding:14px 20px">🚀 Paso 4 — Generar Constancia(s)</button>
+          <button class="btn btn-full" id="gen-btn" onclick="generar()"
+            style="font-size:15px;padding:14px 20px;background:linear-gradient(135deg,#0f7a4a,#15a05f);color:#fff;box-shadow:0 4px 18px rgba(15,122,74,.35);letter-spacing:.01em;">
+            🚀 Paso 4 — Generar Constancia(s)
+          </button>
           </div>
           <div id="prog-wrap" class="hidden">
             <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
@@ -1145,6 +1148,8 @@ async function generar(){
   progLbl.textContent=`✅ ${total} constancia(s) generada(s)`;
 
   btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
+  btn.style.background='linear-gradient(135deg,#0f7a4a,#15a05f)';
+  btn.style.boxShadow='0 4px 18px rgba(15,122,74,.35)';
   setTimeout(()=>progWrap.classList.add('hidden'),2500);
   const ok=GEN.filter(g=>g.blobUrl).length;
   toast(ok===total?`🎉 ${total} constancia(s) generada(s)`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
