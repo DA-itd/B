@@ -329,7 +329,33 @@
     #mira.visible { display:block; }
     #mira svg { animation:pulsoMira 1s ease-in-out infinite; }
 
-    /* ── ETIQUETA DE MODO ACTIVO ────────────────────────── */
+    /* ── RECTS DE CALIBRACIÓN (drag en canvas) ──────────── */
+    .calib-rect-overlay {
+      pointer-events:none; position:absolute; z-index:12;
+      border-radius:3px; display:none;
+    }
+    .mk-rect {
+      pointer-events:none; position:absolute; z-index:11;
+      border-radius:3px; display:none;
+    }
+    .mk-rect-lbl {
+      position:absolute; top:-22px; left:0;
+      color:#fff; font-size:9px; font-weight:800;
+      padding:2px 8px; border-radius:4px;
+      white-space:nowrap; letter-spacing:.05em;
+    }
+    /* Colores por modo */
+    #overlay-nombre { border:2px dashed #1e3a8a; background:rgba(30,58,138,.08); }
+    #mk-nombre-rect { border:2px solid #1e3a8a; background:rgba(30,58,138,.06); }
+    #mk-nombre-rect .mk-rect-lbl { background:#1e3a8a; }
+
+    #overlay-qr     { border:2px dashed #14532d; background:rgba(20,83,45,.08); }
+    #mk-qr-rect     { border:2px solid #14532d; background:rgba(20,83,45,.06); }
+    #mk-qr-rect .mk-rect-lbl { background:#14532d; }
+
+    #overlay-concepto { border:2px dashed #7c3aed; background:rgba(109,40,217,.08); }
+    #mk-concepto-rect { border:2px solid #7c3aed; background:rgba(109,40,217,.06); }
+    #mk-concepto-rect .mk-rect-lbl { background:#4c1d95; }
     #calib-modo-tag {
       position:absolute; top:10px; left:50%; transform:translateX(-50%);
       padding:5px 14px; border-radius:20px; font-size:11px; font-weight:800;
@@ -664,9 +690,9 @@
             </div>
             <div style="display:flex;justify-content:flex-end;margin-top:-10px;margin-bottom:10px">
               <div style="display:flex;gap:6px">
-                <button class="btn-sm-blue" id="calib-nom-btn" onclick="setCalibMode('nombre')" title="Clic en el PDF para marcar donde va el nombre">✍️ Nombre</button>
-                <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">⬛ QR</button>
-                <button class="btn-sm-prp"  id="calib-concepto-btn" onclick="setCalibMode('concepto')" title="Clic para marcar donde va el concepto" style="display:none">📝 Concepto</button>
+                <button class="btn-sm-blue" id="calib-nom-btn" onclick="setCalibMode('nombre')" title="Clic en el PDF para marcar donde va el nombre">✍ Nombre</button>
+                <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">▪ QR</button>
+                <button class="btn-sm-prp"  id="calib-concepto-btn" onclick="setCalibMode('concepto')" title="Arrastra para definir el área del concepto" style="display:none">¶ Concepto</button>
                 <button class="btn-sm-yel"  onclick="guardarEvento()">💾 Guardar</button>
               </div>
             </div>
@@ -719,19 +745,9 @@
               </div>
               <!-- Fila 3: QR opciones -->
               <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:700;color:#555;user-select:none">
+                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:700;color:var(--t2);user-select:none">
                   <input type="checkbox" id="f-qr-on" checked onchange="toggleQROptions()"/> Incluir QR
                 </label>
-                <div style="display:flex;align-items:center;gap:4px" id="qr-size-wrap">
-                  <label style="font-size:11px;font-weight:700;color:#555">QR tamaño</label>
-                  <select id="f-qrsize"
-                    style="width:70px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;background:#fff">
-                    <option value="30">30 pt</option>
-                    <option value="40" selected>40 pt</option>
-                    <option value="50">50 pt</option>
-                  </select>
-                  <label style="font-size:11px;color:#888">pt</label>
-                </div>
               </div>
             </div>
             <div id="calib-hint" class="calib-hint"></div>
@@ -751,16 +767,14 @@
                   <circle cx="23" cy="23" r="1.8" id="m-dot"/>
                 </svg>
               </div>
-              <!-- Marcadores de posición guardada -->
-              <div id="mk-nombre" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
-                <div style="background:#1e3a8a;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:5px;white-space:nowrap;letter-spacing:.05em;box-shadow:0 2px 6px rgba(0,0,0,.25)">✍ NOMBRE</div>
-              </div>
-              <div id="mk-qr" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
-                <div style="background:#14532d;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:5px;white-space:nowrap;letter-spacing:.05em;box-shadow:0 2px 6px rgba(0,0,0,.25)">▪ QR</div>
-              </div>
-              <div id="mk-concepto" style="display:none;position:absolute;pointer-events:none;transform:translate(-50%,-50%)">
-                <div style="background:#4c1d95;color:#fff;font-size:9px;font-weight:800;padding:3px 8px;border-radius:5px;white-space:nowrap;letter-spacing:.05em;box-shadow:0 2px 6px rgba(0,0,0,.25)">¶ CONCEPTO</div>
-              </div>
+              <!-- Overlays de drag (vivos durante el arrastre) -->
+              <div id="overlay-nombre"  class="calib-rect-overlay"></div>
+              <div id="overlay-qr"      class="calib-rect-overlay"></div>
+              <div id="overlay-concepto" class="calib-rect-overlay"></div>
+              <!-- Rectángulos persistentes (después de definidos) -->
+              <div id="mk-nombre-rect"  class="mk-rect"><div class="mk-rect-lbl">✍ NOMBRE</div></div>
+              <div id="mk-qr-rect"      class="mk-rect"><div class="mk-rect-lbl">▪ QR</div></div>
+              <div id="mk-concepto-rect" class="mk-rect"><div class="mk-rect-lbl">¶ CONCEPTO</div></div>
               <!-- Placeholder antes de cargar PDF -->
               <div id="calib-placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(237,240,245,.95)">
                 <div style="font-size:40px;opacity:.35">📄</div>
@@ -923,7 +937,7 @@ let calibMode=null;           // 'nombre' | 'qr' | 'concepto'
 let calibScale=1;             // canvas display scale vs PDF pts
 let pdfPageW=0, pdfPageH=0;  // PDF page size in pts
 let pdfBase64='';             // base64 of loaded PDF
-let coords={ nombre:{x:0,y:0,set:false}, qr:{x:0,y:0,set:false}, concepto:{x:0,y:0,set:false} };
+let coords={ nombre:{x:0,y:0,w:0,h:0,set:false}, qr:{x:0,y:0,w:0,h:0,set:false}, concepto:{x:0,y:0,w:0,h:0,set:false} };
 
 /* ═══ INIT ═══════════════════════════════════════ */
 (async()=>{
@@ -997,7 +1011,7 @@ function toggleConcepto(){
   // Mostrar/ocultar botón calibrar concepto y label posición
   document.getElementById('calib-concepto-btn').style.display = on ? '' : 'none';
   document.getElementById('pos-concepto-lbl').style.display   = on ? '' : 'none';
-  if(!on){ coords.concepto={x:0,y:0,set:false}; document.getElementById('mk-concepto').style.display='none'; }
+  if(!on){ coords.concepto={x:0,y:0,w:0,h:0,set:false}; document.getElementById('mk-concepto-rect').style.display='none'; }
   updateStepper();
 }
 
@@ -1040,7 +1054,7 @@ function cargarEvento(){
   document.getElementById('del-evt-btn').style.display=idx!==''?'':'none';
   if(idx===''){
     // reset
-    pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false},concepto:{x:0,y:0,set:false}};
+    pdfBase64=''; coords={nombre:{x:0,y:0,w:0,h:0,set:false},qr:{x:0,y:0,w:0,h:0,set:false},concepto:{x:0,y:0,w:0,h:0,set:false}};
     limpiarCalibrador(); return;
   }
   const evt=getEvts()[parseInt(idx)];
@@ -1054,7 +1068,6 @@ function cargarEvento(){
   if(evt.fontFamily){ document.getElementById('f-fontfamily').value=evt.fontFamily; }
   if(evt.fontItalic!==undefined) document.getElementById('f-italic').checked=evt.fontItalic;
   if(evt.fontBold!==undefined)   document.getElementById('f-bold').checked=evt.fontBold;
-  if(evt.qrSizePt)   document.getElementById('f-qrsize').value=evt.qrSizePt;
   updateFontPreview();
   if(pdfBase64) renderPDFCanvas(pdfBase64, true);
   actualizarPosLabels();
@@ -1073,7 +1086,7 @@ function eliminarEvento(){
   renderEventoSelect();
   document.getElementById('f-evento').value='';
   document.getElementById('del-evt-btn').style.display='none';
-  pdfBase64=''; coords={nombre:{x:0,y:0,set:false},qr:{x:0,y:0,set:false},concepto:{x:0,y:0,set:false}};
+  pdfBase64=''; coords={nombre:{x:0,y:0,w:0,h:0,set:false},qr:{x:0,y:0,w:0,h:0,set:false},concepto:{x:0,y:0,w:0,h:0,set:false}};
   limpiarCalibrador();
   toast('Plantilla eliminada','info');
 }
@@ -1091,8 +1104,7 @@ function guardarEvento(){
     fontColor:document.getElementById('f-fontcolor').value||'#1a1a1a',
     fontFamily:document.getElementById('f-fontfamily').value||'Georgia, serif',
     fontItalic:document.getElementById('f-italic').checked,
-    fontBold:document.getElementById('f-bold').checked,
-    qrSizePt:parseFloat(document.getElementById('f-qrsize').value)||40};
+    fontBold:document.getElementById('f-bold').checked};
   if(!isNaN(idx)&&idx>=0&&idx<evts.length){ evts[idx]=entry; }
   else { evts.push(entry); }
   setEvts(evts);
@@ -1259,10 +1271,12 @@ function limpiarCalibrador(){
 /* ═══ CALIBRADOR ═══════════════════════════════════ */
 /* ─── Config de colores por modo de calibración ─── */
 const CALIB_CFG = {
-  nombre:   { color:'#1e3a8a', bg:'#1e3a8a', tag:'✍  CALIBRANDO NOMBRE',   tagBg:'#1e3a8a', tagClr:'#fff' },
-  qr:       { color:'#14532d', bg:'#14532d', tag:'▪  CALIBRANDO QR',        tagBg:'#14532d', tagClr:'#fff' },
-  concepto: { color:'#4c1d95', bg:'#4c1d95', tag:'¶  CALIBRANDO CONCEPTO',  tagBg:'#4c1d95', tagClr:'#fff' }
+  nombre:   { tag:'✍  ARRASTRA EL ÁREA DEL NOMBRE',   tagBg:'#1e3a8a', overlay:'overlay-nombre',  mkRect:'mk-nombre-rect',  lbl:'Nombre'  },
+  qr:       { tag:'▪  ARRASTRA EL ÁREA DEL QR',        tagBg:'#14532d', overlay:'overlay-qr',      mkRect:'mk-qr-rect',      lbl:'QR'      },
+  concepto: { tag:'¶  ARRASTRA EL ÁREA DEL CONCEPTO',  tagBg:'#6d28d9', overlay:'overlay-concepto', mkRect:'mk-concepto-rect', lbl:'Concepto'}
 };
+
+let _drag = null;  // { mode, startX, startY }
 
 function setCalibMode(m){
   calibMode = m;
@@ -1270,180 +1284,173 @@ function setCalibMode(m){
   const wrap = document.getElementById('calib-wrap');
   const hint = document.getElementById('calib-hint');
   const tag  = document.getElementById('calib-modo-tag');
-  const mira = document.getElementById('mira');
 
-  // Hint con clase activa
-  const msgs = {
-    nombre:   'Haz clic exactamente donde debe quedar centrado el nombre del destinatario.',
-    qr:       'Haz clic en la esquina superior-izquierda donde debe aparecer el código QR.',
-    concepto: 'Haz clic donde debe quedar centrado el texto del concepto.'
-  };
-  hint.textContent = msgs[m];
+  hint.textContent = `Arrastra para marcar el área donde irá el ${cfg.lbl.toLowerCase()}.`;
   hint.classList.add('activo');
 
-  // Etiqueta flotante en el canvas
-  tag.textContent = cfg.tag;
-  tag.style.background = cfg.tagBg;
-  tag.style.color = cfg.tagClr;
+  tag.textContent        = cfg.tag;
+  tag.style.background   = cfg.tagBg;
+  tag.style.color        = '#fff';
   tag.classList.add('visible');
 
-  // Resaltar botón activo
-  ['nombre','qr','concepto'].forEach(k => {
-    const btn = document.getElementById('calib-'+k+'-btn') || document.getElementById(k==='nombre'?'calib-nom-btn':k==='qr'?'calib-qr-btn':'calib-concepto-btn');
-    if(btn) btn.style.outline = (k===m) ? '3px solid '+cfg.color : '';
-  });
+  document.getElementById('calib-nom-btn').style.outline      = m==='nombre'  ? '3px solid #1e3a8a' : '';
+  document.getElementById('calib-qr-btn').style.outline       = m==='qr'      ? '3px solid #14532d' : '';
+  document.getElementById('calib-concepto-btn').style.outline = m==='concepto'? '3px solid #6d28d9' : '';
 
-  // Mira — color según modo
-  ['m-h1','m-h2','m-v1','m-v2','m-circle'].forEach(id =>
-    document.getElementById(id).setAttribute('stroke', cfg.color));
-  document.getElementById('m-dot').setAttribute('fill', cfg.color);
-
-  // Activar wrap
   wrap.classList.add('calibrando');
+  wrap.style.cursor = 'crosshair';
+  _detachDragListeners(wrap);
 
-  // Listeners del mouse
-  _detachMiraListeners(wrap);
-  wrap._mmov = e => {
-    const r = wrap.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    // Centrar la mira exactamente sobre el cursor del mouse
-    mira.style.left      = x + 'px';
-    mira.style.top       = y + 'px';
-    mira.style.transform = 'translate(-50%, -50%)';
-    mira.classList.add('visible');
-  };
-  wrap._mout = () => mira.classList.remove('visible');
-  wrap.addEventListener('mousemove',  wrap._mmov);
-  wrap.addEventListener('mouseleave', wrap._mout);
+  wrap._mdown = e => _dragStart(e, wrap, m);
+  wrap._mmov  = e => _dragMove(e, wrap);
+  wrap._mup   = e => _dragEnd(e, wrap, m);
+  wrap.addEventListener('mousedown', wrap._mdown);
+  wrap.addEventListener('mousemove', wrap._mmov);
+  wrap.addEventListener('mouseup',   wrap._mup);
 }
 
-function _detachMiraListeners(wrap){
-  if(wrap._mmov) wrap.removeEventListener('mousemove',  wrap._mmov);
-  if(wrap._mout) wrap.removeEventListener('mouseleave', wrap._mout);
+/* ── Drag unificado ─────────────────────────────── */
+function _dragStart(e, wrap, m){
+  if(e.button !== 0) return;
+  e.preventDefault();
+  const r = wrap.getBoundingClientRect();
+  _drag = { mode:m, startX: e.clientX-r.left, startY: e.clientY-r.top };
+  const ov = document.getElementById(CALIB_CFG[m].overlay);
+  ov.style.cssText = `left:${_drag.startX}px;top:${_drag.startY}px;width:0;height:0;display:block`;
+}
+
+function _dragMove(e, wrap){
+  if(!_drag) return;
+  const r  = wrap.getBoundingClientRect();
+  const cx = e.clientX - r.left;
+  const cy = e.clientY - r.top;
+  const x  = Math.min(cx, _drag.startX);
+  const y  = Math.min(cy, _drag.startY);
+  const w  = Math.abs(cx - _drag.startX);
+  const h  = Math.abs(cy - _drag.startY);
+  const ov = document.getElementById(CALIB_CFG[_drag.mode].overlay);
+  ov.style.left = x+'px'; ov.style.top = y+'px';
+  ov.style.width = w+'px'; ov.style.height = h+'px';
+}
+
+function _dragEnd(e, wrap, m){
+  if(!_drag || _drag.mode !== m) return;
+  const r  = wrap.getBoundingClientRect();
+  const cx = e.clientX - r.left;
+  const cy = e.clientY - r.top;
+  const xW = Math.min(cx, _drag.startX);
+  const yW = Math.min(cy, _drag.startY);
+  const wW = Math.abs(cx - _drag.startX);
+  const hW = Math.abs(cy - _drag.startY);
+
+  document.getElementById(CALIB_CFG[m].overlay).style.display = 'none';
+  _drag = null;
+
+  if(wW < 10 || hW < 10){ toast('⚠ Arrastra un área más grande','warn'); return; }
+
+  // Convertir a pts PDF
+  const canvas = document.getElementById('calib-canvas');
+  const cRect  = canvas.getBoundingClientRect();
+  const offX   = cRect.left - r.left;
+  const offY   = cRect.top  - r.top;
+  const ds     = canvas.width / cRect.width;
+  const toPDF  = (v, off) => ((v - off) * ds) / calibScale;
+
+  coords[m] = {
+    x: Math.round(toPDF(xW, offX)),
+    y: Math.round(toPDF(yW, offY)),
+    w: Math.round((wW * ds) / calibScale),
+    h: Math.round((hW * ds) / calibScale),
+    set: true,
+    _wx: xW, _wy: yW, _ww: wW, _wh: hW
+  };
+
+  _detachDragListeners(wrap);
+  calibMode = null;
+  _resetCalibUI();
+  _showRect(m, xW, yW, wW, hW);
+  actualizarPosLabels();
+  updateStepper();
+  document.getElementById('calib-hint').textContent =
+    `✅ Área de ${CALIB_CFG[m].lbl} guardada. Puedes ajustarla o guardar el evento.`;
+}
+
+function _showRect(m, x, y, w, h){
+  const mk = document.getElementById(CALIB_CFG[m].mkRect);
+  mk.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;display:block`;
+  mk.style.position = 'absolute';
+}
+
+function _detachDragListeners(wrap){
+  if(wrap._mmov)  wrap.removeEventListener('mousemove',  wrap._mmov);
+  if(wrap._mout)  wrap.removeEventListener('mouseleave', wrap._mout);
+  if(wrap._mdown) wrap.removeEventListener('mousedown',  wrap._mdown);
+  if(wrap._mup)   wrap.removeEventListener('mouseup',    wrap._mup);
 }
 
 function _resetCalibUI(){
   const wrap = document.getElementById('calib-wrap');
-  const hint = document.getElementById('calib-hint');
-  const tag  = document.getElementById('calib-modo-tag');
-  const mira = document.getElementById('mira');
   wrap.classList.remove('calibrando');
-  mira.classList.remove('visible');
-  tag.classList.remove('visible');
-  hint.classList.remove('activo');
-  _detachMiraListeners(wrap);
+  wrap.style.cursor = '';
+  document.getElementById('mira').classList.remove('visible');
+  document.getElementById('calib-modo-tag').classList.remove('visible');
+  document.getElementById('calib-hint').classList.remove('activo');
+  _detachDragListeners(wrap);
   ['calib-nom-btn','calib-qr-btn','calib-concepto-btn'].forEach(id => {
-    const b = document.getElementById(id);
-    if(b) b.style.outline = '';
+    const b = document.getElementById(id); if(b) b.style.outline = '';
   });
 }
 
-function onCalibClick(e){
-  if(!calibMode){ toast('⚠ Selecciona primero qué calibrar (Nombre o QR)','warn'); return; }
-  const canvas = document.getElementById('calib-canvas');
-  const wrap   = document.getElementById('calib-wrap');
-  const wRect  = wrap.getBoundingClientRect();
-  const cRect  = canvas.getBoundingClientRect();
-
-  // Posición del clic relativa al canvas (misma referencia que el cursor)
-  const xEnWrap = e.clientX - wRect.left;
-  const yEnWrap = e.clientY - wRect.top;
-
-  // Offset del canvas dentro del wrap (normalmente 0, pero por si acaso)
-  const offsetX = cRect.left - wRect.left;
-  const offsetY = cRect.top  - wRect.top;
-
-  // Coordenadas en píxeles de pantalla del canvas
-  const xEnCanvas = xEnWrap - offsetX;
-  const yEnCanvas = yEnWrap - offsetY;
-
-  // Escala canvas-px / pantalla-px
-  const ds = canvas.width / cRect.width;
-
-  // Coordenadas en puntos PDF
-  const px = (xEnCanvas * ds) / calibScale;
-  const py = (yEnCanvas * ds) / calibScale;
-
-  coords[calibMode] = { x:Math.round(px), y:Math.round(py), set:true };
-
-  // Guardar también la posición visual en píxeles del wrap (para marcadores exactos)
-  coords[calibMode]._wx = xEnWrap;
-  coords[calibMode]._wy = yEnWrap;
-
-  redrawMarkers();
-  actualizarPosLabels();
-  updateStepper();
-
-  const modoGuardado = calibMode;
-  calibMode = null;
-  _resetCalibUI();
-
-  const lbl = { nombre:'Nombre', qr:'QR', concepto:'Concepto' };
-  document.getElementById('calib-hint').textContent =
-    `✅ Posición de ${lbl[modoGuardado]} guardada. Puedes calibrar otro elemento o guardar el evento.`;
-}
+// onCalibClick ya no se usa para nada (todo es drag) pero lo mantenemos vacío por si hay referencia en HTML
+function onCalibClick(e){ /* drag handles everything */ }
 
 function redrawMarkers(){
-  // Si tenemos la posición visual guardada (_wx/_wy) la usamos directamente
-  // para que el marcador quede EXACTAMENTE donde se hizo clic.
-  // Si no (posición cargada de evento guardado), la recalculamos desde pts PDF.
   const canvas  = document.getElementById('calib-canvas');
   const wrap    = document.getElementById('calib-wrap');
-  const wRect   = wrap.getBoundingClientRect();
   const cRect   = canvas.getBoundingClientRect();
-  const offsetX = cRect.left - wRect.left;
-  const offsetY = cRect.top  - wRect.top;
-  const ds      = cRect.width / canvas.width;  // pantalla-px por canvas-px
+  const wRect   = wrap.getBoundingClientRect();
+  const offX    = cRect.left - wRect.left;
+  const offY    = cRect.top  - wRect.top;
+  const ds      = cRect.width / canvas.width;
 
-  function posVisual(c){
-    if(c._wx !== undefined) return { x: c._wx, y: c._wy };
-    // reconstruir desde pts PDF
+  function rectVisual(c){
+    if(c._wx !== undefined) return { x:c._wx, y:c._wy, w:c._ww, h:c._wh };
     return {
-      x: c.x * calibScale * ds + offsetX,
-      y: c.y * calibScale * ds + offsetY
+      x: c.x*calibScale*ds + offX,
+      y: c.y*calibScale*ds + offY,
+      w: c.w*calibScale*ds,
+      h: c.h*calibScale*ds
     };
   }
 
-  if(coords.nombre.set){
-    const mk = document.getElementById('mk-nombre');
-    const p  = posVisual(coords.nombre);
-    mk.style.left = p.x + 'px';
-    mk.style.top  = p.y + 'px';
-    mk.style.display = 'block';
-  }
-  if(coords.qr.set){
-    const mk = document.getElementById('mk-qr');
-    const p  = posVisual(coords.qr);
-    mk.style.left = p.x + 'px';
-    mk.style.top  = p.y + 'px';
-    mk.style.display = 'block';
-  }
-  if(coords.concepto.set && document.getElementById('f-concepto-on').checked){
-    const mk = document.getElementById('mk-concepto');
-    const p  = posVisual(coords.concepto);
-    mk.style.left = p.x + 'px';
-    mk.style.top  = p.y + 'px';
-    mk.style.display = 'block';
-  }
+  ['nombre','qr','concepto'].forEach(m => {
+    const c = coords[m];
+    const showConcepto = m==='concepto' ? document.getElementById('f-concepto-on').checked : true;
+    if(c.set && showConcepto){
+      const r = rectVisual(c);
+      _showRect(m, r.x, r.y, r.w, r.h);
+    }
+  });
 }
 
 function actualizarPosLabels(){
-  const n = document.getElementById('pos-nombre-lbl');
-  const q = document.getElementById('pos-qr-lbl');
-  const c = document.getElementById('pos-concepto-lbl');
-  if(coords.nombre.set){
-    n.textContent=`✍ Nombre: (${coords.nombre.x}, ${coords.nombre.y}) pt`;
-    n.classList.remove('no-set');
-  } else { n.textContent='✍ Nombre: —'; n.classList.add('no-set'); }
-  if(coords.qr.set){
-    q.textContent=`▪ QR: (${coords.qr.x}, ${coords.qr.y}) pt`;
-    q.classList.remove('no-set');
-  } else { q.textContent='▪ QR: —'; q.classList.add('no-set'); }
-  if(coords.concepto.set){
-    c.textContent=`¶ Concepto: (${coords.concepto.x}, ${coords.concepto.y}) pt`;
-    c.classList.remove('no-set');
-  } else { c.textContent='¶ Concepto: —'; c.classList.add('no-set'); }
+  const cfg = {
+    nombre:   { el:'pos-nombre-lbl', icon:'✍', lbl:'Nombre'   },
+    qr:       { el:'pos-qr-lbl',     icon:'▪', lbl:'QR'       },
+    concepto: { el:'pos-concepto-lbl',icon:'¶', lbl:'Concepto' }
+  };
+  Object.entries(cfg).forEach(([m, c]) => {
+    const el = document.getElementById(c.el);
+    if(!el) return;
+    const d = coords[m];
+    if(d.set){
+      el.textContent = `${c.icon} ${c.lbl}: ${d.w}×${d.h} pt`;
+      el.classList.remove('no-set');
+    } else {
+      el.textContent = `${c.icon} ${c.lbl}: —`;
+      el.classList.add('no-set');
+    }
+  });
 }
 
 /* ═══ EXCEL ═══════════════════════════════════════ */
@@ -1488,8 +1495,6 @@ function loadExcel(inp){
 /* ═══ QR TOGGLE ══════════════════════════════════════ */
 function toggleQROptions(){
   const on=document.getElementById('f-qr-on').checked;
-  document.getElementById('qr-size-wrap').style.opacity=on?'1':'.35';
-  document.getElementById('qr-size-wrap').style.pointerEvents=on?'':'none';
   document.getElementById('calib-qr-btn').style.opacity=on?'1':'.4';
   document.getElementById('calib-qr-btn').disabled=!on;
   document.getElementById('pos-qr-lbl').style.opacity=on?'1':'.4';
@@ -1635,7 +1640,6 @@ async function superponerNombreQR(nombre, fecha){
   const isItalic    = document.getElementById('f-italic').checked;
   const isBold      = document.getElementById('f-bold').checked;
   const fontStyle   = `${isBold?'bold ':''} ${isItalic?'italic ':''}`.trim()||'normal';
-  const qrSizePt    = parseFloat(document.getElementById('f-qrsize').value)||40;
   const qrOn        = document.getElementById('f-qr-on').checked;
 
   const binary=atob(pdfBase64);
@@ -1652,52 +1656,34 @@ async function superponerNombreQR(nombre, fecha){
 
   const ctx=canvas.getContext('2d');
 
-  // ── Nombre: auto-fit y multi-línea si es muy largo ──
-  const nx       = coords.nombre.x * SCALE;
-  const ny       = coords.nombre.y * SCALE;
-  const fontSize = Math.round(fontSizePt * SCALE);   // ← fix: definido aquí
-  const maxNameW = pdfPageW * SCALE * 0.70;
-
-  function mkFont(fs){ return `${fontStyle} ${fs}px ${fontFamily}`; }
-
-  function drawNombre(ctx, text, color){
+  // ── Helper: texto centrado y ajustado dentro de un rect ──
+  function drawTextInRect(ctx, text, font, color, rx, ry, rw, rh){
+    if(!text) return;
     ctx.save();
-    ctx.textAlign   = 'center';
-    ctx.textBaseline= 'middle';
-    ctx.fillStyle   = color;
-
-    let fs = fontSize;
-    ctx.font = mkFont(fs);
-
-    if(ctx.measureText(text).width <= maxNameW){
-      ctx.fillText(text, nx, ny);
-    } else {
-      // Partir en 2 líneas por el punto más cercano al centro
-      const words = text.split(' ');
-      let best = null, bestDiff = Infinity;
-      for(let i=1;i<words.length;i++){
-        const l1=words.slice(0,i).join(' ');
-        const l2=words.slice(i).join(' ');
-        const diff=Math.abs(l1.length-l2.length);
-        if(diff<bestDiff){bestDiff=diff;best={l1,l2};}
+    ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    let fs = parseInt(font);
+    const setFont = s => { ctx.font = font.replace(/\d+px/, s+'px'); };
+    setFont(fs);
+    const wrapLines = () => {
+      const words = text.split(' '), lines = []; let cur = '';
+      for(const w of words){
+        const test = cur ? cur+' '+w : w;
+        if(ctx.measureText(test).width > rw*0.97 && cur){ lines.push(cur); cur=w; } else cur=test;
       }
-      if(best){
-        const longer=[best.l1,best.l2].reduce((a,b)=>a.length>b.length?a:b);
-        while(fs>8 && ctx.measureText(longer).width > maxNameW){
-          fs--; ctx.font=mkFont(fs);
-        }
-        const gap=Math.round(fs*1.35);
-        ctx.fillText(best.l1, nx, ny - gap/2);
-        ctx.fillText(best.l2, nx, ny + gap/2);
-      } else {
-        while(fs>8 && ctx.measureText(text).width > maxNameW){ fs--; ctx.font=mkFont(fs); }
-        ctx.fillText(text, nx, ny);
-      }
-    }
+      if(cur) lines.push(cur); return lines;
+    };
+    let lines = wrapLines();
+    while(fs > 7 && lines.length * fs * 1.35 > rh * 0.95){ fs=Math.max(7,fs-1); setFont(fs); lines=wrapLines(); }
+    const lineH = Math.round(fs*1.35);
+    const startY = ry + (rh - lines.length*lineH)/2 + lineH/2;
+    lines.forEach((line,i) => ctx.fillText(line, rx+rw/2, startY+i*lineH));
     ctx.restore();
   }
 
-  drawNombre(ctx, nombre, fontColor);
+  // ── Nombre: centrado en su rect ──
+  const fontSize = Math.round(fontSizePt * SCALE);
+  drawTextInRect(ctx, nombre, `${fontStyle} ${fontSize}px ${fontFamily}`, fontColor,
+    coords.nombre.x*SCALE, coords.nombre.y*SCALE, coords.nombre.w*SCALE, coords.nombre.h*SCALE);
 
   // ── Concepto (opcional) ──
   const conceptoOn = document.getElementById('f-concepto-on').checked;
@@ -1709,52 +1695,30 @@ async function superponerNombreQR(nombre, fecha){
     const cItalic = document.getElementById('c-italic').checked;
     const cBold   = document.getElementById('c-bold').checked;
     const cStyle  = `${cBold?'bold':''} ${cItalic?'italic':''}`.trim()||'normal';
-    const cx = coords.concepto.x * SCALE;
-    const cy = coords.concepto.y * SCALE;
     const cFontPx = Math.round(cSizePt * SCALE);
-    const maxCW   = pdfPageW * SCALE * 0.80;
-
-    ctx.save();
-    ctx.textAlign    = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle    = cColor;
-    ctx.font         = `${cStyle} ${cFontPx}px ${cFamily}`;
-
-    // Partir en líneas si el texto es muy ancho
-    if(cTxt && ctx.measureText(cTxt).width <= maxCW){
-      ctx.fillText(cTxt, cx, cy);
-    } else if(cTxt) {
-      const words = cTxt.split(' ');
-      const lines = [];
-      let cur = '';
-      for(const w of words){
-        const test = cur ? cur+' '+w : w;
-        if(ctx.measureText(test).width > maxCW && cur){ lines.push(cur); cur=w; }
-        else cur = test;
-      }
-      if(cur) lines.push(cur);
-      const lineH = Math.round(cFontPx * 1.35);
-      const startY = cy - ((lines.length-1)/2) * lineH;
-      lines.forEach((line, li) => ctx.fillText(line, cx, startY + li * lineH));
-    }
-    ctx.restore();
+    drawTextInRect(ctx, cTxt, `${cStyle} ${cFontPx}px ${cFamily}`, cColor,
+      coords.concepto.x*SCALE, coords.concepto.y*SCALE, coords.concepto.w*SCALE, coords.concepto.h*SCALE);
   }
 
-  // ── QR (top-left at calibrated point) ──
+  // ── QR: usa el rect para posición y tamaño ──
   if(qrOn && coords.qr.set){
-    const qx = coords.qr.x * SCALE;
-    const qy = coords.qr.y * SCALE;
-    const qSize = Math.round(qrSizePt * SCALE);
+    const qx    = coords.qr.x * SCALE;
+    const qy    = coords.qr.y * SCALE;
+    const qw    = coords.qr.w * SCALE;
+    const qh    = coords.qr.h * SCALE;
+    // Usar lado menor para mantener QR cuadrado, centrado en el rect
+    const qSize = Math.min(qw, qh);
+    const qOffX = (qw - qSize) / 2;
+    const qOffY = (qh - qSize) / 2;
     const qrImg = await loadImage(qrUrl(nombre, fecha));
     ctx.save();
-    ctx.drawImage(qrImg, qx, qy, qSize, qSize);
-    // "Verificación ITD" label
+    ctx.drawImage(qrImg, qx+qOffX, qy+qOffY, qSize, qSize);
     const lblPx = Math.round(7 * SCALE);
     ctx.font = `bold ${lblPx}px sans-serif`;
     ctx.fillStyle = '#8B1A2A';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
-    ctx.fillText('Verificación ITD', qx, qy + qSize + 4);
+    ctx.fillText('Verificación ITD', qx+qOffX, qy+qOffY+qSize+4);
     ctx.restore();
   }
 
