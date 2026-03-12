@@ -1661,8 +1661,10 @@ async function superponerNombreQR(nombre, fecha){
     if(!text) return;
     ctx.save();
     ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    let fs = parseInt(font);
-    const setFont = s => { ctx.font = font.replace(/\d+px/, s+'px'); };
+    // Extraer el tamaño numérico del string de font (ej: "bold 60px Georgia" → 60)
+    let fs = parseFloat((font.match(/(\d+(?:\.\d+)?)px/) || [0,12])[1]);
+    const baseFont = font;
+    const setFont = s => { ctx.font = baseFont.replace(/(\d+(?:\.\d+)?)px/, s+'px'); };
     setFont(fs);
     const wrapLines = () => {
       const words = text.split(' '), lines = []; let cur = '';
