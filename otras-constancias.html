@@ -62,7 +62,6 @@
     @keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideIn  { from{opacity:0;transform:translateY(4px)}  to{opacity:1;transform:translateY(0)} }
     @keyframes toastIn  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes pulsoMira{ 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.14);opacity:.72} }
 
     /* ── STRIPE INSTITUCIONAL ───────────────────────────── */
     .stripe { height:4px; background:linear-gradient(90deg,#3D0A14,#8B1A2A,#C49A35,#8B1A2A,#3D0A14); background-size:300% 100%; animation:shimmer 6s linear infinite; }
@@ -323,11 +322,6 @@
       box-shadow:0 0 0 4px var(--navy-ghost);
       cursor:none;
     }
-
-    /* ── MIRA PERSONALIZADA ─────────────────────────────── */
-    #mira { pointer-events:none; position:absolute; z-index:20; display:none; }
-    #mira.visible { display:block; }
-    #mira svg { animation:pulsoMira 1s ease-in-out infinite; }
 
     /* ── RECTS DE CALIBRACIÓN (drag en canvas) ──────────── */
     .calib-rect-overlay {
@@ -752,21 +746,10 @@
             </div>
             <div id="calib-hint" class="calib-hint"></div>
             <!-- Canvas calibrador -->
-            <div class="calib-wrap" id="calib-wrap" onclick="onCalibClick(event)">
+            <div class="calib-wrap" id="calib-wrap">
               <canvas id="calib-canvas" style="display:block;width:100%;height:auto"></canvas>
               <!-- Etiqueta de modo activo -->
               <div id="calib-modo-tag"></div>
-              <!-- Mira personalizada -->
-              <div id="mira">
-                <svg id="mira-svg" width="46" height="46" viewBox="0 0 46 46" fill="none">
-                  <line x1="2"  y1="23" x2="17" y2="23" stroke-width="2.5" stroke-linecap="round" id="m-h1"/>
-                  <line x1="29" y1="23" x2="44" y2="23" stroke-width="2.5" stroke-linecap="round" id="m-h2"/>
-                  <line x1="23" y1="2"  x2="23" y2="17" stroke-width="2.5" stroke-linecap="round" id="m-v1"/>
-                  <line x1="23" y1="29" x2="23" y2="44" stroke-width="2.5" stroke-linecap="round" id="m-v2"/>
-                  <circle cx="23" cy="23" r="5" stroke-width="2.5" fill="none" id="m-circle"/>
-                  <circle cx="23" cy="23" r="1.8" id="m-dot"/>
-                </svg>
-              </div>
               <!-- Overlays de drag (vivos durante el arrastre) -->
               <div id="overlay-nombre"  class="calib-rect-overlay"></div>
               <div id="overlay-qr"      class="calib-rect-overlay"></div>
@@ -1008,7 +991,6 @@ function toggleConcepto(){
   const on = document.getElementById('f-concepto-on').checked;
   const pnl = document.getElementById('pnl-concepto');
   pnl.style.display = on ? 'flex' : 'none';
-  // Mostrar/ocultar botón calibrar concepto y label posición
   document.getElementById('calib-concepto-btn').style.display = on ? '' : 'none';
   document.getElementById('pos-concepto-lbl').style.display   = on ? '' : 'none';
   if(!on){ coords.concepto={x:0,y:0,w:0,h:0,set:false}; document.getElementById('mk-concepto-rect').style.display='none'; }
@@ -1109,7 +1091,6 @@ function guardarEvento(){
   else { evts.push(entry); }
   setEvts(evts);
   renderEventoSelect();
-  // Select the saved one
   const sel=document.getElementById('f-evento');
   sel.value=evts.indexOf(entry)>=0?evts.indexOf(entry):evts.length-1;
   document.getElementById('del-evt-btn').style.display='';
@@ -1163,7 +1144,6 @@ async function abrirDrivePicker(){
 }
 
 function mostrarModalDrive(files){
-  // Quitar modal anterior si existe
   document.getElementById('drive-modal')?.remove();
 
   const modal = document.createElement('div');
@@ -1197,7 +1177,6 @@ function mostrarModalDrive(files){
     </div>`;
 
   modal.appendChild(box);
-  // Cerrar al hacer clic fuera
   modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
   document.body.appendChild(modal);
 }
@@ -1226,7 +1205,6 @@ async function seleccionarPDFDrive(fileId, fileName){
 }
 
 async function renderPDFCanvas(b64, keepMarkers){
-  // Use PDF.js from CDN (loaded dynamically)
   if(!window.pdfjsLib){
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -1239,7 +1217,6 @@ async function renderPDFCanvas(b64, keepMarkers){
     const page=await pdf.getPage(1);
     const vp=page.getViewport({scale:1});
     pdfPageW=vp.width; pdfPageH=vp.height;
-    // Render at 1.5x for display quality
     const scale=1.5;
     const vp2=page.getViewport({scale});
     const canvas=document.getElementById('calib-canvas');
@@ -1247,9 +1224,6 @@ async function renderPDFCanvas(b64, keepMarkers){
     calibScale=scale;
     document.getElementById('calib-placeholder').style.display='none';
     await page.render({canvasContext:canvas.getContext('2d'),viewport:vp2}).promise;
-    // Setup click handler
-    canvas.onclick=onCalibClick;
-    canvas.style.cursor='crosshair';
     if(keepMarkers) redrawMarkers();
   }catch(err){
     toast('⚠ Error al leer el PDF: '+err.message,'error');
@@ -1392,7 +1366,6 @@ function _resetCalibUI(){
   const wrap = document.getElementById('calib-wrap');
   wrap.classList.remove('calibrando');
   wrap.style.cursor = '';
-  document.getElementById('mira').classList.remove('visible');
   document.getElementById('calib-modo-tag').classList.remove('visible');
   document.getElementById('calib-hint').classList.remove('activo');
   _detachDragListeners(wrap);
@@ -1400,9 +1373,6 @@ function _resetCalibUI(){
     const b = document.getElementById(id); if(b) b.style.outline = '';
   });
 }
-
-// onCalibClick ya no se usa para nada (todo es drag) pero lo mantenemos vacío por si hay referencia en HTML
-function onCalibClick(e){ /* drag handles everything */ }
 
 function redrawMarkers(){
   const canvas  = document.getElementById('calib-canvas');
@@ -1633,7 +1603,6 @@ async function superponerNombreQR(nombre, fecha){
     pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   }
 
-  // Read user settings
   const fontSizePt  = parseFloat(document.getElementById('f-fontsize').value)||36;
   const fontColor   = document.getElementById('f-fontcolor').value||'#1a1a1a';
   const fontFamily  = document.getElementById('f-fontfamily').value||'Georgia, serif';
