@@ -62,7 +62,7 @@
     @keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideIn  { from{opacity:0;transform:translateY(4px)}  to{opacity:1;transform:translateY(0)} }
     @keyframes toastIn  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes pulsoMira{ 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1} 50%{transform:translate(-50%,-50%) scale(1.08);opacity:.85} }
+    @keyframes pulsoMira{ 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.14);opacity:.72} }
 
     /* ── STRIPE INSTITUCIONAL ───────────────────────────── */
     .stripe { height:4px; background:linear-gradient(90deg,#3D0A14,#8B1A2A,#C49A35,#8B1A2A,#3D0A14); background-size:300% 100%; animation:shimmer 6s linear infinite; }
@@ -325,9 +325,9 @@
     }
 
     /* ── MIRA PERSONALIZADA ─────────────────────────────── */
-    #mira { pointer-events:none; position:absolute; z-index:20; display:none; transform:translate(-50%,-50%); }
+    #mira { pointer-events:none; position:absolute; z-index:20; display:none; }
     #mira.visible { display:block; }
-    #mira svg { animation:pulsoMira 1s ease-in-out infinite; filter:drop-shadow(0 0 3px rgba(0,0,0,.4)); }
+    #mira svg { animation:pulsoMira 1s ease-in-out infinite; }
 
     /* ── ETIQUETA DE MODO ACTIVO ────────────────────────── */
     #calib-modo-tag {
@@ -1305,8 +1305,12 @@ function setCalibMode(m){
   _detachMiraListeners(wrap);
   wrap._mmov = e => {
     const r = wrap.getBoundingClientRect();
-    mira.style.left = (e.clientX - r.left) + 'px';
-    mira.style.top  = (e.clientY - r.top)  + 'px';
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    // Centrar la mira exactamente sobre el cursor del mouse
+    mira.style.left      = x + 'px';
+    mira.style.top       = y + 'px';
+    mira.style.transform = 'translate(-50%, -50%)';
     mira.classList.add('visible');
   };
   wrap._mout = () => mira.classList.remove('visible');
@@ -1338,11 +1342,35 @@ function _resetCalibUI(){
 function onCalibClick(e){
   if(!calibMode){ toast('⚠ Selecciona primero qué calibrar (Nombre o QR)','warn'); return; }
   const canvas = document.getElementById('calib-canvas');
-  const rect   = canvas.getBoundingClientRect();
-  const displayScale = canvas.width / rect.width;
-  const cx = (e.clientX - rect.left) * displayScale;
-  const cy = (e.clientY - rect.top)  * displayScale;
-  coords[calibMode] = { x:Math.round(cx/calibScale), y:Math.round(cy/calibScale), set:true };
+  const wrap   = document.getElementById('calib-wrap');
+  const wRect  = wrap.getBoundingClientRect();
+  const cRect  = canvas.getBoundingClientRect();
+
+  // Posición del clic relativa al canvas (misma referencia que el cursor)
+  const xEnWrap = e.clientX - wRect.left;
+  const yEnWrap = e.clientY - wRect.top;
+
+  // Offset del canvas dentro del wrap (normalmente 0, pero por si acaso)
+  const offsetX = cRect.left - wRect.left;
+  const offsetY = cRect.top  - wRect.top;
+
+  // Coordenadas en píxeles de pantalla del canvas
+  const xEnCanvas = xEnWrap - offsetX;
+  const yEnCanvas = yEnWrap - offsetY;
+
+  // Escala canvas-px / pantalla-px
+  const ds = canvas.width / cRect.width;
+
+  // Coordenadas en puntos PDF
+  const px = (xEnCanvas * ds) / calibScale;
+  const py = (yEnCanvas * ds) / calibScale;
+
+  coords[calibMode] = { x:Math.round(px), y:Math.round(py), set:true };
+
+  // Guardar también la posición visual en píxeles del wrap (para marcadores exactos)
+  coords[calibMode]._wx = xEnWrap;
+  coords[calibMode]._wy = yEnWrap;
+
   redrawMarkers();
   actualizarPosLabels();
   updateStepper();
@@ -1357,32 +1385,46 @@ function onCalibClick(e){
 }
 
 function redrawMarkers(){
+  // Si tenemos la posición visual guardada (_wx/_wy) la usamos directamente
+  // para que el marcador quede EXACTAMENTE donde se hizo clic.
+  // Si no (posición cargada de evento guardado), la recalculamos desde pts PDF.
   const canvas  = document.getElementById('calib-canvas');
-  const rect    = canvas.getBoundingClientRect();
   const wrap    = document.getElementById('calib-wrap');
   const wRect   = wrap.getBoundingClientRect();
   const cRect   = canvas.getBoundingClientRect();
   const offsetX = cRect.left - wRect.left;
   const offsetY = cRect.top  - wRect.top;
-  const ds      = rect.width / canvas.width;
+  const ds      = cRect.width / canvas.width;  // pantalla-px por canvas-px
+
+  function posVisual(c){
+    if(c._wx !== undefined) return { x: c._wx, y: c._wy };
+    // reconstruir desde pts PDF
+    return {
+      x: c.x * calibScale * ds + offsetX,
+      y: c.y * calibScale * ds + offsetY
+    };
+  }
 
   if(coords.nombre.set){
-    const mk=document.getElementById('mk-nombre');
-    mk.style.left = (coords.nombre.x*calibScale*ds+offsetX)+'px';
-    mk.style.top  = (coords.nombre.y*calibScale*ds+offsetY)+'px';
-    mk.style.display='block';
+    const mk = document.getElementById('mk-nombre');
+    const p  = posVisual(coords.nombre);
+    mk.style.left = p.x + 'px';
+    mk.style.top  = p.y + 'px';
+    mk.style.display = 'block';
   }
   if(coords.qr.set){
-    const mk=document.getElementById('mk-qr');
-    mk.style.left = (coords.qr.x*calibScale*ds+offsetX)+'px';
-    mk.style.top  = (coords.qr.y*calibScale*ds+offsetY)+'px';
-    mk.style.display='block';
+    const mk = document.getElementById('mk-qr');
+    const p  = posVisual(coords.qr);
+    mk.style.left = p.x + 'px';
+    mk.style.top  = p.y + 'px';
+    mk.style.display = 'block';
   }
   if(coords.concepto.set && document.getElementById('f-concepto-on').checked){
-    const mk=document.getElementById('mk-concepto');
-    mk.style.left = (coords.concepto.x*calibScale*ds+offsetX)+'px';
-    mk.style.top  = (coords.concepto.y*calibScale*ds+offsetY)+'px';
-    mk.style.display='block';
+    const mk = document.getElementById('mk-concepto');
+    const p  = posVisual(coords.concepto);
+    mk.style.left = p.x + 'px';
+    mk.style.top  = p.y + 'px';
+    mk.style.display = 'block';
   }
 }
 
