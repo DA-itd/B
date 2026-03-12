@@ -135,6 +135,74 @@
     .result-qr   { width:44px; height:44px; border-radius:6px; border:1.5px solid #C49A35; flex-shrink:0; background:#fff; padding:2px; }
     .result-acts { display:flex; flex-wrap:wrap; gap:6px; }
 
+    /* ══ STEPPER ══════════════════════════════════════════ */
+    .stepper { display:flex; align-items:flex-start; gap:0; margin-bottom:6px; }
+    .step-item { display:flex; flex-direction:column; align-items:center; position:relative; flex:1; }
+    .step-item:not(:last-child)::after {
+      content:''; position:absolute; top:18px; left:calc(50% + 18px);
+      right:calc(-50% + 18px); height:2px;
+      background:#e0e8f5; z-index:0; transition:background .4s;
+    }
+    .step-item.done:not(:last-child)::after  { background:linear-gradient(90deg,#1B396A,#2B5580); }
+    .step-item.active:not(:last-child)::after { background:#e0e8f5; }
+    .step-circle {
+      width:36px; height:36px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:800; z-index:1; position:relative;
+      border:2.5px solid #e0e8f5; background:#f4f6fa; color:#bbb;
+      transition:all .3s; flex-shrink:0;
+    }
+    .step-item.active .step-circle {
+      border-color:#1B396A; background:#1B396A; color:#F5E4A8;
+      box-shadow:0 0 0 4px rgba(27,57,106,.12);
+    }
+    .step-item.done .step-circle {
+      border-color:#1B396A; background:#1B396A; color:#F5E4A8;
+    }
+    .step-item.done .step-circle::after { content:'✓'; font-size:14px; }
+    .step-item.done .step-circle span { display:none; }
+    .step-lbl {
+      margin-top:6px; font-size:10px; font-weight:700; color:#bbb;
+      text-align:center; letter-spacing:.03em; text-transform:uppercase;
+      transition:color .3s; white-space:nowrap;
+    }
+    .step-item.active .step-lbl { color:#1B396A; }
+    .step-item.done  .step-lbl  { color:#1B396A; }
+
+    /* ══ STEP CARDS ══════════════════════════════════════ */
+    .step-card {
+      background:#fff; border-radius:14px;
+      box-shadow:0 1px 4px rgba(0,0,0,.06);
+      padding:20px; position:relative;
+      border:2px solid transparent;
+      transition:border-color .3s, box-shadow .3s;
+    }
+    .step-card.active-step {
+      border-color:#1B396A22;
+      box-shadow:0 4px 20px rgba(27,57,106,.10);
+    }
+    .step-card.done-step {
+      opacity:.75;
+    }
+    .step-card-header {
+      display:flex; align-items:center; gap:10px; margin-bottom:14px;
+    }
+    .step-num-badge {
+      width:26px; height:26px; border-radius:50%;
+      background:linear-gradient(135deg,#1B396A,#2B5580);
+      color:#F5E4A8; font-size:12px; font-weight:800;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    }
+    .step-card.done-step .step-num-badge { background:#e0f0ea; color:#14532d; }
+    .step-card-title { font-size:14px; font-weight:700; color:#333; }
+    .step-done-badge {
+      margin-left:auto; background:#f0fdf4; color:#14532d;
+      border:1px solid #86efac; border-radius:20px;
+      font-size:10px; font-weight:700; padding:2px 9px;
+      display:none;
+    }
+    .step-card.done-step .step-done-badge { display:inline-flex; align-items:center; gap:3px; }
+
     /* USERS TABLE */
     .usr-hdr { display:grid; grid-template-columns:1fr 1fr 90px 90px 50px; gap:8px; padding:10px 18px; background:#f8fafc; border-bottom:1px solid #eee; font-size:10px; font-weight:700; color:#999; text-transform:uppercase; letter-spacing:.05em; }
     .usr-row { display:grid; grid-template-columns:1fr 1fr 90px 90px 50px; gap:8px; padding:12px 18px; align-items:center; border-bottom:1px solid #f5f5f5; }
@@ -223,17 +291,47 @@
     <!-- TAB GENERAR -->
     <div id="tab-generar">
       <div class="gen-hdr">
-        <div><div class="gen-h2">Generar Constancias</div><div class="gen-sub">PDF base + nombre y QR superpuestos · Múltiples plantillas</div></div>
+        <div>
+          <div class="gen-h2">Generar Constancias</div>
+          <div class="gen-sub">Sigue los pasos para generar constancias con nombre y QR</div>
+        </div>
         <span class="badge badge-blue">📄 PDF + QR</span>
       </div>
+
+      <!-- STEPPER VISUAL -->
+      <div style="background:#fff;border-radius:14px;padding:18px 24px 14px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+        <div class="stepper" id="main-stepper">
+          <div class="step-item active" id="st-1">
+            <div class="step-circle"><span>1</span></div>
+            <div class="step-lbl">Plantilla</div>
+          </div>
+          <div class="step-item" id="st-2">
+            <div class="step-circle"><span>2</span></div>
+            <div class="step-lbl">Destinatario</div>
+          </div>
+          <div class="step-item" id="st-3">
+            <div class="step-circle"><span>3</span></div>
+            <div class="step-lbl">Calibrar</div>
+          </div>
+          <div class="step-item" id="st-4">
+            <div class="step-circle"><span>4</span></div>
+            <div class="step-lbl">Generar</div>
+          </div>
+        </div>
+      </div>
+
       <div class="gen-grid">
 
         <!-- FORM -->
         <div class="form-col">
 
           <!-- PLANTILLA -->
-          <div class="card">
-            <div class="card-title">🖼 Plantilla del evento</div>
+          <div class="step-card active-step" id="sc-1">
+            <div class="step-card-header">
+              <div class="step-num-badge">1</div>
+              <div class="step-card-title">🖼 Plantilla del evento</div>
+              <span class="step-done-badge">✓ Listo</span>
+            </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <div class="field">
                 <label>Evento / Plantilla guardada</label>
@@ -246,7 +344,7 @@
               </div>
               <div class="field">
                 <label>Nombre del evento <span style="color:#e05050">*</span></label>
-                <input type="text" id="f-evento-nombre" placeholder="Ej: ExpoTecno 2026"/>
+                <input type="text" id="f-evento-nombre" placeholder="Ej: ExpoTecno 2026" oninput="updateStepper()"/>
               </div>
               <div class="field">
                 <label>PDF de la plantilla <span style="color:#e05050">*</span></label>
@@ -265,8 +363,12 @@
           </div>
 
           <!-- DESTINATARIO -->
-          <div class="card">
-            <div class="card-title">👤 Destinatario(s)</div>
+          <div class="step-card" id="sc-2">
+            <div class="step-card-header">
+              <div class="step-num-badge">2</div>
+              <div class="step-card-title">👤 Destinatario(s)</div>
+              <span class="step-done-badge">✓ Listo</span>
+            </div>
             <div style="display:flex;gap:8px;margin-bottom:14px">
               <button class="mode-btn active" id="mb-manual" onclick="setMode('manual')">✍️ Manual</button>
               <button class="mode-btn" id="mb-excel" onclick="setMode('excel')">📊 Excel</button>
@@ -281,7 +383,7 @@
                     title="Ej: DRA. GERARDINA DE LAS MARAVILLAS VALENCIANO">AA Mayúsculas</button>
                 </div>
                 <input type="text" id="f-nom" placeholder="Ej: Dra. María García López"
-                  oninput="ortografiaManual()"/>
+                  oninput="ortografiaManual();updateStepper()"/>
                 <div id="orto-manual" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
               </div>
             </div>
@@ -302,7 +404,9 @@
             </div>
           </div>
 
-          <button class="btn btn-primary btn-full" id="gen-btn" onclick="generar()">🚀 Generar Constancia(s)</button>
+          <div class="step-card" id="sc-4" style="padding:0;overflow:hidden;border:none;box-shadow:none;background:transparent">
+          <button class="btn btn-primary btn-full" id="gen-btn" onclick="generar()" style="font-size:15px;padding:14px 20px">🚀 Paso 4 — Generar Constancia(s)</button>
+          </div>
           <div id="prog-wrap" class="hidden">
             <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
             <div class="prog-lbl" id="prog-lbl">Preparando…</div>
@@ -312,9 +416,13 @@
         <!-- CALIBRADOR + RESULTADOS -->
         <div class="right-col">
           <!-- CALIBRADOR -->
-          <div class="card" id="calib-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-              <div class="card-title" style="margin:0">📍 Calibrar posición</div>
+          <div class="step-card" id="sc-3">
+            <div class="step-card-header">
+              <div class="step-num-badge">3</div>
+              <div class="step-card-title">📍 Calibrar posición</div>
+              <span class="step-done-badge">✓ Listo</span>
+            </div>
+            <div style="display:flex;justify-content:flex-end;margin-top:-10px;margin-bottom:10px">
               <div style="display:flex;gap:6px">
                 <button class="btn-sm-blue" id="calib-nom-btn" onclick="setCalibMode('nombre')" title="Clic en el PDF para marcar donde va el nombre">✍️ Nombre</button>
                 <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">⬛ QR</button>
@@ -485,6 +593,29 @@ const SCRIPT_URL      = "https://script.google.com/macros/s/AKfycbxMyVFB5HXwxhRC
 
 document.getElementById('yr').textContent = new Date().getFullYear();
 
+/* ═══ STEPPER ═══════════════════════════════════════ */
+function updateStepper(){
+  // Determina qué pasos están completos
+  const s1done = !!(pdfBase64 && document.getElementById('f-evento-nombre').value.trim());
+  const s2done = !!(mode==='excel' ? XL.length>0 : document.getElementById('f-nom').value.trim());
+  const s3done = !!(coords.nombre.set);
+
+  const steps = [
+    {id:'st-1', card:'sc-1', done:s1done, active:!s1done},
+    {id:'st-2', card:'sc-2', done:s2done, active:s1done && !s2done},
+    {id:'st-3', card:'sc-3', done:s3done, active:s1done && s2done && !s3done},
+    {id:'st-4', card:'sc-4', done:false,  active:s1done && s2done && s3done},
+  ];
+
+  steps.forEach(s => {
+    const el  = document.getElementById(s.id);
+    const card = document.getElementById(s.card);
+    if(!el || !card) return;
+    el.className  = 'step-item' + (s.done?' done': s.active?' active':'');
+    card.className = 'step-card' + (s.done?' done-step': s.active?' active-step':'');
+  });
+}
+
 function togglePass(inputId, btn){
   var input=document.getElementById(inputId);
   if(input.type==='password'){input.type='text';btn.textContent='🙈';}
@@ -600,6 +731,7 @@ function setMode(m){
   document.getElementById('pnl-excel').classList.toggle('hidden',m!=='excel');
   document.getElementById('mb-manual').classList.toggle('active',m==='manual');
   document.getElementById('mb-excel').classList.toggle('active',m==='excel');
+  updateStepper();
 }
 
 /* ═══ EVENTOS (plantillas guardadas) ═══════════════ */
@@ -633,6 +765,7 @@ function cargarEvento(){
   updateFontPreview();
   if(pdfBase64) renderPDFCanvas(pdfBase64, true);
   actualizarPosLabels();
+  updateStepper();
   toast('✅ Plantilla cargada: '+evt.nombre,'success');
 }
 
@@ -691,6 +824,7 @@ function cargarPDF(inp){
     document.getElementById('pdf-ok').textContent='✅ '+file.name;
     document.getElementById('pdf-ok').classList.remove('hidden');
     renderPDFCanvas(b64, false);
+    updateStepper();
     toast('PDF cargado — ahora calibra las posiciones','info');
   };
   reader.readAsDataURL(file);
@@ -777,6 +911,7 @@ async function seleccionarPDFDrive(fileId, fileName){
     pdfBase64 = data.pdfBase64;
     okEl.textContent = '✅ ☁ ' + fileName;
     renderPDFCanvas(pdfBase64, false);
+    updateStepper();
     toast('PDF de Drive cargado — calibra las posiciones', 'info');
   } catch(err){
     okEl.textContent = '⚠ Error al descargar';
@@ -852,6 +987,7 @@ function onCalibClick(e){
   coords[calibMode]={x:Math.round(px), y:Math.round(py), set:true};
   redrawMarkers();
   actualizarPosLabels();
+  updateStepper();
   calibMode=null;
   document.getElementById('calib-hint').textContent='✅ Posición guardada. Calibra el otro elemento o guarda el evento.';
   document.getElementById('calib-nom-btn').style.outline='';
@@ -919,6 +1055,7 @@ function loadExcel(inp){
       document.getElementById('xl-ok').classList.remove('hidden');
       toast(`✅ ${XL.length} nombre(s) cargados`,'success');
       ortografiaExcel();
+      updateStepper();
     }catch(err){
       document.getElementById('xl-err').textContent='⚠ '+err.message;
       document.getElementById('xl-err').classList.remove('hidden');
