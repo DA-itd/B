@@ -204,6 +204,20 @@ const Login = ({ onLogin }) => {
   const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
 
 
+  // Abrir Apps Script de constancias con el email del usuario
+  const abrirConstancias = () => {
+    const input = document.getElementById('inputEmailConstancia');
+    const prefijo = (input ? input.value : '').replace(/@.*$/, '').trim().toLowerCase();
+    if (!prefijo) {
+      input && (input.style.border = '1.5px solid #e05050');
+      setTimeout(() => { input && (input.style.border = '1.5px solid #ddd'); }, 1500);
+      return;
+    }
+    const email = prefijo + '@itdurango.edu.mx';
+    const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
+    window.open(url, '_blank');
+  };
+
   // Doble click en logo → modal admin
   const handleLogoClick = () => {
     setAdminPass('');
@@ -563,18 +577,44 @@ const Login = ({ onLogin }) => {
               Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
             </p>
 
-            <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer"
-              onClick={(e)=>{ e.preventDefault(); window.open(CONSTANCIAS_URL,"_blank"); }}
-              style={{
-                display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
-                padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
-                background:'linear-gradient(135deg,#3D0A14,#922438)',
-                color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
-                boxShadow:'0 4px 18px rgba(107,26,42,.3)'
-              }}>
-              <Award size={15}/> Acceder a mis constancias
-              <ExternalLink size={12} style={{marginLeft:'auto',opacity:.7}}/>
-            </a>
+            {/* El usuario ingresa su correo y abrimos el Apps Script con ?email=... */}
+            <div style={{display:'flex',flexDirection:'column',gap:'.5rem'}}>
+              <div style={{display:'flex',gap:'.45rem',alignItems:'stretch'}}>
+                <div style={{
+                  display:'flex', flex:1, border:'1.5px solid #ddd', borderRadius:10,
+                  overflow:'hidden', background:'#fff'
+                }}>
+                  <input
+                    id="inputEmailConstancia"
+                    type="text"
+                    placeholder="usuario"
+                    style={{
+                      flex:1, padding:'.7rem .75rem', border:'none', outline:'none',
+                      fontSize:'.85rem', fontFamily:"'DM Sans',sans-serif", color:'#1A1720'
+                    }}
+                    onKeyDown={(e)=>{ if(e.key==='Enter') abrirConstancias(); }}
+                  />
+                  <span style={{
+                    padding:'.7rem .6rem', background:'#f5f5f5', borderLeft:'1.5px solid #eee',
+                    fontSize:'.72rem', color:'#888', display:'flex', alignItems:'center', whiteSpace:'nowrap'
+                  }}>@itdurango.edu.mx</span>
+                </div>
+                <button
+                  onClick={abrirConstancias}
+                  style={{
+                    padding:'.7rem 1rem', borderRadius:10, border:'none',
+                    background:'linear-gradient(135deg,#3D0A14,#922438)',
+                    color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
+                    cursor:'pointer', boxShadow:'0 4px 14px rgba(107,26,42,.3)',
+                    display:'flex', alignItems:'center', gap:'.4rem', whiteSpace:'nowrap'
+                  }}>
+                  <Award size={15}/> Generar
+                </button>
+              </div>
+              <p style={{fontSize:'.68rem',color:'#A0A0B0',margin:0,textAlign:'center'}}>
+                Ingresa tu usuario ITD para acceder a tus constancias
+              </p>
+            </div>
           </div>
         </div>
 
