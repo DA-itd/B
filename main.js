@@ -31,8 +31,18 @@ const ADMIN_PASSWORD = "Xela1615";
 // MÓDULO: GENERACIÓN DE CONSTANCIAS
 // ==========================================
 const CONSTANCIAS_URL = "https://script.google.com/macros/s/AKfycbwxTOTI0iXjs4l8qZrOP5sK-tflW7Bz-cugiq55LTtuIRziM9SLfM8z9GgjqaoS-o5v/exec";
-// Lunes 29 de Junio 2026 — después de que terminen los cursos el 26 de junio
+// Fecha de apertura automática (si el admin no ha activado/desactivado manualmente)
 const CONSTANCIAS_FECHA_APERTURA = new Date('2026-06-29T00:00:00');
+
+// Consulta si el admin activó/desactivó manualmente desde el portal principal
+const fetchConstanciasActivada = async () => {
+  try {
+    const res = await fetch(CONSTANCIAS_URL + '?action=getConstanciasStatus');
+    const data = await res.json();
+    if (data.success) return data.status === 'OPEN';
+  } catch(e) { /* si falla, usa la fecha automática */ }
+  return null; // null = respetar fecha automática
+};
 
 // ==========================================
 // LÓGICA DE DATOS
@@ -193,7 +203,17 @@ const Login = ({ onLogin }) => {
   const [adminError, setAdminError] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
-  const { dias, horas, minutos, segundos, abierto } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
+  // null = aún cargando, true = admin activó, false = admin desactivó, undefined = usar fecha
+  const [adminActivada, setAdminActivada] = useState(undefined);
+  const { dias, horas, minutos, segundos, abierto: abiertoFecha } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
+  // abierto = activación manual del admin (si existe) O apertura automática por fecha
+  const abierto = adminActivada === true ? true : (adminActivada === false ? false : abiertoFecha);
+
+  useEffect(() => {
+    fetchConstanciasActivada().then(val => {
+      setAdminActivada(val); // null si falló → usa fecha
+    });
+  }, []);
 
   // Doble click en logo → modal admin
   const handleLogoClick = () => {
