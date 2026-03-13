@@ -202,16 +202,7 @@ const Login = ({ onLogin }) => {
   const [adminError, setAdminError] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
-  // abierto: null = cargando, true = activa, false = cerrada (reloj)
-  const [abierto, setAbierto] = useState(null);
-  const { dias, horas, minutos, segundos } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
 
-  useEffect(() => {
-    fetchConstanciasActivada().then(val => {
-      // val = true (OPEN) | false (CLOSED) | null (error → cerrada por defecto)
-      setAbierto(val === true);
-    });
-  }, []);
 
   // Doble click en logo → modal admin
   const handleLogoClick = () => {
@@ -572,62 +563,18 @@ const Login = ({ onLogin }) => {
               Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
             </p>
 
-            {abierto === null ? (
-              /* ── CARGANDO: placeholder sin parpadeo ── */
-              <div style={{
-                display:'flex', alignItems:'center', justifyContent:'center',
-                minHeight:90, opacity:.4
+            <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer"
+              onClick={(e)=>{ e.preventDefault(); window.open(CONSTANCIAS_URL,"_blank"); }}
+              style={{
+                display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
+                padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
+                background:'linear-gradient(135deg,#3D0A14,#922438)',
+                color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
+                boxShadow:'0 4px 18px rgba(107,26,42,.3)'
               }}>
-                <div style={{
-                  width:22, height:22, borderRadius:'50%',
-                  border:'2.5px solid #1B396A', borderTopColor:'transparent',
-                  animation:'spin .8s linear infinite'
-                }}/>
-              </div>
-            ) : abierto === true ? (
-              /* ── ACTIVA: botón de acceso ── */
-              <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer"
-                onClick={(e)=>{ e.preventDefault(); window.open(CONSTANCIAS_URL,"_blank"); }}
-                style={{
-                  display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
-                  padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
-                  background:'linear-gradient(135deg,#3D0A14,#922438)',
-                  color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
-                  boxShadow:'0 4px 18px rgba(107,26,42,.3)'
-                }}>
-                <Award size={15}/> Acceder a mis constancias
-                <ExternalLink size={12} style={{marginLeft:'auto',opacity:.7}}/>
-              </a>
-            ) : (
-              /* ── CERRADA: reloj ── */
-              <>
-                <div style={{
-                  display:'flex', alignItems:'center', gap:'.4rem',
-                  padding:'.6rem .85rem', borderRadius:10,
-                  background:'rgba(26,58,92,.06)', border:'1px solid rgba(26,58,92,.1)',
-                  marginBottom:'.65rem'
-                }}>
-                  <Lock size={13} color="#8888A0"/>
-                  <span style={{fontSize:'.78rem', fontWeight:600, color:'#5A5A6A'}}>
-                    Disponible próximamente
-                  </span>
-                </div>
-                <div style={S.countdown}>
-                  {[{v:dias,l:'días'},{v:horas,l:'hrs'},{v:minutos,l:'min'},{v:segundos,l:'seg'}].map(({v,l},i) => (
-                    <React.Fragment key={l}>
-                      {i > 0 && <span style={S.colon}>:</span>}
-                      <div style={{textAlign:'center'}}>
-                        <div style={S.unitBox}>{String(v).padStart(2,'0')}</div>
-                        <div style={S.unitLabel}>{l}</div>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                </div>
-                <p style={{textAlign:'center', fontSize:'.7rem', color:'#A0A0B0', margin:'0.4rem 0 0'}}>
-                  Se habilitará al concluir el periodo de cursos
-                </p>
-              </>
-            )}
+              <Award size={15}/> Acceder a mis constancias
+              <ExternalLink size={12} style={{marginLeft:'auto',opacity:.7}}/>
+            </a>
           </div>
         </div>
 
