@@ -224,7 +224,7 @@ const Login = ({ onLogin }) => {
     setShowAdminModal(true);
   };
 
-  const handleAdminLogin = () => {
+  const handleAdminLogin = async () => {
     if (adminStep === 'clave') {
       if (adminPass === ADMIN_PASSWORD) {
         setAdminError('');
@@ -234,14 +234,33 @@ const Login = ({ onLogin }) => {
         setAdminError('Clave incorrecta.');
       }
     } else {
+      // Paso correo: verificar que sea admin y toggle activar/desactivar tarjeta
       const prefijo = adminEmail.replace(/@.*$/, '').trim();
       if (!prefijo) { setAdminError('Ingresa un usuario válido.'); return; }
       const emailFinal = prefijo + '@itdurango.edu.mx';
-      const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(emailFinal);
-      window.open(url, "_blank"); setTimeout(function(){ window.close(); }, 400);
-      setShowAdminModal(false);
-      setAdminStep('clave');
-      setAdminEmail('');
+      const esAdmin = ADMIN_EMAILS.includes(emailFinal.toLowerCase());
+      if (!esAdmin) { setAdminError('Correo no autorizado.'); return; }
+
+      // Toggle: si está activada la apaga, si está apagada la enciende
+      const nuevoEstado = !abierto;
+      try {
+        const res = await fetch(CONSTANCIAS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'setConstanciasStatus', status: nuevoEstado ? 'OPEN' : 'CLOSED', email: emailFinal })
+        });
+        const data = await res.json();
+        if (data.success) {
+          setAdminActivada(nuevoEstado);
+          setShowAdminModal(false);
+          setAdminStep('clave');
+          setAdminEmail('');
+        } else {
+          setAdminError('Error al guardar: ' + (data.message || 'intenta de nuevo'));
+        }
+      } catch(e) {
+        setAdminError('Error de conexión. Intenta de nuevo.');
+      }
     }
   };
 
@@ -404,7 +423,7 @@ const Login = ({ onLogin }) => {
                 <div style={{fontSize:'1.8rem', marginBottom:'.4rem'}}>{adminStep === 'clave' ? '🔐' : '👤'}</div>
                 <div style={{fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.1rem', color:'#3D0A14'}}>Acceso Administrador</div>
                 <div style={{fontSize:'.75rem', color:'#9090A0', marginTop:'.2rem'}}>
-                  {adminStep === 'clave' ? 'Ingresa la clave de acceso' : '¿Para quién generas la constancia?'}
+                  {adminStep === 'clave' ? 'Ingresa la clave de acceso' : 'Ingresa tu correo para confirmar'}
                 </div>
               </div>
               {adminStep === 'clave' ? (
@@ -462,7 +481,7 @@ const Login = ({ onLogin }) => {
                 fontSize:'.88rem', cursor:'pointer',
                 boxShadow:'0 4px 14px rgba(107,26,42,.28)',
                 marginBottom:'.6rem'
-              }}>{adminStep === 'clave' ? 'Continuar' : 'Abrir constancias'}</button>
+              }}>{adminStep === 'clave' ? 'Continuar' : (abierto ? 'Desactivar tarjeta 🔒' : 'Activar tarjeta ✅')}</button>
               <button onClick={() => { setShowAdminModal(false); setAdminStep('clave'); setAdminEmail(''); setAdminPass(''); setAdminError(''); }} style={{
                 width:'100%', padding:'.55rem',
                 background:'transparent', border:'1.5px solid #e8e8e8',
