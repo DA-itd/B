@@ -197,21 +197,19 @@ const UnitBox = ({ valor, label }) => (
 const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [logoError, setLogoError] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [adminPass, setAdminPass] = useState('');
   const [adminError, setAdminError] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
-  // null = aún cargando, true = admin activó, false = admin desactivó, undefined = usar fecha
-  const [adminActivada, setAdminActivada] = useState(undefined);
-  const { dias, horas, minutos, segundos, abierto: abiertoFecha } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
-  // abierto = activación manual del admin (si existe) O apertura automática por fecha
-  const abierto = adminActivada === true ? true : (adminActivada === false ? false : abiertoFecha);
+  // abierto: null = cargando, true = activa, false = cerrada (reloj)
+  const [abierto, setAbierto] = useState(null);
+  const { dias, horas, minutos, segundos } = useCountdown(CONSTANCIAS_FECHA_APERTURA);
 
   useEffect(() => {
     fetchConstanciasActivada().then(val => {
-      setAdminActivada(val); // null si falló → usa fecha
+      // val = true (OPEN) | false (CLOSED) | null (error → cerrada por defecto)
+      setAbierto(val === true);
     });
   }, []);
 
@@ -275,12 +273,7 @@ const Login = ({ onLogin }) => {
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-            // Clonar visualmente al espejo de tarjeta 2
-            setTimeout(() => {
-              const src = document.getElementById("googleSignInDiv");
-              const mirror = document.getElementById("googleSignInMirror");
-              if (src && mirror) { mirror.innerHTML = src.innerHTML; }
-            }, 900);
+
         } catch (err) {
             console.error("Error initializing Google Btn", err);
             setError("Error al cargar servicios de Google.");
@@ -579,42 +572,46 @@ const Login = ({ onLogin }) => {
               Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
             </p>
 
-            {abierto ? (
-              <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer" onClick={(e)=>{ e.preventDefault(); window.open(CONSTANCIAS_URL,"_blank"); setTimeout(()=>window.close(),400); }} style={{
-                display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
-                padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
-                background:'linear-gradient(135deg,#3D0A14,#922438)',
-                color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
-                boxShadow:'0 4px 18px rgba(107,26,42,.3)', transition:'all .2s'
+            {abierto === null ? (
+              /* ── CARGANDO: placeholder sin parpadeo ── */
+              <div style={{
+                display:'flex', alignItems:'center', justifyContent:'center',
+                minHeight:90, opacity:.4
               }}>
+                <div style={{
+                  width:22, height:22, borderRadius:'50%',
+                  border:'2.5px solid #1B396A', borderTopColor:'transparent',
+                  animation:'spin .8s linear infinite'
+                }}/>
+              </div>
+            ) : abierto === true ? (
+              /* ── ACTIVA: botón de acceso ── */
+              <a href={CONSTANCIAS_URL} target="_blank" rel="noopener noreferrer"
+                onClick={(e)=>{ e.preventDefault(); window.open(CONSTANCIAS_URL,"_blank"); }}
+                style={{
+                  display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem',
+                  padding:'.85rem 1rem', borderRadius:12, textDecoration:'none',
+                  background:'linear-gradient(135deg,#3D0A14,#922438)',
+                  color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
+                  boxShadow:'0 4px 18px rgba(107,26,42,.3)'
+                }}>
                 <Award size={15}/> Acceder a mis constancias
                 <ExternalLink size={12} style={{marginLeft:'auto',opacity:.7}}/>
               </a>
             ) : (
+              /* ── CERRADA: reloj ── */
               <>
-                {/* Mismo recuadro Google clonado — bloqueado */}
-                <div style={{ position:'relative', marginBottom:'.7rem' }}>
-                  <div id="googleSignInMirror" style={{
-                    width:'100%', minHeight:44, pointerEvents:'none', userSelect:'none'
-                  }}/>
-                  {/* Overlay con candado encima */}
-                  <div style={{
-                    position:'absolute', inset:0,
-                    background:'rgba(250,247,242,.72)',
-                    backdropFilter:'blur(1.5px)',
-                    borderRadius:4,
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    gap:'.45rem', cursor:'not-allowed'
-                  }}>
-                    <Lock size={13} color="#8888A0"/>
-                    <span style={{
-                      fontSize:'.8rem', fontWeight:600,
-                      color:'#5A5A6A', letterSpacing:'.01em'
-                    }}>Disponible el 29 de Jun 2026</span>
-                  </div>
+                <div style={{
+                  display:'flex', alignItems:'center', gap:'.4rem',
+                  padding:'.6rem .85rem', borderRadius:10,
+                  background:'rgba(26,58,92,.06)', border:'1px solid rgba(26,58,92,.1)',
+                  marginBottom:'.65rem'
+                }}>
+                  <Lock size={13} color="#8888A0"/>
+                  <span style={{fontSize:'.78rem', fontWeight:600, color:'#5A5A6A'}}>
+                    Disponible próximamente
+                  </span>
                 </div>
-
-                {/* Cuenta regresiva */}
                 <div style={S.countdown}>
                   {[{v:dias,l:'días'},{v:horas,l:'hrs'},{v:minutos,l:'min'},{v:segundos,l:'seg'}].map(({v,l},i) => (
                     <React.Fragment key={l}>
@@ -626,7 +623,7 @@ const Login = ({ onLogin }) => {
                     </React.Fragment>
                   ))}
                 </div>
-                <p style={{textAlign:'center', fontSize:'.7rem', color:'#A0A0B0', margin:0}}>
+                <p style={{textAlign:'center', fontSize:'.7rem', color:'#A0A0B0', margin:'0.4rem 0 0'}}>
                   Se habilitará al concluir el periodo de cursos
                 </p>
               </>
