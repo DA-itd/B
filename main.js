@@ -270,6 +270,7 @@ const Login = ({ onLogin }) => {
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
+            // Botón tarjeta 1 — Mis Constancias → login en Dashboard
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse
@@ -278,7 +279,11 @@ const Login = ({ onLogin }) => {
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-
+            // Botón tarjeta 2 — Generar Constancia → abre Apps Script con email
+            window.google.accounts.id.renderButton(
+                document.getElementById("googleSignInDivConstancia"),
+                { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
+            );
         } catch (err) {
             console.error("Error initializing Google Btn", err);
             setError("Error al cargar servicios de Google.");
@@ -288,12 +293,32 @@ const Login = ({ onLogin }) => {
 
   const handleCredentialResponse = (response) => {
     const payload = decodeJwtResponse(response.credential);
-    if (payload && payload.email) {
-        const email = payload.email.toLowerCase();
-        const isAdmin = ADMIN_EMAILS.includes(email);
-        onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
+    if (!payload || !payload.email) {
+      setError('No se pudo verificar la identidad.');
+      return;
+    }
+    const email = payload.email.toLowerCase();
+
+    // Si el clic fue en el botón de Generar Constancia → abrir Apps Script
+    const origen = window._constanciaSignInOrigen || 'login';
+    window._constanciaSignInOrigen = null;
+
+    if (origen === 'constancia') {
+      const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
+      window.open(url, '_blank');
+      // Re-inicializar para dejar los botones listos de nuevo
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse
+      });
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInDivConstancia"),
+        { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
+      );
     } else {
-        setError('No se pudo verificar la identidad.');
+      // Destino normal → entrar al Dashboard
+      const isAdmin = ADMIN_EMAILS.includes(email);
+      onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
     }
   };
 
@@ -577,43 +602,12 @@ const Login = ({ onLogin }) => {
               Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
             </p>
 
-            {/* El usuario ingresa su correo y abrimos el Apps Script con ?email=... */}
-            <div style={{display:'flex',flexDirection:'column',gap:'.5rem'}}>
-              <div style={{display:'flex',gap:'.45rem',alignItems:'stretch'}}>
-                <div style={{
-                  display:'flex', flex:1, border:'1.5px solid #ddd', borderRadius:10,
-                  overflow:'hidden', background:'#fff'
-                }}>
-                  <input
-                    id="inputEmailConstancia"
-                    type="text"
-                    placeholder="usuario"
-                    style={{
-                      flex:1, padding:'.7rem .75rem', border:'none', outline:'none',
-                      fontSize:'.85rem', fontFamily:"'DM Sans',sans-serif", color:'#1A1720'
-                    }}
-                    onKeyDown={(e)=>{ if(e.key==='Enter') abrirConstancias(); }}
-                  />
-                  <span style={{
-                    padding:'.7rem .6rem', background:'#f5f5f5', borderLeft:'1.5px solid #eee',
-                    fontSize:'.72rem', color:'#888', display:'flex', alignItems:'center', whiteSpace:'nowrap'
-                  }}>@itdurango.edu.mx</span>
-                </div>
-                <button
-                  onClick={abrirConstancias}
-                  style={{
-                    padding:'.7rem 1rem', borderRadius:10, border:'none',
-                    background:'linear-gradient(135deg,#3D0A14,#922438)',
-                    color:'#F5E4A8', fontWeight:700, fontSize:'.84rem',
-                    cursor:'pointer', boxShadow:'0 4px 14px rgba(107,26,42,.3)',
-                    display:'flex', alignItems:'center', gap:'.4rem', whiteSpace:'nowrap'
-                  }}>
-                  <Award size={15}/> Generar
-                </button>
+            <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.6rem'}}>
+              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
+                onClick={()=>{ window._constanciaSignInOrigen = 'constancia'; }}/>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.35rem',fontSize:'.7rem',color:'#A0A0B0'}}>
+                <Lock size={11}/> Autenticación segura con Google
               </div>
-              <p style={{fontSize:'.68rem',color:'#A0A0B0',margin:0,textAlign:'center'}}>
-                Ingresa tu usuario ITD para acceder a tus constancias
-              </p>
             </div>
           </div>
         </div>
