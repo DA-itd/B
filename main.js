@@ -195,42 +195,18 @@ const UnitBox = ({ valor, label }) => (
 
 
 const Login = ({ onLogin }) => {
-  const [error,           setError]           = useState('');
-  const [logoError,       setLogoError]       = useState(false);
+  const [error,           setError]     = useState('');
+  const [logoError,       setLogoError] = useState(false);
   const [constanciaError, setConstanciaError] = useState('');
 
-  // Ref de intención y de la ventana pre-abierta
+  // Intención: qué tarjeta disparó el botón Google
   const googleIntencion = React.useRef('login');
-  const ventanaRef      = React.useRef(null);
 
-  // onMouseDown: abrir la ventana YA (gesto directo → nunca bloqueada)
-  // y marcar la intención. Cuando llegue el callback de Google,
-  // simplemente redirigimos esa ventana ya abierta.
-  const prepararVentanaConstancia = () => {
-    googleIntencion.current = 'constancia';
-    ventanaRef.current = window.open('', '_blank');
-    // Mostrar página de espera para que no parezca vacía
-    if (ventanaRef.current) {
-      ventanaRef.current.document.write(
-        '<html><head><title>Verificando...</title>' +
-        '<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;' +
-        'min-height:100vh;margin:0;background:#FAF7F2;flex-direction:column;gap:1rem;}' +
-        '.spin{width:36px;height:36px;border:3px solid #1B396A;border-top-color:transparent;' +
-        'border-radius:50%;animation:s 0.7s linear infinite;}' +
-        '@keyframes s{to{transform:rotate(360deg);}}</style></head>' +
-        '<body><div class="spin"></div>' +
-        '<p style="color:#1B396A;font-weight:600;">Verificando tu identidad…</p></body></html>'
-      );
-    }
-  };
-
-  // Callback único para ambos botones Google
+  // Callback único — distingue por intención
   const handleCredentialResponse = (response) => {
-    const token   = response.credential;
-    const payload = decodeJwtResponse(token);
+    const payload = decodeJwtResponse(response.credential);
     if (!payload || !payload.email) {
       setError('No se pudo verificar la identidad.');
-      if (ventanaRef.current) { ventanaRef.current.close(); ventanaRef.current = null; }
       return;
     }
     const email = payload.email.toLowerCase();
@@ -240,18 +216,11 @@ const Login = ({ onLogin }) => {
       if (!email.endsWith('@itdurango.edu.mx')) {
         setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
         setTimeout(() => setConstanciaError(''), 4000);
-        if (ventanaRef.current) { ventanaRef.current.close(); ventanaRef.current = null; }
         return;
       }
-      // Redirigir la ventana ya abierta — no hay popup-blocker porque ya estaba abierta
-      const url = CONSTANCIAS_URL + '?token=' + encodeURIComponent(token);
-      if (ventanaRef.current && !ventanaRef.current.closed) {
-        ventanaRef.current.location.href = url;
-      } else {
-        // Fallback: si la cerraron, intentar de nuevo
-        window.open(url, '_blank');
-      }
-      ventanaRef.current = null;
+      // Navegar en la misma pestaña → Apps Script con email
+      // (window.open bloqueado en callbacks; location.href siempre funciona)
+      window.location.href = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
     } else {
       const isAdmin = ADMIN_EMAILS.includes(email);
       onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
@@ -476,8 +445,8 @@ const Login = ({ onLogin }) => {
 
             <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
               <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
-                onMouseDown={prepararVentanaConstancia}
-                onTouchStart={prepararVentanaConstancia}/>
+                onMouseDown={()=>{ googleIntencion.current='constancia'; }}
+                onTouchStart={()=>{ googleIntencion.current='constancia'; }}/>
               {constanciaError && (
                 <div style={{display:'flex',alignItems:'center',gap:'.45rem',padding:'.6rem .85rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.2)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
                   <AlertCircle size={13}/> {constanciaError}
