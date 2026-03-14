@@ -1,919 +1,403 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import ReactDOM from 'react-dom/client';
-import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
+// =============================================================
+// CONSTANCIA DE PARTICIPACION / INSTRUCTOR - Google Apps Script
+// Spreadsheet: 1ZNOunBLHVLiGN2lCxgoUI32YTAgJKSm6_upWFjNU7k0
+//   Hoja 0: "Inscripciones"  → participantes → Slide 0
+//   Hoja 1: "Instructores"   → instructores  → Slide 1
+//
+// Columnas (indice base 0) — mismas en ambas hojas:
+//   0:Folio personal  1:NombreCompleto  2:Curp  3:Email
+//   4:Genero  5:Departamento  6:Curso  7:FechaCurso
+//   8:Horas  9:tipo  10:Estado
+// =============================================================
 
-// ==========================================
-// CONFIGURACIÓN DE GOOGLE (OBLIGATORIO)
-// ==========================================
-const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
+var SHEET_ID      = "1ZNOunBLHVLiGN2lCxgoUI32YTAgJKSm6_upWFjNU7k0";
+var TEMPLATE_ID   = "1ooP8iWCI8CsvO5lUY-UO1rEmu16oVaVXNhE6TTh2A0A";
+var OUTPUT_FOLDER = "1PDc9-4DsTTbx6JijFoPbiqCjvr5BaLMu";
+var ADMIN_EMAIL   = "alejandro.calderon@itdurango.edu.mx";
 
-// ==========================================
-// CONFIGURACIÓN LOCAL (GITHUB)
-// ==========================================
-const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
+var SLIDE_PARTICIPANTE = 0;   // Diapositiva 1 → participantes
+var SLIDE_INSTRUCTOR   = 1;   // Diapositiva 2 → instructores
 
-// CONFIGURACIÓN DE ARCHIVOS
-const DATA_SOURCES = {
-  '2026': './db_2026.csv',
-  '2025': './db_2025.csv', 
-  '2024': './db_2024.csv'
-};
+// -------------------------------------------------------------
+// Web App entry point
+// -------------------------------------------------------------
+function doGet(e) {
+  var action     = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+  var emailParam = (e && e.parameter && e.parameter.email)  ? e.parameter.email  : "";
 
-const ADMIN_EMAILS = [
-    'alejandro.calderon@itdurango.edu.mx',
-    'coord_actualizaciondocente@itdurango.edu.mx',
-    'usuario@itdurango.edu.mx' 
-];
-// Clave de acceso rápido admin (doble click en logo)
-const ADMIN_PASSWORD = "Xela1615";
-
-// ==========================================
-// MÓDULO: GENERACIÓN DE CONSTANCIAS
-// ==========================================
-const CONSTANCIAS_URL = "https://script.google.com/macros/s/AKfycbwxTOTI0iXjs4l8qZrOP5sK-tflW7Bz-cugiq55LTtuIRziM9SLfM8z9GgjqaoS-o5v/exec";
-// Fecha de apertura automática (si el admin no ha activado/desactivado manualmente)
-const CONSTANCIAS_FECHA_APERTURA = new Date('2026-06-29T00:00:00');
-
-// Consulta si el admin activó/desactivó manualmente desde el portal principal
-const fetchConstanciasActivada = async () => {
-  try {
-    const res = await fetch(CONSTANCIAS_URL + '?action=getConstanciasStatus');
-    const data = await res.json();
-    if (data.success) return data.status === 'OPEN';
-  } catch(e) { /* si falla, usa la fecha automática */ }
-  return null; // null = respetar fecha automática
-};
-
-// ==========================================
-// LÓGICA DE DATOS
-// ==========================================
-
-const detectDelimiter = (text) => {
-    if (!text) return ',';
-    const firstLine = text.split('\n')[0] || '';
-    const commas = (firstLine.match(/,/g) || []).length;
-    const semicolons = (firstLine.match(/;/g) || []).length;
-    return semicolons > commas ? ';' : ',';
-};
-
-const parseCSV = (text) => {
-  if (!text) return [];
-  const delimiter = detectDelimiter(text);
-  const rows = [];
-  let currentRow = [];
-  let currentField = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '"' && text[i+1] === '"') { currentField += '"'; i++; }
-    else if (char === '"') { inQuotes = !inQuotes; }
-    else if (char === delimiter && !inQuotes) { currentRow.push(currentField); currentField = ''; }
-    else if ((char === '\r' || char === '\n') && !inQuotes) {
-      if (char === '\r' && text[i+1] === '\n') i++;
-      currentRow.push(currentField); rows.push(currentRow); currentRow = []; currentField = '';
-    } else { currentField += char; }
+  // ── API: estado de constancias (llamado desde index-9.html) ──
+  if (action === "getConstanciasStatus") {
+    var status = PropertiesService.getScriptProperties().getProperty("CONSTANCIAS_STATUS") || "OPEN";
+    return buildJsonOutput({ success: true, status: status });
   }
-  if (currentField || currentRow.length > 0) { currentRow.push(currentField); rows.push(currentRow); }
-  return rows;
-};
 
-const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
+  // ── Página HTML normal ──
+  var html = HtmlService.createHtmlOutputFromFile("index")
+    .setTitle("Constancia de Participacion")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 
-const fetchLocalData = async (year) => {
-  const fileUrl = DATA_SOURCES[year];
-  if (!fileUrl) return { data: [], error: null, headersFound: [] };
-  
+  var content = html.getContent();
+  content = content.replace(
+    "var cursosDisponibles = [];",
+    "var cursosDisponibles = [];\n  var EMAIL_PARAM = " + JSON.stringify(emailParam) + ";"
+  );
+  return HtmlService.createHtmlOutput(content)
+    .setTitle("Constancia de Participacion")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// -------------------------------------------------------------
+// POST — recibe acciones JSON desde el portal principal
+// -------------------------------------------------------------
+function doPost(e) {
   try {
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-         if (response.status === 404) throw new Error(`El archivo "db_${year}.csv" no se encuentra en el repositorio.`);
-         throw new Error(`Error al cargar el archivo local (${response.status})`);
+    var body = JSON.parse(e.postData.contents);
+    if (body.action === "setConstanciasStatus") {
+      return buildJsonOutput(setConstanciasStatus(body));
     }
-    const text = await response.text();
-    if (!text || text.trim().length === 0) throw new Error("El archivo CSV está vacío.");
-
-    const rows = parseCSV(text);
-    if (rows.length < 2) return { data: [], error: "El archivo CSV no tiene datos suficientes.", headersFound: [] };
-
-    const rawHeaders = rows[0];
-    const headers = rawHeaders.map(h => normalize(h));
-    const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(normalize(k))));
-
-    const idx = {
-        nombre: findCol(['nombre', 'participante', 'docente', 'alumno', 'name']),
-        correo: findCol(['emailaddress', 'correo', 'email', 'mail', 'e-mail']),
-        curso:  findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
-        fecha:  findCol(['año', 'fecha', 'periodo', 'year', 'date']),
-        status: findCol(['status', 'estatus', 'estado']),
-        link:   findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
-    };
-
-    if (idx.correo === -1) {
-        return { 
-            data: [], 
-            error: `No se encontró la columna de Correo (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
-            headersFound: rawHeaders
-        };
-    }
-
-    const cleanData = rows.slice(1).map((r, i) => {
-        if (r.length <= 1 && !r[0]) return null;
-        const statusRaw = idx.status !== -1 ? (r[idx.status] || 'PENDIENTE') : 'ENVIADO';
-        return {
-            id:     i,
-            nombre: idx.nombre !== -1 ? r[idx.nombre] : 'Usuario ITD',
-            correo: (r[idx.correo] || '').trim().toLowerCase(),
-            curso:  idx.curso !== -1 ? r[idx.curso] : 'Documento ITD',
-            fecha:  idx.fecha !== -1 ? r[idx.fecha] : year,
-            status: statusRaw.toUpperCase().trim(),
-            link:   idx.link !== -1 ? r[idx.link] : '',
-            year:   year
-        };
-    }).filter(item => item && item.correo);
-
-    return { data: cleanData, error: null, headersFound: rawHeaders };
-  } catch (error) {
-    console.error("Error Fetch Local:", error);
-    return { data: [], error: error.message, headersFound: [] };
+    return buildJsonOutput({ success: false, message: "Accion no reconocida." });
+  } catch(err) {
+    return buildJsonOutput({ success: false, message: err.message });
   }
-};
+}
 
-// ==========================================
-// AUTH UTILS (GOOGLE JWT DECODER)
-// ==========================================
-const decodeJwtResponse = (token) => {
-    try {
-        const base64Url = token.split('.')[1];
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        console.error("Error decoding JWT", e);
-        return null;
+// -------------------------------------------------------------
+// ACTIVAR / DESACTIVAR CONSTANCIAS  (solo admin)
+// Acepta autenticación por email directo (desde main.js)
+// o por token de Google (desde index-9.html)
+// -------------------------------------------------------------
+function setConstanciasStatus(body) {
+  try {
+    var emailVerificado = "";
+
+    // Opción A: viene email directo (desde modal de main.js)
+    if (body.email) {
+      emailVerificado = String(body.email).trim().toLowerCase();
     }
-};
+    // Opción B: viene token de Google (desde index-9.html)
+    else if (body.id_token) {
+      var token  = body.id_token;
+      var parts  = token.split(".");
+      if (parts.length < 2) return { success: false, message: "Token inválido." };
+      var payload = JSON.parse(Utilities.newBlob(
+        Utilities.base64DecodeWebSafe(parts[1] + "==")).getDataAsString());
+      emailVerificado = payload.email.toLowerCase();
+    }
 
-// ==========================================
-// COMPONENTE: CUENTA REGRESIVA — CONSTANCIAS
-// ==========================================
-const useCountdown = (targetDate) => {
-  const calc = () => {
-    const diff = targetDate - new Date();
-    if (diff <= 0) return { dias: 0, horas: 0, minutos: 0, segundos: 0, abierto: true };
+    if (!emailVerificado) return { success: false, message: "Sin credenciales." };
+
+    // Verificar que sea un correo admin autorizado
+    var admins = [ADMIN_EMAIL.toLowerCase(), "coord_actualizaciondocente@itdurango.edu.mx"];
+    if (admins.indexOf(emailVerificado) === -1) {
+      return { success: false, message: "No autorizado." };
+    }
+
+    var status = (body.status === "CLOSED") ? "CLOSED" : "OPEN";
+    PropertiesService.getScriptProperties().setProperty("CONSTANCIAS_STATUS", status);
+    return { success: true, status: status };
+  } catch(err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// -------------------------------------------------------------
+// Helper: respuesta JSON con CORS
+// -------------------------------------------------------------
+function buildJsonOutput(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+// -------------------------------------------------------------
+// OBTENER CURSOS DEL USUARIO — busca en AMBAS hojas
+// Cada registro incluye campo "tipoHoja": "participante" | "instructor"
+// -------------------------------------------------------------
+function obtenerMisCursos(emailManual) {
+  try {
+    // Email viene siempre por parametro URL — no usamos Session.getActiveUser()
+    var email = emailManual ? emailManual.trim().toLowerCase() : "";
+
+    if (!email) {
+      return { ok: false, mensaje: "No se recibio el correo. Accede desde el portal ITD." };
+    }
+
+    var esAdmin = (email === ADMIN_EMAIL.toLowerCase());
+    var ss      = SpreadsheetApp.openById(SHEET_ID);
+    var activos   = [];
+    var inactivos = [];
+
+    var hojas = [
+      { hoja: ss.getSheetByName("Inscripciones"), tipoHoja: "participante" },
+      { hoja: ss.getSheetByName("Instructores"),  tipoHoja: "instructor"   }
+    ];
+
+    for (var h = 0; h < hojas.length; h++) {
+      if (!hojas[h].hoja) continue; // si la hoja no existe, saltar
+      var data     = hojas[h].hoja.getDataRange().getValues();
+      var tipoHoja = hojas[h].tipoHoja;
+
+      for (var i = 1; i < data.length; i++) {
+        var r         = data[i];
+        var emailFila = String(r[3]).trim().toLowerCase();
+
+        if (esAdmin || emailFila === email) {
+          var registro = {
+            folio        : r[0],
+            nombre       : r[1],
+            curp         : r[2],
+            email        : r[3],
+            departamento : r[5],
+            curso        : r[6],
+            fechaCurso   : (r[7] instanceof Date)
+                             ? Utilities.formatDate(r[7], Session.getScriptTimeZone(), "dd/MM/yyyy")
+                             : String(r[7]),
+            horas        : r[8],
+            tipo         : r[9],
+            estado       : String(r[10]).toUpperCase(),
+            tipoHoja     : tipoHoja
+          };
+
+          if (registro.estado === "ACTIVO") activos.push(registro);
+          else inactivos.push(registro);
+        }
+      }
+    }
+
+    if (activos.length === 0 && inactivos.length === 0) {
+      return { ok: false, mensaje: "No se encontro ningun registro con el correo: " + email + ". Contacta a Desarrollo Academico." };
+    }
+    if (activos.length === 0) {
+      return { ok: false, mensaje: "No tienes cursos activos. Verifica que hayas completado el curso y la encuesta." };
+    }
+
+    var tieneParticipante = activos.some(function(c) { return c.tipoHoja === "participante"; });
+    var tieneInstructor   = activos.some(function(c) { return c.tipoHoja === "instructor";   });
+
     return {
-      dias:     Math.floor(diff / (1000 * 60 * 60 * 24)),
-      horas:    Math.floor((diff / (1000 * 60 * 60)) % 24),
-      minutos:  Math.floor((diff / (1000 * 60)) % 60),
-      segundos: Math.floor((diff / 1000) % 60),
-      abierto:  false
+      ok               : true,
+      email            : email,
+      nombre           : esAdmin ? "Administrador" : activos[0].nombre,
+      esAdmin          : esAdmin,
+      hayInactivos     : inactivos.length > 0,
+      tieneParticipante: tieneParticipante,
+      tieneInstructor  : tieneInstructor,
+      cursos           : activos
     };
-  };
-  const [tiempo, setTiempo] = useState(calc);
-  useEffect(() => {
-    const t = setInterval(() => setTiempo(calc()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  return tiempo;
-};
 
-const UnitBox = ({ valor, label }) => (
-  <div className="flex flex-col items-center">
-    <div className="bg-itd-blue text-white rounded-lg w-14 h-14 flex items-center justify-center text-2xl font-bold tabular-nums shadow-inner">
-      {String(valor).padStart(2, '0')}
-    </div>
-    <span className="text-[10px] uppercase tracking-widest text-gray-500 mt-1">{label}</span>
-  </div>
-);
+  } catch(e) {
+    Logger.log("obtenerMisCursos ERROR: " + e.message);
+    return { ok: false, mensaje: "Error interno: " + e.message };
+  }
+}
 
+// -------------------------------------------------------------
+// BUSCAR CURSOS POR CORREO (solo admin) — busca en ambas hojas
+// -------------------------------------------------------------
+function buscarCursosPorCorreo(emailBusqueda) {
+  try {
+    // Esta funcion solo es llamada desde el frontend admin — no validamos sesion
 
-// ==========================================
-// COMPONENTES UI
-// ==========================================
+    var emailTarget = String(emailBusqueda).trim().toLowerCase();
+    if (!emailTarget) return { ok: false, mensaje: "Correo de busqueda no valido." };
 
+    var ss      = SpreadsheetApp.openById(SHEET_ID);
+    var activos = [];
 
-const Login = ({ onLogin }) => {
-  const [error, setError] = useState('');
-  const [logoError, setLogoError] = useState(false);
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
-  const [adminError, setAdminError] = useState('');
-  const [adminEmail, setAdminEmail] = useState('');
-  const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
+    var hojas = [
+      { hoja: ss.getSheetByName("Inscripciones"), tipoHoja: "participante" },
+      { hoja: ss.getSheetByName("Instructores"),  tipoHoja: "instructor"   }
+    ];
 
+    for (var h = 0; h < hojas.length; h++) {
+      if (!hojas[h].hoja) continue; // si la hoja no existe, saltar
+      var data     = hojas[h].hoja.getDataRange().getValues();
+      var tipoHoja = hojas[h].tipoHoja;
 
-  // Abrir Apps Script de constancias con el email del usuario
-  const abrirConstancias = () => {
-    const input = document.getElementById('inputEmailConstancia');
-    const prefijo = (input ? input.value : '').replace(/@.*$/, '').trim().toLowerCase();
-    if (!prefijo) {
-      input && (input.style.border = '1.5px solid #e05050');
-      setTimeout(() => { input && (input.style.border = '1.5px solid #ddd'); }, 1500);
-      return;
+      for (var i = 1; i < data.length; i++) {
+        var r         = data[i];
+        var emailFila = String(r[3]).trim().toLowerCase();
+
+        if (emailFila === emailTarget && String(r[10]).toUpperCase() === "ACTIVO") {
+          activos.push({
+            folio        : r[0],
+            nombre       : r[1],
+            curp         : r[2],
+            email        : r[3],
+            departamento : r[5],
+            curso        : r[6],
+            fechaCurso   : (r[7] instanceof Date)
+                             ? Utilities.formatDate(r[7], Session.getScriptTimeZone(), "dd/MM/yyyy")
+                             : String(r[7]),
+            horas        : r[8],
+            tipo         : r[9],
+            estado       : "ACTIVO",
+            tipoHoja     : tipoHoja
+          });
+        }
+      }
     }
-    const email = prefijo + '@itdurango.edu.mx';
-    const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
-    window.open(url, '_blank');
-  };
 
-  // Doble click en logo → modal admin
-  const handleLogoClick = () => {
-    setAdminPass('');
-    setAdminError('');
-    setAdminEmail('');
-    setAdminStep('clave');
-    setShowAdminModal(true);
-  };
+    if (activos.length === 0) {
+      return { ok: false, mensaje: "No se encontraron cursos activos para: " + emailBusqueda };
+    }
 
-  const handleAdminLogin = async () => {
-    if (adminStep === 'clave') {
-      if (adminPass === ADMIN_PASSWORD) {
-        setAdminError('');
-        setAdminPass('');
-        setAdminStep('correo');
+    return { ok: true, cursos: activos, nombre: activos[0].nombre };
+
+  } catch(e) {
+    Logger.log("buscarCursosPorCorreo ERROR: " + e.message);
+    return { ok: false, mensaje: "Error al buscar: " + e.message };
+  }
+}
+
+// -------------------------------------------------------------
+// GENERAR CONSTANCIA EN PDF
+// dc.tipoHoja → "participante" usa Slide 0, "instructor" usa Slide 1
+// Se elimina la slide no usada para que el PDF tenga solo 1 pagina
+// -------------------------------------------------------------
+function generarConstancia(dc) {
+  try {
+    // El email ya fue validado al buscar los cursos — confiamos en dc.email
+    var emailCurso = String(dc.email).trim().toLowerCase();
+    if (!emailCurso) {
+      return { ok: false, mensaje: "No se recibio el correo del usuario." };
+    }
+
+    var slideIndex = (dc.tipoHoja === "instructor") ? SLIDE_INSTRUCTOR : SLIDE_PARTICIPANTE;
+
+    var folder     = DriveApp.getFolderById(OUTPUT_FOLDER);
+    // Prefijo P_ o I_ para diferenciar participante e instructor en Drive
+    var prefijo    = (dc.tipoHoja === "instructor") ? "Instructor_" : "Participante_";
+    var nombrePDF  = prefijo + dc.curp + "_" + sanitizar(dc.curso);
+    var ahora      = new Date();
+    var tz         = Session.getScriptTimeZone();
+    var fechaHoy   = Utilities.formatDate(ahora, tz, "dd/MM/yyyy");
+    var horaHoy    = Utilities.formatDate(ahora, tz, "HH:mm");
+    var fechaYHora = fechaHoy + " " + horaHoy;
+
+    // Si ya existe lo devuelve sin regenerar
+    var iter = folder.getFilesByName(nombrePDF + ".pdf");
+    if (iter.hasNext()) {
+      var archivo = iter.next();
+      archivo.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      return { ok: true, url: archivo.getDownloadUrl(), nombre: dc.nombre, esDuplicado: true, fechaHoy: fechaYHora, tipoHoja: dc.tipoHoja };
+    }
+
+    // Clonar plantilla completa
+    var copiaFile = DriveApp.getFileById(TEMPLATE_ID).makeCopy("TEMP_" + nombrePDF, folder);
+    var copiaId   = copiaFile.getId();
+    Utilities.sleep(800);
+
+    // Rellenar solo la slide correspondiente
+    var pres  = SlidesApp.openById(copiaId);
+    var slide = pres.getSlides()[slideIndex];
+
+    var reemplazos = {
+      "{{NombreCompleto}}" : dc.nombre                       || "",
+      "{{Folio personal}}" : dc.folio                        || "",
+      "{{Departamento}}"   : dc.departamento                 || "",
+      "{{Curso}}"          : dc.curso                        || "",
+      "{{FechaCurso}}"     : dc.fechaCurso                   || "",
+      "{{Horas}}"          : String(dc.horas)                || "",
+      "{{fecha}}"          : extraerFechaFinal(dc.fechaCurso),
+      "{{FECHA_CREACION}}" : "Generado el " + fechaYHora
+    };
+
+    var shapes = slide.getShapes();
+    for (var s = 0; s < shapes.length; s++) {
+      try {
+        var txt  = shapes[s].getText();
+        var keys = Object.keys(reemplazos);
+        for (var k = 0; k < keys.length; k++) {
+          txt.replaceAllText(keys[k], reemplazos[keys[k]]);
+        }
+      } catch(ex) {}
+    }
+    pres.saveAndClose();
+    Utilities.sleep(600);
+
+    // Eliminar la slide que NO se usa → PDF de 1 sola pagina
+    var presLimpio = SlidesApp.openById(copiaId);
+    var slides     = presLimpio.getSlides();
+    if (slides.length > 1) {
+      // Eliminar en orden inverso para no afectar indices
+      if (slideIndex === SLIDE_PARTICIPANTE) {
+        slides[1].remove();   // quitar slide de instructor
       } else {
-        setAdminError('Clave incorrecta.');
-      }
-    } else {
-      // Paso correo: verificar que sea admin y toggle activar/desactivar tarjeta
-      const prefijo = adminEmail.replace(/@.*$/, '').trim();
-      if (!prefijo) { setAdminError('Ingresa un usuario válido.'); return; }
-      const emailFinal = prefijo + '@itdurango.edu.mx';
-      const esAdmin = ADMIN_EMAILS.includes(emailFinal.toLowerCase());
-      if (!esAdmin) { setAdminError('Correo no autorizado.'); return; }
-
-      // Toggle: si está activada la apaga, si está apagada la enciende
-      const nuevoEstado = !abierto;
-      try {
-        const res = await fetch(CONSTANCIAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'setConstanciasStatus', status: nuevoEstado ? 'OPEN' : 'CLOSED', email: emailFinal })
-        });
-        const data = await res.json();
-        if (data.success) {
-          setAdminActivada(nuevoEstado);
-          setShowAdminModal(false);
-          setAdminStep('clave');
-          setAdminEmail('');
-        } else {
-          setAdminError('Error al guardar: ' + (data.message || 'intenta de nuevo'));
-        }
-      } catch(e) {
-        setAdminError('Error de conexión. Intenta de nuevo.');
+        slides[0].remove();   // quitar slide de participante
       }
     }
-  };
+    presLimpio.saveAndClose();
+    Utilities.sleep(600);
 
-  // ── Callback Tarjeta 1: Mis Constancias → entra al Dashboard ──
-  const handleCredentialResponse = (response) => {
-    const payload = decodeJwtResponse(response.credential);
-    if (!payload || !payload.email) {
-      setError('No se pudo verificar la identidad.');
-      return;
-    }
-    const email = payload.email.toLowerCase();
-    const isAdmin = ADMIN_EMAILS.includes(email);
-    onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
-  };
+    var pdfBlob = DriveApp.getFileById(copiaId)
+      .getAs("application/pdf")
+      .setName(nombrePDF + ".pdf");
 
-  // ── Callback Tarjeta 2: Generar Constancia → abre Apps Script ──
-  const handleCredentialConstancia = (response) => {
-    const payload = decodeJwtResponse(response.credential);
-    if (!payload || !payload.email) return;
-    const email = payload.email.toLowerCase();
-    const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
-    window.open(url, '_blank');
-    // Re-renderizar el botón para que pueda usarse de nuevo
-    setTimeout(() => {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleCredentialConstancia
-        });
-        window.google.accounts.id.renderButton(
-          document.getElementById("googleSignInDivConstancia"),
-          { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
-        );
-      } catch(e) {}
-    }, 500);
-  };
+    var pdfFile = folder.createFile(pdfBlob);
+    pdfFile.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    DriveApp.getFileById(copiaId).setTrashed(true);
 
-  useEffect(() => {
-    if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
-        try {
-            // Botón tarjeta 1 — Mis Constancias → login en Dashboard
-            window.google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleCredentialResponse
-            });
-            window.google.accounts.id.renderButton(
-                document.getElementById("googleSignInDiv"),
-                { theme: "outline", size: "large", width: "100%", text: "continue_with" }
-            );
-            // Botón tarjeta 2 — Generar Constancia → callback propio
-            window.google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleCredentialConstancia
-            });
-            window.google.accounts.id.renderButton(
-                document.getElementById("googleSignInDivConstancia"),
-                { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
-            );
-        } catch (err) {
-            console.error("Error initializing Google Btn", err);
-            setError("Error al cargar servicios de Google.");
-        }
-    }
-  }, []);
+    return {
+      ok         : true,
+      url        : pdfFile.getDownloadUrl(),
+      nombre     : dc.nombre,
+      esDuplicado: false,
+      fechaHoy   : fechaYHora,
+      tipoHoja   : dc.tipoHoja
+    };
 
-  const S = {
-    page: {
-      minHeight:'100vh',
-      background:'linear-gradient(150deg, #f8f4ec 0%, #efe7d5 45%, #e8f0f8 100%)',
-      display:'flex', flexDirection:'column', alignItems:'center',
-      justifyContent:'center', padding:'2rem 1rem',
-      fontFamily:"'DM Sans','Inter',sans-serif",
-      position:'relative', overflow:'hidden'
-    },
-    bgDeco: {
-      position:'absolute', inset:0, pointerEvents:'none',
-      background:'radial-gradient(ellipse 70% 50% at 15% 5%, rgba(107,26,42,.08) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 85% 95%, rgba(26,58,92,.08) 0%, transparent 50%)'
-    },
-    header: {
-      textAlign:'center', marginBottom:'2rem', position:'relative',
-      animation:'fadeUp .5s cubic-bezier(.22,.68,0,1.2) both'
-    },
-    logoWrap: {
-      position:'relative', width:84, height:84, margin:'0 auto 1rem'
-    },
-    logoRing: {
-      position:'absolute', inset:-8, borderRadius:'50%',
-      border:'1.5px solid rgba(196,154,53,.5)',
-      animation:'ringPulse 2.8s ease-out infinite'
-    },
-    logoRing2: {
-      position:'absolute', inset:-8, borderRadius:'50%',
-      border:'1.5px solid rgba(196,154,53,.3)',
-      animation:'ringPulse 2.8s 1.4s ease-out infinite'
-    },
-    logoImg: {
-      width:'100%', height:'100%', objectFit:'contain', borderRadius:'50%',
-      background:'#fff', padding:8,
-      boxShadow:'0 4px 22px rgba(107,26,42,.2), 0 0 0 2.5px rgba(196,154,53,.65)'
-    },
-    h1: {
-      fontFamily:"'Playfair Display','Georgia',serif",
-      fontSize:'clamp(1.55rem,5vw,2.1rem)', fontWeight:900,
-      color:'#3D0A14', margin:'0 0 .35rem', letterSpacing:'-.015em', lineHeight:1.15
-    },
-    sub: { fontSize:'.83rem', color:'#6B6B7B', margin:0 },
-    grid: {
-      display:'grid',
-      gridTemplateColumns:'repeat(auto-fit, minmax(288px, 1fr))',
-      gap:'1.1rem', width:'100%', maxWidth:760,
-      animation:'fadeUp .55s .1s cubic-bezier(.22,.68,0,1.2) both'
-    },
-    card: (accent) => ({
-      background:'#fff', borderRadius:22, overflow:'hidden',
-      boxShadow:`0 4px 8px rgba(0,0,0,.04), 0 24px 52px ${accent}, 0 0 0 1px rgba(196,154,53,.12)`,
-      display:'flex', flexDirection:'column'
-    }),
-    stripe: (g) => ({
-      height:5, backgroundSize:'200% 100%',
-      animation:'shimmer 4s linear infinite',
-      background: g
-    }),
-    cardBody: { padding:'1.7rem 1.9rem', flex:1, display:'flex', flexDirection:'column' },
-    iconWrap: (bg, shadow) => ({
-      width:46, height:46, borderRadius:13, flexShrink:0,
-      background: bg, display:'flex', alignItems:'center', justifyContent:'center',
-      boxShadow: shadow
-    }),
-    cardTitle: { fontWeight:700, fontSize:'1.02rem', color:'#1A1720', lineHeight:1.2 },
-    cardSub:   { fontSize:'.74rem', color:'#6B6B7B', marginTop:'.08rem' },
-    desc: { fontSize:'.82rem', color:'#5A5A6A', lineHeight:1.62, margin:'1rem 0 1.2rem' },
-    lockBtn: {
-      display:'flex', alignItems:'center', justifyContent:'center', gap:'.6rem',
-      padding:'.84rem 1rem', borderRadius:12,
-      border:'1.5px solid #e2e2e2', background:'#f7f7f7',
-      color:'#9090A0', fontSize:'.83rem', fontWeight:500,
-      cursor:'not-allowed', userSelect:'none', marginBottom:'.65rem'
-    },
-    countdown: {
-      display:'flex', justifyContent:'center', alignItems:'flex-start', gap:'.45rem',
-      padding:'.75rem', borderRadius:12,
-      background:'rgba(26,58,92,.04)', border:'1px solid rgba(26,58,92,.09)',
-      marginBottom:'.55rem'
-    },
-    unitBox: {
-      background:'#1B396A', color:'#fff', borderRadius:9,
-      width:40, height:40, display:'flex', alignItems:'center', justifyContent:'center',
-      fontWeight:700, fontSize:'1rem', fontVariantNumeric:'tabular-nums',
-      boxShadow:'0 2px 8px rgba(26,58,92,.22)'
-    },
-    unitLabel: {
-      fontSize:'.54rem', color:'#9090A0', marginTop:'.22rem',
-      letterSpacing:'.06em', textTransform:'uppercase', textAlign:'center'
-    },
-    colon: { color:'#C8C8D0', fontWeight:300, fontSize:'1rem', marginTop:'.35rem', lineHeight:1 },
-    authNote: {
-      display:'flex', alignItems:'center', justifyContent:'center', gap:'.35rem',
-      fontSize:'.7rem', color:'#A0A0B0', marginTop:'.5rem'
-    },
-    footer: {
-      marginTop:'1.8rem', textAlign:'center',
-      fontSize:'.68rem', color:'rgba(80,65,55,.55)',
-      animation:'fadeUp .5s .3s ease both', letterSpacing:'.02em'
-    }
-  };
+  } catch(e) {
+    Logger.log("generarConstancia ERROR: " + e.message);
+    return { ok: false, mensaje: "Error al generar la constancia: " + e.message };
+  }
+}
 
-  return (
-    <div style={S.page}>
-      <div style={S.bgDeco}/>
+// -------------------------------------------------------------
+// DIAGNOSTICO
+// -------------------------------------------------------------
+function diagnostico() {
+  var log = [];
+  log.push("Admin configurado: " + ADMIN_EMAIL);
 
-      {/* Modal acceso admin */}
-      {showAdminModal && (
-        <div style={{
-          position:'fixed', inset:0, zIndex:1000,
-          background:'rgba(0,0,0,.45)', backdropFilter:'blur(4px)',
-          display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'
-        }} onClick={e => { if(e.target===e.currentTarget) setShowAdminModal(false); }}>
-          <div style={{
-            background:'#fff', borderRadius:18, overflow:'hidden',
-            width:'100%', maxWidth:340,
-            boxShadow:'0 24px 60px rgba(0,0,0,.25)',
-            animation:'fadeUp .3s cubic-bezier(.22,.68,0,1.2) both'
-          }}>
-            <div style={{height:4, background:'linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14)', backgroundSize:'200% 100%', animation:'shimmer 3s linear infinite'}}/>
-            <div style={{padding:'1.6rem 1.8rem'}}>
-              <div style={{textAlign:'center', marginBottom:'1.2rem'}}>
-                <div style={{fontSize:'1.8rem', marginBottom:'.4rem'}}>{adminStep === 'clave' ? '🔐' : '👤'}</div>
-                <div style={{fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.1rem', color:'#3D0A14'}}>Acceso Administrador</div>
-                <div style={{fontSize:'.75rem', color:'#9090A0', marginTop:'.2rem'}}>
-                  {adminStep === 'clave' ? 'Ingresa la clave de acceso' : 'Ingresa tu correo para confirmar'}
-                </div>
-              </div>
-              {adminStep === 'clave' ? (
-                <input
-                  type="password"
-                  value={adminPass}
-                  onChange={e => { setAdminPass(e.target.value); setAdminError(''); }}
-                  onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
-                  placeholder="••••••••"
-                  autoFocus
-                  style={{
-                    width:'100%', padding:'.75rem 1rem',
-                    border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
-                    borderRadius:10, fontSize:'.9rem',
-                    fontFamily:"'DM Sans',sans-serif", outline:'none',
-                    marginBottom:'.5rem', boxSizing:'border-box',
-                    background: adminError ? '#fff5f5' : '#fff'
-                  }}
-                />
-              ) : (
-                <div style={{display:'flex', marginBottom:'.5rem'}}>
-                  <input
-                    type="text"
-                    value={adminEmail}
-                    onChange={e => { setAdminEmail(e.target.value.replace(/@.*$/,'')); setAdminError(''); }}
-                    onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
-                    placeholder="usuario"
-                    autoFocus
-                    style={{
-                      flex:1, padding:'.75rem 1rem',
-                      border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
-                      borderRadius:'10px 0 0 10px', fontSize:'.9rem',
-                      fontFamily:"'DM Sans',sans-serif", outline:'none',
-                      boxSizing:'border-box', background: adminError ? '#fff5f5' : '#fff'
-                    }}
-                  />
-                  <span style={{
-                    padding:'.75rem .6rem', background:'#f3f4f6',
-                    border:'1.5px solid #e0e0e0', borderLeft:'none',
-                    borderRadius:'0 10px 10px 0', fontSize:'.72rem',
-                    color:'#6b7280', whiteSpace:'nowrap', display:'flex', alignItems:'center'
-                  }}>@itdurango.edu.mx</span>
-                </div>
-              )}
-              {adminError && (
-                <div style={{fontSize:'.73rem', color:'#c0392b', marginBottom:'.6rem', display:'flex', alignItems:'center', gap:'.3rem'}}>
-                  <AlertCircle size={12}/> {adminError}
-                </div>
-              )}
-              <button onClick={handleAdminLogin} style={{
-                width:'100%', padding:'.75rem',
-                background:'linear-gradient(135deg,#3D0A14,#922438)',
-                color:'#F5E4A8', border:'none', borderRadius:10,
-                fontFamily:"'DM Sans',sans-serif", fontWeight:700,
-                fontSize:'.88rem', cursor:'pointer',
-                boxShadow:'0 4px 14px rgba(107,26,42,.28)',
-                marginBottom:'.6rem'
-              }}>{adminStep === 'clave' ? 'Continuar' : (abierto ? 'Desactivar tarjeta 🔒' : 'Activar tarjeta ✅')}</button>
-              <button onClick={() => { setShowAdminModal(false); setAdminStep('clave'); setAdminEmail(''); setAdminPass(''); setAdminError(''); }} style={{
-                width:'100%', padding:'.55rem',
-                background:'transparent', border:'1.5px solid #e8e8e8',
-                borderRadius:10, fontFamily:"'DM Sans',sans-serif",
-                fontSize:'.8rem', color:'#9090A0', cursor:'pointer'
-              }}>Cancelar</button>
-            </div>
-          </div>
-        </div>
-      )}
+  try {
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var h0 = ss.getSheetByName("Inscripciones");
+    var h1 = ss.getSheetByName("Instructores");
+    log.push("Hoja [Inscripciones]: " + (h0 ? (h0.getLastRow() - 1) + " registros" : "NO ENCONTRADA"));
+    log.push("Hoja [Instructores]:  " + (h1 ? (h1.getLastRow() - 1) + " registros" : "NO ENCONTRADA"));
+  } catch(e) { log.push("ERROR Sheets: " + e.message); }
 
-      {/* Header */}
-      <div style={S.header}>
-        <div style={{...S.logoWrap, cursor:'pointer'}} onClick={handleLogoClick} title="">
-          <div style={S.logoRing}/>
-          <div style={S.logoRing2}/>
-          {logoError ? (
-            <div style={{
-              width:'100%', height:'100%', borderRadius:'50%',
-              background:'linear-gradient(135deg,#3D0A14,#6B1A2A)',
-              display:'flex', alignItems:'center', justifyContent:'center',
-              boxShadow:'0 4px 22px rgba(107,26,42,.2), 0 0 0 2.5px rgba(196,154,53,.65)',
-              flexDirection:'column', gap:2
-            }}>
-              <span style={{fontSize:'.65rem', fontWeight:900, color:'#F5E4A8', letterSpacing:'.1em', lineHeight:1}}>ITD</span>
-              <span style={{fontSize:'.42rem', color:'rgba(245,228,168,.6)', letterSpacing:'.06em', lineHeight:1}}>DURANGO</span>
-            </div>
-          ) : (
-            <img src={LOGO_URL} alt="ITD" style={S.logoImg}
-              onError={() => setLogoError(true)}/>
-          )}
-        </div>
-        <h1 style={S.h1}>
-          Constancias y <em style={{fontStyle:'italic',color:'#922438'}}>Reconocimientos</em>
-        </h1>
-        <p style={S.sub}>Instituto Tecnológico de Durango — Portal ITD</p>
-      </div>
+  try {
+    var pres   = SlidesApp.openById(TEMPLATE_ID);
+    var slides = pres.getSlides();
+    log.push("Plantilla: " + pres.getName() + " — " + slides.length + " slide(s)");
+    log.push("  Slide 0 → participantes");
+    log.push("  Slide 1 → instructores");
+  } catch(e) { log.push("ERROR Plantilla: " + e.message); }
 
-      {/* Grid de tarjetas */}
-      <div style={S.grid}>
+  try { log.push("Carpeta: " + DriveApp.getFolderById(OUTPUT_FOLDER).getName()); }
+  catch(e) { log.push("ERROR Carpeta: " + e.message); }
 
-        {/* Tarjeta 1: Mis Constancias */}
-        <div style={S.card('rgba(107,26,42,.12)')}>
-          <div style={S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)')}/>
-          <div style={S.cardBody}>
-            <div style={{display:'flex',alignItems:'center',gap:'.85rem',marginBottom:'.2rem'}}>
-              <div style={S.iconWrap('linear-gradient(135deg,#3D0A14,#922438)','0 3px 14px rgba(107,26,42,.28)')}>
-                <FileText size={21} color="#F5E4A8"/>
-              </div>
-              <div>
-                <div style={S.cardTitle}>Mis Constancias</div>
-                <div style={S.cardSub}>Descarga tus documentos</div>
-              </div>
-            </div>
+  var reporte = log.join("\n");
+  Logger.log(reporte);
+  Browser.msgBox(reporte);
+}
 
-            <p style={S.desc}>
-              Inicia sesión con tu cuenta <strong style={{color:'#1B396A'}}>@itdurango.edu.mx</strong> para ver y descargar tus constancias y reconocimientos.
-            </p>
+// -------------------------------------------------------------
+// HELPERS
+// -------------------------------------------------------------
+function sanitizar(str) {
+  return String(str).replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 40);
+}
 
-            {GOOGLE_CLIENT_ID === "TU_CLIENT_ID_AQUI.apps.googleusercontent.com" ? (
-              <div style={{padding:'.85rem',background:'#fffbee',border:'1.5px solid rgba(196,154,53,.3)',borderRadius:12,fontSize:'.78rem',color:'#7A5500'}}>
-                <strong>⚠ Configuración pendiente:</strong> agrega el GOOGLE_CLIENT_ID en main.js.
-              </div>
-            ) : (
-              <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.6rem'}}>
-                <div id="googleSignInDiv" style={{width:'100%',minHeight:44}}/>
-                {error && (
-                  <div style={{display:'flex',alignItems:'center',gap:'.5rem',padding:'.7rem .9rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.18)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
-                    <AlertCircle size={14}/> {error}
-                  </div>
-                )}
-                <div style={S.authNote}>
-                  <Lock size={11}/> Autenticación segura con Google
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Tarjeta 2: Generar Constancia */}
-        <div style={S.card('rgba(26,58,92,.1)')}>
-          <div style={S.stripe('linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)')}/>
-          <div style={S.cardBody}>
-            <div style={{display:'flex',alignItems:'center',gap:'.85rem',marginBottom:'.2rem'}}>
-              <div style={S.iconWrap('linear-gradient(135deg,#1B396A,#2B5580)','0 3px 14px rgba(26,58,92,.25)')}>
-                <Award size={21} color="#F5E4A8"/>
-              </div>
-              <div>
-                <div style={S.cardTitle}>Generar Constancia</div>
-                <div style={S.cardSub}>Cursos Enero–Junio 2026</div>
-              </div>
-            </div>
-
-            <p style={S.desc}>
-              Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
-            </p>
-
-            <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.6rem'}}>
-              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}/>
-              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.35rem',fontSize:'.7rem',color:'#A0A0B0'}}>
-                <Lock size={11}/> Autenticación segura con Google
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        {/* Tarjeta 3: Desarrollo Académico — Uso Interno */}
-        <a href="./otras-constancias.html" style={{...S.card('rgba(107,26,42,.1)'), cursor:'pointer', textDecoration:'none', transition:'transform .2s, box-shadow .2s'}}
-          onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(107,26,42,.15)';}}
-          onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow='';}}
-        >
-          <div style={S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)')}/>
-          <div style={S.cardBody}>
-            <div style={{display:'flex', alignItems:'center', gap:'.85rem', marginBottom:'.2rem'}}>
-              <div style={S.iconWrap('linear-gradient(135deg,#3D0A14,#922438)', '0 3px 14px rgba(107,26,42,.28)')}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 38" width="22" height="22" aria-label="ITD">
-                  <path d="M19 2 L36 2 L36 28 Q27.5 36 19 31 Q10.5 36 2 28 L2 2 Z"
-                        fill="rgba(255,255,255,0.15)" stroke="#F5E4A8" strokeWidth="1.8" opacity="0.9"/>
-                  <circle cx="19" cy="18" r="5.5" fill="none" stroke="#F5E4A8" strokeWidth="1.5" opacity="0.85"/>
-                  <circle cx="19" cy="18" r="2" fill="#F5E4A8" opacity="0.95"/>
-                  <line x1="19" y1="6"  x2="19" y2="29" stroke="#F5E4A8" strokeWidth="1" opacity="0.4"/>
-                  <line x1="5"  y1="18" x2="33" y2="18" stroke="#F5E4A8" strokeWidth="1" opacity="0.4"/>
-                </svg>
-              </div>
-              <div>
-                <div style={S.cardTitle}>Desarrollo Académico</div>
-                <div style={S.cardSub}>Uso Interno</div>
-              </div>
-            </div>
-            <p style={S.desc}>
-              Genera constancias y reconocimientos personalizados con la plantilla oficial ITD. Ingresa nombres manualmente o carga un Excel. Incluye QR de verificación.
-            </p>
-            <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'.5rem', padding:'.85rem 1rem', borderRadius:12, background:'linear-gradient(135deg,#3D0A14,#922438)', color:'#F5E4A8', fontWeight:700, fontSize:'.84rem', boxShadow:'0 4px 18px rgba(107,26,42,.30)'}}>
-              📜 Acceder
-            </div>
-          </div>
-        </a>
-
-      </div>
-
-      <div style={S.footer}>
-        © {new Date().getFullYear()} Dr. Alejandro Calderón Rentería — Coordinación Docente ITD
-      </div>
-    </div>
-  );
-};
-
-const Dashboard = ({ user, onLogout }) => {
-  const [year, setYear] = useState('2025');
-  const [allData, setAllData] = useState([]);
-  const [headers, setHeaders] = useState([]);
-  const [errorStr, setErrorStr] = useState(null);
-  const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!DATA_SOURCES[year]) { setAllData([]); return; }
-    setLoading(true);
-    setErrorStr(null);
-    fetchLocalData(year).then(res => {
-        setAllData(res.data);
-        setHeaders(res.headersFound);
-        if (res.error) setErrorStr(res.error);
-        setLoading(false);
-    });
-  }, [year]);
-
-  const filteredData = useMemo(() => {
-    if (errorStr || allData.length === 0) return [];
-    return allData.filter(item => {
-        const isOwner    = item.correo === user.email;
-        const isStatusOk = item.status === 'ENVIADO';
-        if (!user.isAdmin && !(isOwner && isStatusOk)) return false;
-        if (!user.isAdmin && !item.correo.includes('@')) return false;
-        if (search) {
-            const term = normalize(search);
-            return (
-                normalize(item.nombre).includes(term) ||
-                normalize(item.curso).includes(term)  ||
-                normalize(item.correo).includes(term)
-            );
-        }
-        return true;
-    });
-  }, [allData, user, search, errorStr]);
-
-  const downloadReport = () => {
-    if (!filteredData.length) return;
-    const csvContent = "data:text/csv;charset=utf-8,"
-        + "Nombre,Correo,Documento,Fecha,Status,Link\n"
-        + filteredData.map(e => `"${e.nombre}","${e.correo}","${e.curso}","${e.fecha}","${e.status}","${e.link}"`).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `reporte_itd_${year}.csv`);
-    document.body.appendChild(link);
-    link.click();
-  };
-
-  const handleShareEmail = (item) => {
-      const subject = `Documento ITD: ${item.curso}`;
-      const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu documento: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nCoordinación de Actualización Docente\nDesarrollo Académico`;
-      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  };
-
-  const handleDownloadClick = (item) => {
-      console.log(`[Analytics] Descarga iniciada: ${item.curso} por ${user.email}`);
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans flex flex-col">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16 items-center">
-                <div className="flex items-center gap-3">
-                    <img src={LOGO_URL} className="h-10 w-auto" alt="ITD" onError={(e) => e.target.style.display='none'}/>
-                    <div className="h-8 w-px bg-gray-300 hidden sm:block mx-1"></div>
-                    <div className="flex flex-col">
-                        <span className="text-base md:text-lg font-bold text-itd-blue leading-tight">
-                            Descarga de Constancias y Reconocimientos
-                        </span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3">
-                    {user.picture ? (
-                        <img src={user.picture} alt="Profile" className="w-8 h-8 rounded-full border border-gray-200" />
-                    ) : (
-                        <div className="w-8 h-8 rounded-full bg-itd-blue text-white flex items-center justify-center text-xs font-bold">
-                            {user.email.charAt(0).toUpperCase()}
-                        </div>
-                    )}
-                    <div className="hidden md:flex flex-col items-end">
-                         <span className="text-xs font-bold text-gray-700">{user.name || 'Usuario'}</span>
-                         <span className="text-[10px] text-gray-500">{user.email}</span>
-                    </div>
-                    {user.isAdmin && <span className="bg-itd-red text-white text-[10px] px-2 py-0.5 rounded font-bold uppercase ml-2">Admin</span>}
-                    <button 
-                        onClick={onLogout} 
-                        className="ml-2 flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
-                        title="Salir"
-                    >
-                        <span className="text-sm font-medium hidden sm:inline">Salir</span>
-                        <LogOut className="w-4 h-4"/>
-                    </button>
-                </div>
-            </div>
-        </div>
-      </nav>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
-        
-        {/* Filtros */}
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className="flex gap-4 w-full md:w-auto items-center">
-                <span className="text-sm font-bold text-gray-500 uppercase">Año:</span>
-                <select value={year} onChange={(e) => setYear(e.target.value)} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full md:w-48 p-2.5">
-                    {Object.keys(DATA_SOURCES).map(k => <option key={k} value={k}>{k}</option>)}
-                </select>
-            </div>
-            <div className="relative w-full md:w-96">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><Search className="w-4 h-4 text-gray-400"/></div>
-                <input 
-                    type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-                    className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5" 
-                    placeholder="Buscar por nombre, correo o documento..." 
-                />
-            </div>
-            {user.isAdmin && (
-                <button onClick={downloadReport} className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
-                    <Download className="w-4 h-4"/> Reporte
-                </button>
-            )}
-        </div>
-
-        {/* Error de lectura */}
-        {errorStr && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-r-xl shadow-sm mb-8 animate-pulse">
-                <div className="flex items-start">
-                    <AlertTriangle className="w-8 h-8 text-red-600 mr-4 mt-1 flex-shrink-0" />
-                    <div>
-                        <h3 className="text-lg font-bold text-red-800 mb-2">Error de lectura</h3>
-                        <p className="text-red-700 font-medium mb-3">{errorStr}</p>
-                        <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
-                            <strong>Ayuda:</strong>
-                            <p className="mt-1">Revisa que el archivo <code>db_{year}.csv</code> esté en GitHub. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* Lista de documentos */}
-        {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100">
-                <div className="animate-spin rounded-full h-10 w-10 border-4 border-itd-blue border-t-transparent mb-4"></div>
-                <p className="text-gray-500 font-medium">Cargando registros del {year}...</p>
-            </div>
-        ) : filteredData.length > 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <div className="col-span-4">Nombre / Correo</div>
-                    <div className="col-span-5">Documento</div>
-                    <div className="col-span-3 text-right">Acciones</div>
-                </div>
-                <div>
-                    {filteredData.map((item, index) => (
-                        <div key={item.id} className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center transition-colors group ${index % 2 === 0 ? 'bg-white' : 'bg-red-50'} hover:bg-blue-50`}>
-                            <div className="col-span-1 md:col-span-4 flex items-start gap-3">
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mt-1 ${index % 2 === 0 ? 'bg-blue-100 text-itd-blue' : 'bg-white text-itd-red border border-red-100'}`}>
-                                    {item.nombre.charAt(0)}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <p className="font-bold text-gray-900 text-sm truncate">{item.nombre}</p>
-                                    <p className="text-xs text-gray-500 truncate">{item.correo}</p>
-                                    <div className="md:hidden flex items-center gap-1 mt-1 text-[10px] text-gray-400">
-                                        <Calendar className="w-3 h-3" /> {item.fecha}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="col-span-1 md:col-span-5">
-                                <div className="flex items-start gap-2">
-                                     {user.isAdmin && (
-                                        <div className="mt-1">
-                                            {item.status === 'ENVIADO' ? 
-                                                <CheckCircle className="w-4 h-4 text-green-500" /> : 
-                                                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
-                                            }
-                                        </div>
-                                     )}
-                                     <div>
-                                        <h3 className="text-sm font-medium text-gray-800 leading-snug">{item.curso}</h3>
-                                        <p className="hidden md:flex items-center gap-1 text-xs text-gray-400 mt-1">
-                                            <Calendar className="w-3 h-3" /> {item.fecha}
-                                        </p>
-                                     </div>
-                                </div>
-                            </div>
-                            <div className="col-span-1 md:col-span-3 flex justify-start md:justify-end gap-2">
-                                {item.link && item.link !== '#' && item.status === 'ENVIADO' ? (
-                                    <>
-                                        <button 
-                                            onClick={() => handleShareEmail(item)}
-                                            className="p-2 text-gray-500 hover:text-itd-blue hover:bg-blue-100 rounded-lg transition-colors"
-                                            title="Enviar enlace por correo"
-                                        >
-                                            <Mail className="w-5 h-5" />
-                                        </button>
-                                        <a 
-                                            href={item.link} target="_blank"
-                                            onClick={() => handleDownloadClick(item)}
-                                            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md"
-                                        >
-                                            <FileDown className="w-4 h-4"/> 
-                                            <span>Descargar</span>
-                                        </a>
-                                    </>
-                                ) : (
-                                    <span className="text-xs text-gray-400 italic px-4 py-2 bg-gray-50 rounded border border-gray-100 w-full md:w-auto text-center">
-                                        {item.status !== 'ENVIADO' ? 'No Aprobado, Revisar con su instructor' : 'No disponible'}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        ) : !loading && !errorStr && (
-            <div className="text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200">
-                <ShieldCheck className="mx-auto h-16 w-16 text-gray-200 mb-4" />
-                <h3 className="text-xl font-bold text-gray-900">Sin resultados</h3>
-                <p className="text-gray-500 mt-2 max-w-sm mx-auto">
-                    {search ? 'No encontramos coincidencias para tu búsqueda.' : 'No tienes documentos disponibles con estatus "ENVIADO" para este año.'}
-                </p>
-                {user.isAdmin && (
-                   <div className="mt-6 inline-block px-4 py-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 text-left">
-                        <strong>Diagnóstico Admin:</strong><br/>
-                        Leyendo archivo: <code>db_{year}.csv</code><br/>
-                        Asegúrate que el archivo esté subido en GitHub en la carpeta raíz.
-                   </div>
-                )}
-            </div>
-        )}
-
-
-
-      </main>
-
-      <footer className="bg-itd-red text-white py-6 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-            <p className="text-sm font-medium">© {new Date().getFullYear()} Dr. Alejandro Calderón Rentería - Coordinación Docente</p>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-const App = () => {
-  const [user, setUser] = useState(null);
-  const handleLogout = () => { window.location.href = "https://da-itd.github.io/A/"; };
-  return user ? <Dashboard user={user} onLogout={handleLogout} /> : <Login onLogin={setUser} />;
-};
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+function extraerFechaFinal(texto) {
+  if (!texto) return "";
+  var str   = String(texto).trim();
+  var match = str.match(/AL\s+(\d{1,2}\s+.+)$/i);
+  if (match) return match[1].trim();
+  if (texto instanceof Date) {
+    return Utilities.formatDate(texto, Session.getScriptTimeZone(), "dd 'DE' MMMM 'DEL' yyyy").toUpperCase();
+  }
+  return str;
+}
