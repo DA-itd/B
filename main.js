@@ -199,11 +199,27 @@ const Login = ({ onLogin }) => {
   const [logoError,       setLogoError]       = useState(false);
   const [constanciaError, setConstanciaError] = useState('');
 
-  // Ref de intención: qué tarjeta disparó el botón de Google
-  // Se setea en onMouseDown/onTouchStart ANTES de que Google dispare el callback
+  // Ref de intención: qué tarjeta disparó el botón Google
   const googleIntencion = React.useRef('login');
 
-  // ── Callback único para ambos botones Google ──
+  // Abrir Apps Script pasando el token JWT por un form POST
+  // (evita bloqueo de popup-blocker que afecta a window.open en callbacks)
+  const abrirConstanciaConToken = (token) => {
+    const form = document.createElement('form');
+    form.method = 'GET';
+    form.action = CONSTANCIAS_URL;
+    form.target = '_blank';
+    const input = document.createElement('input');
+    input.type  = 'hidden';
+    input.name  = 'token';
+    input.value = token;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+  };
+
+  // Callback único para ambos botones Google
   const handleCredentialResponse = (response) => {
     const token   = response.credential;
     const payload = decodeJwtResponse(token);
@@ -214,22 +230,13 @@ const Login = ({ onLogin }) => {
     const email = payload.email.toLowerCase();
 
     if (googleIntencion.current === 'constancia') {
-      googleIntencion.current = 'login'; // reset
+      googleIntencion.current = 'login';
       if (!email.endsWith('@itdurango.edu.mx')) {
         setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
         setTimeout(() => setConstanciaError(''), 4000);
         return;
       }
-      // Redirigir la pestaña actual a Apps Script con el token JWT
-      // (window.open bloqueado por popup-blocker; location.href no lo bloquea)
-      const url = CONSTANCIAS_URL + '?token=' + encodeURIComponent(token);
-      const win = window.open('', '_blank');
-      if (win) {
-        win.location.href = url;
-      } else {
-        // Fallback si el navegador bloquea popups
-        window.location.href = url;
-      }
+      abrirConstanciaConToken(token);
     } else {
       const isAdmin = ADMIN_EMAILS.includes(email);
       onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
@@ -239,7 +246,7 @@ const Login = ({ onLogin }) => {
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
-            // UN SOLO initialize — callback unificado
+            // UN SOLO initialize — callback unificado para ambas tarjetas
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse
