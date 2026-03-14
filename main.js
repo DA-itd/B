@@ -197,120 +197,56 @@ const UnitBox = ({ valor, label }) => (
 const Login = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [logoError, setLogoError] = useState(false);
-  const [showAdminModal, setShowAdminModal] = useState(false);
-  const [adminPass, setAdminPass] = useState('');
-  const [adminError, setAdminError] = useState('');
-  const [adminEmail, setAdminEmail] = useState('');
-  const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
 
 
-  // ── Tarjeta 2: Generar Constancia ──
-  const [constanciaLoading, setConstanciaLoading] = useState(false);
-  const [constanciaError,   setConstanciaError]   = useState('');
 
-  // Callback del botón Google de Tarjeta 2
-  // Manda el token JWT por URL (GET) — sin fetch, sin CORS
-  const handleCredentialConstancia = (response) => {
+  // ── Estado de intención: qué tarjeta disparó el botón Google ──
+  const [constanciaError, setConstanciaError] = useState('');
+  const googleIntencion = React.useRef('login'); // 'login' | 'constancia'
+
+  // Callback ÚNICO para ambas tarjetas — distingue por googleIntencion
+  const handleCredentialResponse = (response) => {
     const token   = response.credential;
     const payload = decodeJwtResponse(token);
     if (!payload || !payload.email) {
-      setConstanciaError('No se pudo verificar tu identidad.');
-      setTimeout(() => setConstanciaError(''), 4000);
+      setError('No se pudo verificar la identidad.');
       return;
     }
-    if (!payload.email.toLowerCase().endsWith('@itdurango.edu.mx')) {
-      setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
-      setTimeout(() => setConstanciaError(''), 4000);
-      reRenderConstanciaBtn();
-      return;
-    }
-    // Pasar el token por URL → Apps Script lo verifica en doGet
-    const url = CONSTANCIAS_URL + '?token=' + encodeURIComponent(token);
-    window.open(url, '_blank');
-    reRenderConstanciaBtn();
-  };
+    const email = payload.email.toLowerCase();
 
-  const reRenderConstanciaBtn = () => {
-    setTimeout(() => {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback : handleCredentialConstancia
-        });
-        window.google.accounts.id.renderButton(
-          document.getElementById('googleSignInDivConstancia'),
-          { theme: 'filled_blue', size: 'large', width: '100%', text: 'continue_with' }
-        );
-      } catch(e) {}
-    }, 400);
-  };
-
-  // Doble click en logo → modal admin
-  const handleLogoClick = () => {
-    setAdminPass('');
-    setAdminError('');
-    setAdminEmail('');
-    setAdminStep('clave');
-    setShowAdminModal(true);
-  };
-
-  const handleAdminLogin = async () => {
-    if (adminStep === 'clave') {
-      if (adminPass === ADMIN_PASSWORD) {
-        setAdminError('');
-        setAdminPass('');
-        setAdminStep('correo');
-      } else {
-        setAdminError('Clave incorrecta.');
+    if (googleIntencion.current === 'constancia') {
+      googleIntencion.current = 'login'; // reset
+      if (!email.endsWith('@itdurango.edu.mx')) {
+        setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
+        setTimeout(() => setConstanciaError(''), 4000);
+        return;
       }
+      // Token JWT por URL — Apps Script lo verifica server-side
+      const url = CONSTANCIAS_URL + '?token=' + encodeURIComponent(token);
+      window.open(url, '_blank');
     } else {
-      // Paso correo: verificar que sea admin y toggle activar/desactivar tarjeta
-      const prefijo = adminEmail.replace(/@.*$/, '').trim();
-      if (!prefijo) { setAdminError('Ingresa un usuario válido.'); return; }
-      const emailFinal = prefijo + '@itdurango.edu.mx';
-      const esAdmin = ADMIN_EMAILS.includes(emailFinal.toLowerCase());
-      if (!esAdmin) { setAdminError('Correo no autorizado.'); return; }
-
-      // Toggle: si está activada la apaga, si está apagada la enciende
-      const nuevoEstado = !abierto;
-      try {
-        const res = await fetch(CONSTANCIAS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'setConstanciasStatus', status: nuevoEstado ? 'OPEN' : 'CLOSED', email: emailFinal })
-        });
-        const data = await res.json();
-        if (data.success) {
-          setAdminActivada(nuevoEstado);
-          setShowAdminModal(false);
-          setAdminStep('clave');
-          setAdminEmail('');
-        } else {
-          setAdminError('Error al guardar: ' + (data.message || 'intenta de nuevo'));
-        }
-      } catch(e) {
-        setAdminError('Error de conexión. Intenta de nuevo.');
-      }
+      // Tarjeta 1 — entrar al Dashboard
+      const isAdmin = ADMIN_EMAILS.includes(email);
+      onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
     }
   };
+
+;
 
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
-            // Tarjeta 1 — Mis Constancias → entra al Dashboard
+            // UN SOLO initialize — callback unificado para ambas tarjetas
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse
             });
+            // Tarjeta 1 — Mis Constancias
             window.google.accounts.id.renderButton(
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-            // Tarjeta 2 — Generar Constancia → callback propio con token JWT
-            window.google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleCredentialConstancia
-            });
+            // Tarjeta 2 — Generar Constancia
             window.google.accounts.id.renderButton(
                 document.getElementById("googleSignInDivConstancia"),
                 { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
@@ -322,17 +258,7 @@ const Login = ({ onLogin }) => {
     }
   }, []);
 
-  // Callback Tarjeta 1 — solo entra al Dashboard
-  const handleCredentialResponse = (response) => {
-    const payload = decodeJwtResponse(response.credential);
-    if (!payload || !payload.email) {
-      setError('No se pudo verificar la identidad.');
-      return;
-    }
-    const email   = payload.email.toLowerCase();
-    const isAdmin = ADMIN_EMAILS.includes(email);
-    onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
-  };
+
 
   const S = {
     page: {
@@ -439,98 +365,10 @@ const Login = ({ onLogin }) => {
     <div style={S.page}>
       <div style={S.bgDeco}/>
 
-      {/* Modal acceso admin */}
-      {showAdminModal && (
-        <div style={{
-          position:'fixed', inset:0, zIndex:1000,
-          background:'rgba(0,0,0,.45)', backdropFilter:'blur(4px)',
-          display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem'
-        }} onClick={e => { if(e.target===e.currentTarget) setShowAdminModal(false); }}>
-          <div style={{
-            background:'#fff', borderRadius:18, overflow:'hidden',
-            width:'100%', maxWidth:340,
-            boxShadow:'0 24px 60px rgba(0,0,0,.25)',
-            animation:'fadeUp .3s cubic-bezier(.22,.68,0,1.2) both'
-          }}>
-            <div style={{height:4, background:'linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14)', backgroundSize:'200% 100%', animation:'shimmer 3s linear infinite'}}/>
-            <div style={{padding:'1.6rem 1.8rem'}}>
-              <div style={{textAlign:'center', marginBottom:'1.2rem'}}>
-                <div style={{fontSize:'1.8rem', marginBottom:'.4rem'}}>{adminStep === 'clave' ? '🔐' : '👤'}</div>
-                <div style={{fontFamily:"'Playfair Display',serif", fontWeight:700, fontSize:'1.1rem', color:'#3D0A14'}}>Acceso Administrador</div>
-                <div style={{fontSize:'.75rem', color:'#9090A0', marginTop:'.2rem'}}>
-                  {adminStep === 'clave' ? 'Ingresa la clave de acceso' : 'Ingresa tu correo para confirmar'}
-                </div>
-              </div>
-              {adminStep === 'clave' ? (
-                <input
-                  type="password"
-                  value={adminPass}
-                  onChange={e => { setAdminPass(e.target.value); setAdminError(''); }}
-                  onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
-                  placeholder="••••••••"
-                  autoFocus
-                  style={{
-                    width:'100%', padding:'.75rem 1rem',
-                    border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
-                    borderRadius:10, fontSize:'.9rem',
-                    fontFamily:"'DM Sans',sans-serif", outline:'none',
-                    marginBottom:'.5rem', boxSizing:'border-box',
-                    background: adminError ? '#fff5f5' : '#fff'
-                  }}
-                />
-              ) : (
-                <div style={{display:'flex', marginBottom:'.5rem'}}>
-                  <input
-                    type="text"
-                    value={adminEmail}
-                    onChange={e => { setAdminEmail(e.target.value.replace(/@.*$/,'')); setAdminError(''); }}
-                    onKeyDown={e => e.key==='Enter' && handleAdminLogin()}
-                    placeholder="usuario"
-                    autoFocus
-                    style={{
-                      flex:1, padding:'.75rem 1rem',
-                      border:`1.5px solid ${adminError ? '#e05050' : '#e0e0e0'}`,
-                      borderRadius:'10px 0 0 10px', fontSize:'.9rem',
-                      fontFamily:"'DM Sans',sans-serif", outline:'none',
-                      boxSizing:'border-box', background: adminError ? '#fff5f5' : '#fff'
-                    }}
-                  />
-                  <span style={{
-                    padding:'.75rem .6rem', background:'#f3f4f6',
-                    border:'1.5px solid #e0e0e0', borderLeft:'none',
-                    borderRadius:'0 10px 10px 0', fontSize:'.72rem',
-                    color:'#6b7280', whiteSpace:'nowrap', display:'flex', alignItems:'center'
-                  }}>@itdurango.edu.mx</span>
-                </div>
-              )}
-              {adminError && (
-                <div style={{fontSize:'.73rem', color:'#c0392b', marginBottom:'.6rem', display:'flex', alignItems:'center', gap:'.3rem'}}>
-                  <AlertCircle size={12}/> {adminError}
-                </div>
-              )}
-              <button onClick={handleAdminLogin} style={{
-                width:'100%', padding:'.75rem',
-                background:'linear-gradient(135deg,#3D0A14,#922438)',
-                color:'#F5E4A8', border:'none', borderRadius:10,
-                fontFamily:"'DM Sans',sans-serif", fontWeight:700,
-                fontSize:'.88rem', cursor:'pointer',
-                boxShadow:'0 4px 14px rgba(107,26,42,.28)',
-                marginBottom:'.6rem'
-              }}>{adminStep === 'clave' ? 'Continuar' : (abierto ? 'Desactivar tarjeta 🔒' : 'Activar tarjeta ✅')}</button>
-              <button onClick={() => { setShowAdminModal(false); setAdminStep('clave'); setAdminEmail(''); setAdminPass(''); setAdminError(''); }} style={{
-                width:'100%', padding:'.55rem',
-                background:'transparent', border:'1.5px solid #e8e8e8',
-                borderRadius:10, fontFamily:"'DM Sans',sans-serif",
-                fontSize:'.8rem', color:'#9090A0', cursor:'pointer'
-              }}>Cancelar</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Header */}
       <div style={S.header}>
-        <div style={{...S.logoWrap, cursor:'pointer'}} onClick={handleLogoClick} title="">
+        <div style={S.logoWrap}>
           <div style={S.logoRing}/>
           <div style={S.logoRing2}/>
           {logoError ? (
@@ -615,7 +453,10 @@ const Login = ({ onLogin }) => {
             </p>
 
             <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
-              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}/>
+              {/* onMouseDown/onClick: setear intención ANTES de que Google dispare el callback */}
+              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
+                onMouseDown={()=>{ googleIntencion.current = 'constancia'; }}
+                onTouchStart={()=>{ googleIntencion.current = 'constancia'; }}/>
               {constanciaError && (
                 <div style={{display:'flex',alignItems:'center',gap:'.45rem',padding:'.6rem .85rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.2)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
                   <AlertCircle size={13}/> {constanciaError}
