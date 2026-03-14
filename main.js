@@ -195,16 +195,15 @@ const UnitBox = ({ valor, label }) => (
 
 
 const Login = ({ onLogin }) => {
-  const [error, setError] = useState('');
-  const [logoError, setLogoError] = useState(false);
-
-
-
-  // ── Estado de intención: qué tarjeta disparó el botón Google ──
+  const [error,           setError]           = useState('');
+  const [logoError,       setLogoError]       = useState(false);
   const [constanciaError, setConstanciaError] = useState('');
-  const googleIntencion = React.useRef('login'); // 'login' | 'constancia'
 
-  // Callback ÚNICO para ambas tarjetas — distingue por googleIntencion
+  // Ref de intención: qué tarjeta disparó el botón de Google
+  // Se setea en onMouseDown/onTouchStart ANTES de que Google dispare el callback
+  const googleIntencion = React.useRef('login');
+
+  // ── Callback único para ambos botones Google ──
   const handleCredentialResponse = (response) => {
     const token   = response.credential;
     const payload = decodeJwtResponse(token);
@@ -221,32 +220,34 @@ const Login = ({ onLogin }) => {
         setTimeout(() => setConstanciaError(''), 4000);
         return;
       }
-      // Token JWT por URL — Apps Script lo verifica server-side
+      // Redirigir la pestaña actual a Apps Script con el token JWT
+      // (window.open bloqueado por popup-blocker; location.href no lo bloquea)
       const url = CONSTANCIAS_URL + '?token=' + encodeURIComponent(token);
-      window.open(url, '_blank');
+      const win = window.open('', '_blank');
+      if (win) {
+        win.location.href = url;
+      } else {
+        // Fallback si el navegador bloquea popups
+        window.location.href = url;
+      }
     } else {
-      // Tarjeta 1 — entrar al Dashboard
       const isAdmin = ADMIN_EMAILS.includes(email);
       onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
     }
   };
 
-;
-
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
-            // UN SOLO initialize — callback unificado para ambas tarjetas
+            // UN SOLO initialize — callback unificado
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse
             });
-            // Tarjeta 1 — Mis Constancias
             window.google.accounts.id.renderButton(
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-            // Tarjeta 2 — Generar Constancia
             window.google.accounts.id.renderButton(
                 document.getElementById("googleSignInDivConstancia"),
                 { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
@@ -366,7 +367,7 @@ const Login = ({ onLogin }) => {
       <div style={S.bgDeco}/>
 
 
-      {/* Header */}
+            {/* Header */}
       <div style={S.header}>
         <div style={S.logoWrap}>
           <div style={S.logoRing}/>
@@ -453,10 +454,9 @@ const Login = ({ onLogin }) => {
             </p>
 
             <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
-              {/* onMouseDown/onClick: setear intención ANTES de que Google dispare el callback */}
               <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
-                onMouseDown={()=>{ googleIntencion.current = 'constancia'; }}
-                onTouchStart={()=>{ googleIntencion.current = 'constancia'; }}/>
+                onMouseDown={()=>{ googleIntencion.current='constancia'; }}
+                onTouchStart={()=>{ googleIntencion.current='constancia'; }}/>
               {constanciaError && (
                 <div style={{display:'flex',alignItems:'center',gap:'.45rem',padding:'.6rem .85rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.2)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
                   <AlertCircle size={13}/> {constanciaError}
