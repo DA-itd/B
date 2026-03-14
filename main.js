@@ -267,6 +267,40 @@ const Login = ({ onLogin }) => {
     }
   };
 
+  // ── Callback Tarjeta 1: Mis Constancias → entra al Dashboard ──
+  const handleCredentialResponse = (response) => {
+    const payload = decodeJwtResponse(response.credential);
+    if (!payload || !payload.email) {
+      setError('No se pudo verificar la identidad.');
+      return;
+    }
+    const email = payload.email.toLowerCase();
+    const isAdmin = ADMIN_EMAILS.includes(email);
+    onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
+  };
+
+  // ── Callback Tarjeta 2: Generar Constancia → abre Apps Script ──
+  const handleCredentialConstancia = (response) => {
+    const payload = decodeJwtResponse(response.credential);
+    if (!payload || !payload.email) return;
+    const email = payload.email.toLowerCase();
+    const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
+    window.open(url, '_blank');
+    // Re-renderizar el botón para que pueda usarse de nuevo
+    setTimeout(() => {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: handleCredentialConstancia
+        });
+        window.google.accounts.id.renderButton(
+          document.getElementById("googleSignInDivConstancia"),
+          { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
+        );
+      } catch(e) {}
+    }, 500);
+  };
+
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
@@ -279,7 +313,11 @@ const Login = ({ onLogin }) => {
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-            // Botón tarjeta 2 — Generar Constancia → abre Apps Script con email
+            // Botón tarjeta 2 — Generar Constancia → callback propio
+            window.google.accounts.id.initialize({
+                client_id: GOOGLE_CLIENT_ID,
+                callback: handleCredentialConstancia
+            });
             window.google.accounts.id.renderButton(
                 document.getElementById("googleSignInDivConstancia"),
                 { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
@@ -290,37 +328,6 @@ const Login = ({ onLogin }) => {
         }
     }
   }, []);
-
-  const handleCredentialResponse = (response) => {
-    const payload = decodeJwtResponse(response.credential);
-    if (!payload || !payload.email) {
-      setError('No se pudo verificar la identidad.');
-      return;
-    }
-    const email = payload.email.toLowerCase();
-
-    // Si el clic fue en el botón de Generar Constancia → abrir Apps Script
-    const origen = window._constanciaSignInOrigen || 'login';
-    window._constanciaSignInOrigen = null;
-
-    if (origen === 'constancia') {
-      const url = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
-      window.open(url, '_blank');
-      // Re-inicializar para dejar los botones listos de nuevo
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse
-      });
-      window.google.accounts.id.renderButton(
-        document.getElementById("googleSignInDivConstancia"),
-        { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
-      );
-    } else {
-      // Destino normal → entrar al Dashboard
-      const isAdmin = ADMIN_EMAILS.includes(email);
-      onLogin({ email, name: payload.name, picture: payload.picture, isAdmin });
-    }
-  };
 
   const S = {
     page: {
@@ -603,8 +610,7 @@ const Login = ({ onLogin }) => {
             </p>
 
             <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.6rem'}}>
-              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
-                onClick={()=>{ window._constanciaSignInOrigen = 'constancia'; }}/>
+              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}/>
               <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.35rem',fontSize:'.7rem',color:'#A0A0B0'}}>
                 <Lock size={11}/> Autenticación segura con Google
               </div>
