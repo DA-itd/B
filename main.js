@@ -204,9 +204,31 @@ const Login = ({ onLogin }) => {
   const [adminStep, setAdminStep] = useState('clave'); // 'clave' | 'correo'
 
 
-  // ── Estado Tarjeta 2 ──
-  const [constanciaLoading, setConstanciaLoading] = React.useState(false);
-  const [constanciaError,   setConstanciaError]   = React.useState('');
+  // ── Tarjeta 2: Generar Constancia ──
+  const [constanciaLoading, setConstanciaLoading] = useState(false);
+  const [constanciaError,   setConstanciaError]   = useState('');
+
+  // Callback del botón Google de Tarjeta 2
+  // Manda el token JWT por URL (GET) — sin fetch, sin CORS
+  const handleCredentialConstancia = (response) => {
+    const token   = response.credential;
+    const payload = decodeJwtResponse(token);
+    if (!payload || !payload.email) {
+      setConstanciaError('No se pudo verificar tu identidad.');
+      setTimeout(() => setConstanciaError(''), 4000);
+      return;
+    }
+    if (!payload.email.toLowerCase().endsWith('@itdurango.edu.mx')) {
+      setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
+      setTimeout(() => setConstanciaError(''), 4000);
+      reRenderConstanciaBtn();
+      return;
+    }
+    // Pasar el token por URL → Apps Script lo verifica en doGet
+    const url = CONSTANCIAS_URL + '?token=' + encodeURIComponent(token);
+    window.open(url, '_blank');
+    reRenderConstanciaBtn();
+  };
 
   const reRenderConstanciaBtn = () => {
     setTimeout(() => {
@@ -221,44 +243,6 @@ const Login = ({ onLogin }) => {
         );
       } catch(e) {}
     }, 400);
-  };
-
-  // Callback Tarjeta 2: verifica token JWT en el servidor — nunca confía en el email del cliente
-  const handleCredentialConstancia = async (response) => {
-    const token   = response.credential;
-    const payload = decodeJwtResponse(token);
-    if (!payload || !payload.email) {
-      setConstanciaError('No se pudo verificar tu identidad.');
-      setTimeout(() => setConstanciaError(''), 4000);
-      return;
-    }
-    if (!payload.email.toLowerCase().endsWith('@itdurango.edu.mx')) {
-      setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
-      setTimeout(() => setConstanciaError(''), 4000);
-      reRenderConstanciaBtn();
-      return;
-    }
-    setConstanciaLoading(true);
-    setConstanciaError('');
-    try {
-      const res  = await fetch(CONSTANCIAS_URL, {
-        method : 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body   : JSON.stringify({ action: 'getTokenUrl', id_token: token })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        window.open(data.url, '_blank');
-      } else {
-        setConstanciaError(data.mensaje || 'Error al verificar. Intenta de nuevo.');
-        setTimeout(() => setConstanciaError(''), 5000);
-      }
-    } catch(e) {
-      setConstanciaError('Error de conexión. Intenta de nuevo.');
-      setTimeout(() => setConstanciaError(''), 5000);
-    }
-    setConstanciaLoading(false);
-    reRenderConstanciaBtn();
   };
 
   // Doble click en logo → modal admin
@@ -322,7 +306,7 @@ const Login = ({ onLogin }) => {
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-            // Tarjeta 2 — Generar Constancia → flujo JWT seguro, callback propio
+            // Tarjeta 2 — Generar Constancia → callback propio con token JWT
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialConstancia
@@ -631,14 +615,7 @@ const Login = ({ onLogin }) => {
             </p>
 
             <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
-              {constanciaLoading ? (
-                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.6rem',padding:'.9rem',background:'rgba(26,58,92,.05)',borderRadius:12,border:'1px solid rgba(26,58,92,.1)'}}>
-                  <div style={{width:18,height:18,border:'2.5px solid #1B396A',borderTopColor:'transparent',borderRadius:'50%',animation:'spin .7s linear infinite'}}/>
-                  <span style={{fontSize:'.82rem',color:'#1B396A',fontWeight:500}}>Verificando identidad…</span>
-                </div>
-              ) : (
-                <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}/>
-              )}
+              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}/>
               {constanciaError && (
                 <div style={{display:'flex',alignItems:'center',gap:'.45rem',padding:'.6rem .85rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.2)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
                   <AlertCircle size={13}/> {constanciaError}
