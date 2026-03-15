@@ -203,6 +203,18 @@ const Login = ({ onLogin }) => {
   const [constActivada, setConstActivada] = useState(() => {
     try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
   });
+  // Abrir Apps Script con el usuario ingresado en el input
+  const abrirConstancia = () => {
+    const input  = document.getElementById('inputUsuarioConstancia');
+    const prefijo = (input ? input.value : '').replace(/@.*$/, '').trim().toLowerCase();
+    if (!prefijo) {
+      if (input) { input.style.border = '1.5px solid #e05050'; setTimeout(() => { input.style.border = ''; }, 1500); }
+      return;
+    }
+    const email = prefijo + '@itdurango.edu.mx';
+    window.location.href = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
+  };
+
   // Ref de intención: distingue qué botón Google fue presionado
   const googleIntencion = React.useRef('login');
 
@@ -493,11 +505,24 @@ const Login = ({ onLogin }) => {
             </p>
             {constActivada ? (
               <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
-                <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
-                  onMouseDown={()=>{ googleIntencion.current='constancia'; }}
-                  onTouchStart={()=>{ googleIntencion.current='constancia'; }}/>
+                <div style={{display:'flex',borderRadius:12,overflow:'hidden',border:'1.5px solid #d1d5db',background:'#fff',boxShadow:'0 1px 4px rgba(0,0,0,.06)'}}>
+                  <input
+                    id="inputUsuarioConstancia"
+                    type="text"
+                    placeholder="tu.usuario"
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    onKeyDown={(e)=>{ if(e.key==='Enter') abrirConstancia(); }}
+                    style={{flex:1,padding:'.72rem .9rem',border:'none',outline:'none',fontSize:'.88rem',fontFamily:"'DM Sans','Inter',sans-serif",color:'#1A1720',background:'transparent'}}
+                  />
+                  <span style={{display:'flex',alignItems:'center',padding:'.72rem .75rem .72rem 0',fontSize:'.78rem',color:'#9090A0',fontFamily:"'DM Sans','Inter',sans-serif",whiteSpace:'nowrap',userSelect:'none'}}>@itdurango.edu.mx</span>
+                </div>
+                <button onClick={abrirConstancia}
+                  style={{width:'100%',padding:'.82rem 1rem',background:'linear-gradient(135deg,#1B396A,#2B5580)',color:'#F5E4A8',border:'none',borderRadius:12,fontFamily:"'DM Sans','Inter',sans-serif",fontWeight:700,fontSize:'.9rem',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'.5rem',boxShadow:'0 4px 14px rgba(26,58,92,.30)'}}>
+                  <Award size={16} color="#F5E4A8"/> Generar mi Constancia
+                </button>
                 <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.35rem',fontSize:'.7rem',color:'#A0A0B0'}}>
-                  <Lock size={11}/> Tu identidad es verificada con Google
+                  <Lock size={11}/> Acceso con tu usuario institucional
                 </div>
               </div>
             ) : (
