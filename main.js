@@ -195,31 +195,47 @@ const UnitBox = ({ valor, label }) => (
 
 
 const Login = ({ onLogin }) => {
-  const [error,           setError]     = useState('');
-  const [logoError,       setLogoError] = useState(false);
-  const [constanciaError, setConstanciaError] = useState('');
-
-  // Intención: qué tarjeta disparó el botón Google
+  const [error,         setError]         = useState('');
+  const [logoError,     setLogoError]     = useState(false);
+  const [showModal,     setShowModal]     = useState(false);
+  const [adminPass,     setAdminPass]     = useState('');
+  const [adminError,    setAdminError]    = useState('');
+  const [constActivada, setConstActivada] = useState(() => {
+    // Leer estado guardado en localStorage (persiste entre sesiones)
+    try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
+  });
   const googleIntencion = React.useRef('login');
 
-  // Callback único — distingue por intención
+  // ── Toggle activar/desactivar tarjeta 2 desde modal admin ──
+  const handleAdminToggle = () => {
+    if (adminPass !== ADMIN_PASSWORD) {
+      setAdminError('Clave incorrecta.');
+      return;
+    }
+    const nuevo = !constActivada;
+    setConstActivada(nuevo);
+    try { localStorage.setItem('constActivada', String(nuevo)); } catch(e) {}
+    setShowModal(false);
+    setAdminPass('');
+    setAdminError('');
+  };
+
+  // ── Callback único para ambos botones Google ──
   const handleCredentialResponse = (response) => {
-    const payload = decodeJwtResponse(response.credential);
+    const token   = response.credential;
+    const payload = decodeJwtResponse(token);
     if (!payload || !payload.email) {
       setError('No se pudo verificar la identidad.');
       return;
     }
     const email = payload.email.toLowerCase();
-
     if (googleIntencion.current === 'constancia') {
       googleIntencion.current = 'login';
       if (!email.endsWith('@itdurango.edu.mx')) {
-        setConstanciaError('Usa tu cuenta @itdurango.edu.mx');
-        setTimeout(() => setConstanciaError(''), 4000);
+        setError('Usa tu cuenta @itdurango.edu.mx');
+        setTimeout(() => setError(''), 4000);
         return;
       }
-      // Navegar en la misma pestaña → Apps Script con email
-      // (window.open bloqueado en callbacks; location.href siempre funciona)
       window.location.href = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
     } else {
       const isAdmin = ADMIN_EMAILS.includes(email);
@@ -238,16 +254,18 @@ const Login = ({ onLogin }) => {
                 document.getElementById("googleSignInDiv"),
                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
             );
-            window.google.accounts.id.renderButton(
-                document.getElementById("googleSignInDivConstancia"),
-                { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
-            );
+            if (constActivada && document.getElementById("googleSignInDivConstancia")) {
+              window.google.accounts.id.renderButton(
+                  document.getElementById("googleSignInDivConstancia"),
+                  { theme: "filled_blue", size: "large", width: "100%", text: "continue_with" }
+              );
+            }
         } catch (err) {
             console.error("Error initializing Google Btn", err);
             setError("Error al cargar servicios de Google.");
         }
     }
-  }, []);
+  }, [constActivada]);
 
 
 
@@ -356,10 +374,46 @@ const Login = ({ onLogin }) => {
     <div style={S.page}>
       <div style={S.bgDeco}/>
 
+      {/* Modal toggle admin — clic en logo */}
+      {showModal && (
+        <div style={{position:'fixed',inset:0,zIndex:1000,background:'rgba(0,0,0,.45)',backdropFilter:'blur(4px)',display:'flex',alignItems:'center',justifyContent:'center',padding:'1rem'}}
+          onClick={e => { if(e.target===e.currentTarget){ setShowModal(false); setAdminPass(''); setAdminError(''); } }}>
+          <div style={{background:'#fff',borderRadius:18,overflow:'hidden',width:'100%',maxWidth:320,boxShadow:'0 24px 60px rgba(0,0,0,.25)',animation:'fadeUp .3s cubic-bezier(.22,.68,0,1.2) both'}}>
+            <div style={{height:4,background:'linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14)',backgroundSize:'200% 100%',animation:'shimmer 3s linear infinite'}}/>
+            <div style={{padding:'1.5rem 1.7rem'}}>
+              <div style={{textAlign:'center',marginBottom:'1.1rem'}}>
+                <div style={{fontSize:'1.7rem',marginBottom:'.3rem'}}>{constActivada ? '🔒' : '✅'}</div>
+                <div style={{fontFamily:"'Playfair Display',serif",fontWeight:700,fontSize:'1.05rem',color:'#3D0A14'}}>
+                  {constActivada ? 'Desactivar Tarjeta 2' : 'Activar Tarjeta 2'}
+                </div>
+                <div style={{fontSize:'.73rem',color:'#9090A0',marginTop:'.2rem'}}>Ingresa la clave de administrador</div>
+              </div>
+              <input
+                type="password"
+                value={adminPass}
+                onChange={e => { setAdminPass(e.target.value); setAdminError(''); }}
+                onKeyDown={e => e.key==='Enter' && handleAdminToggle()}
+                placeholder="••••••••"
+                autoFocus
+                style={{width:'100%',padding:'.72rem 1rem',border:`1.5px solid ${adminError?'#e05050':'#e0e0e0'}`,borderRadius:10,fontSize:'.9rem',fontFamily:"'DM Sans',sans-serif",outline:'none',marginBottom:'.5rem',boxSizing:'border-box',background:adminError?'#fff5f5':'#fff'}}
+              />
+              {adminError && (
+                <div style={{fontSize:'.72rem',color:'#c0392b',marginBottom:'.5rem',display:'flex',alignItems:'center',gap:'.3rem'}}>
+                  <AlertCircle size={12}/> {adminError}
+                </div>
+              )}
+              <button onClick={handleAdminToggle} style={{width:'100%',padding:'.72rem',background:constActivada?'linear-gradient(135deg,#555,#888)':'linear-gradient(135deg,#1B396A,#2B5580)',color:'#fff',border:'none',borderRadius:10,fontFamily:"'DM Sans',sans-serif",fontWeight:700,fontSize:'.88rem',cursor:'pointer',marginBottom:'.5rem'}}>
+                {constActivada ? '🔒 Desactivar' : '✅ Activar'}
+              </button>
+              <button onClick={()=>{ setShowModal(false); setAdminPass(''); setAdminError(''); }} style={{width:'100%',padding:'.52rem',background:'transparent',border:'1.5px solid #e8e8e8',borderRadius:10,fontFamily:"'DM Sans',sans-serif",fontSize:'.8rem',color:'#9090A0',cursor:'pointer'}}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            {/* Header */}
+      {/* Header */}
       <div style={S.header}>
-        <div style={S.logoWrap}>
+        <div style={{...S.logoWrap, cursor:'pointer'}} onClick={()=>{ setShowModal(true); setAdminPass(''); setAdminError(''); }} title="">
           <div style={S.logoRing}/>
           <div style={S.logoRing2}/>
           {logoError ? (
@@ -425,37 +479,46 @@ const Login = ({ onLogin }) => {
           </div>
         </div>
 
-        {/* Tarjeta 2: Generar Constancia */}
-        <div style={S.card('rgba(26,58,92,.1)')}>
-          <div style={S.stripe('linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)')}/>
+        {/* Tarjeta 2: Generar Constancia — activa o desactivada según admin */}
+        <div style={{...S.card('rgba(26,58,92,.1)'), opacity: constActivada ? 1 : 0.55, transition:'opacity .3s'}}>
+          <div style={S.stripe(constActivada
+            ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)'
+            : 'linear-gradient(90deg,#999 0%,#bbb 50%,#999 100%)'
+          )}/>
           <div style={S.cardBody}>
             <div style={{display:'flex',alignItems:'center',gap:'.85rem',marginBottom:'.2rem'}}>
-              <div style={S.iconWrap('linear-gradient(135deg,#1B396A,#2B5580)','0 3px 14px rgba(26,58,92,.25)')}>
-                <Award size={21} color="#F5E4A8"/>
+              <div style={S.iconWrap(
+                constActivada ? 'linear-gradient(135deg,#1B396A,#2B5580)' : 'linear-gradient(135deg,#999,#bbb)',
+                constActivada ? '0 3px 14px rgba(26,58,92,.25)' : 'none'
+              )}>
+                {constActivada ? <Award size={21} color="#F5E4A8"/> : <Lock size={21} color="#fff"/>}
               </div>
               <div>
                 <div style={S.cardTitle}>Generar Constancia</div>
-                <div style={S.cardSub}>Cursos Enero–Junio 2026</div>
+                <div style={S.cardSub}>{constActivada ? 'Cursos Enero–Junio 2026' : 'Disponible próximamente'}</div>
               </div>
             </div>
 
             <p style={S.desc}>
-              Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.
+              {constActivada
+                ? 'Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.'
+                : 'Este servicio estará disponible a partir del 29 de junio de 2026, al concluir el periodo de actualización docente.'}
             </p>
 
-            <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
-              <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
-                onMouseDown={()=>{ googleIntencion.current='constancia'; }}
-                onTouchStart={()=>{ googleIntencion.current='constancia'; }}/>
-              {constanciaError && (
-                <div style={{display:'flex',alignItems:'center',gap:'.45rem',padding:'.6rem .85rem',background:'#fef2f2',border:'1.5px solid rgba(220,80,80,.2)',borderRadius:10,fontSize:'.78rem',color:'#7A1E1E'}}>
-                  <AlertCircle size={13}/> {constanciaError}
+            {constActivada ? (
+              <div style={{flex:1,display:'flex',flexDirection:'column',gap:'.55rem'}}>
+                <div id="googleSignInDivConstancia" style={{width:'100%',minHeight:44}}
+                  onMouseDown={()=>{ googleIntencion.current='constancia'; }}
+                  onTouchStart={()=>{ googleIntencion.current='constancia'; }}/>
+                <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.35rem',fontSize:'.7rem',color:'#A0A0B0'}}>
+                  <Lock size={11}/> Tu identidad es verificada con Google
                 </div>
-              )}
-              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.35rem',fontSize:'.7rem',color:'#A0A0B0'}}>
-                <Lock size={11}/> Tu identidad es verificada con Google
               </div>
-            </div>
+            ) : (
+              <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:'.5rem',padding:'.82rem 1rem',borderRadius:12,background:'#f0f0f0',color:'#999',fontSize:'.83rem',fontWeight:500}}>
+                <Clock size={15} color="#bbb"/> Próximamente — 29 Jun 2026
+              </div>
+            )}
           </div>
         </div>
 
