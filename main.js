@@ -25,7 +25,7 @@ const ADMIN_EMAILS = [
     'usuario@itdurango.edu.mx' 
 ];
 // Clave de acceso rápido admin (doble click en logo)
-const ADMIN_PASSWORD = "Xela1615";
+const ADMIN_PASSWORD = "X987ela";
 
 // ==========================================
 // MÓDULO: GENERACIÓN DE CONSTANCIAS
