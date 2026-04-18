@@ -9,9 +9,9 @@ const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw
 const SPREADSHEET_ID = '1CVXtvWAQSSL2efNBxfJH6SrLE2McmNXLlS-58-beScQ';
 
 const DATA_SOURCES = {
-  '2026': 'db_2026',
-  '2025': 'db_2025',
-  '2024': 'db_2024'
+  '2026': '2076074898',
+  '2025': '763823969',
+  '2024': '1498092717'
 };
 
 const ADMIN_EMAILS = [
@@ -65,40 +65,19 @@ const parseCSV = (text) => {
 
 const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
-const fetchSheetGid = async (spreadsheetId, sheetName) => {
-  const metaUrl = `https://spreadsheets.google.com/feeds/worksheets/${spreadsheetId}/public/basic?alt=json&t=${Date.now()}`;
-  try {
-    const res = await fetch(metaUrl);
-    if (!res.ok) throw new Error('No se pudo acceder al spreadsheet. Verifica que sea publico.');
-    const json = await res.json();
-    const entries = json.feed.entry || [];
-    const entry = entries.find(e => e.title && e.title.$t === sheetName);
-    if (!entry) throw new Error(`No se encontro la hoja "${sheetName}" en Google Sheets.`);
-    const link = entry.link.find(l => l.rel === 'http://schemas.google.com/spreadsheets/2006#cellsfeed');
-    if (!link) throw new Error(`No se pudo obtener el GID de la hoja "${sheetName}".`);
-    const match = link.href.match(/\/([^\/]+)\/public/);
-    return match ? match[1] : null;
-  } catch (e) {
-    throw e;
-  }
-};
-
 const fetchSheetData = async (year) => {
-  const sheetName = DATA_SOURCES[year];
-  if (!sheetName) return { data: [], error: null, headersFound: [] };
+  const gid = DATA_SOURCES[year];
+  if (!gid) return { data: [], error: null, headersFound: [] };
 
   try {
-    const gid = await fetchSheetGid(SPREADSHEET_ID, sheetName);
-    if (!gid) throw new Error(`No se encontro la hoja "${sheetName}".`);
-
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}&t=${Date.now()}`;
     const response = await fetch(csvUrl);
-    if (!response.ok) throw new Error(`Error al descargar la hoja "${sheetName}" (HTTP ${response.status}).`);
+    if (!response.ok) throw new Error(`Error al descargar los datos del año ${year} (HTTP ${response.status}).`);
     const text = await response.text();
-    if (!text || text.trim().length === 0) throw new Error(`La hoja "${sheetName}" esta vacia.`);
+    if (!text || text.trim().length === 0) throw new Error(`Sin datos para el año ${year}.`);
 
     const rows = parseCSV(text);
-    if (rows.length < 2) return { data: [], error: `La hoja "${sheetName}" no tiene datos suficientes.`, headersFound: [] };
+    if (rows.length < 2) return { data: [], error: `Sin registros para el año ${year}.`, headersFound: [] };
 
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
@@ -116,7 +95,7 @@ const fetchSheetData = async (year) => {
     if (idx.correo === -1) {
         return {
             data: [],
-            error: `No se encontro la columna de Correo en la hoja "${sheetName}" (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
+            error: `No se encontro la columna de Correo (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
             headersFound: rawHeaders
         };
     }
@@ -136,14 +115,13 @@ const fetchSheetData = async (year) => {
         };
     }).filter(item => item && item.correo);
 
-    console.log(`Hoja "${sheetName}": ${cleanData.length} registros cargados.`);
     return { data: cleanData, error: null, headersFound: rawHeaders };
 
   } catch (error) {
-    console.error(`Error al leer hoja "${sheetName}":`, error);
+    console.error(`Error al leer datos ${year}:`, error);
     return { data: [], error: error.message, headersFound: [] };
   }
-};
+};;
 
 const decodeJwtResponse = (token) => {
     try {
