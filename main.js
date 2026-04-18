@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import { ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
-
 const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
 
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
@@ -19,18 +18,20 @@ const ADMIN_EMAILS = [
     'coord_actualizaciondocente@itdurango.edu.mx',
     'usuario@itdurango.edu.mx' 
 ];
+// Clave de acceso rápido admin (doble click en logo)
 const ADMIN_PASSWORD = "X987ela";
-
 const CONSTANCIAS_URL = "https://script.google.com/macros/s/AKfycbxRpN34MVIg3XVJYfV80WOzNilDpVJEMSw9RuMc7PI49zH1Wl-z2Si8hLxCzOMiJaQSpA/exec";
+// Fecha de apertura automática (si el admin no ha activado/desactivado manualmente)
 const CONSTANCIAS_FECHA_APERTURA = new Date('2026-06-29T00:00:00');
 
+// Consulta si el admin activó/desactivó manualmente desde el portal principal
 const fetchConstanciasActivada = async () => {
   try {
     const res = await fetch(CONSTANCIAS_URL + '?action=getConstanciasStatus');
     const data = await res.json();
     if (data.success) return data.status === 'OPEN';
   } catch(e) { /* si falla, usa la fecha automática */ }
-  return null;
+  return null; // null = respetar fecha automática
 };
 
 const detectDelimiter = (text) => {
@@ -68,38 +69,28 @@ const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u
 const fetchSheetData = async (year) => {
   const gid = DATA_SOURCES[year];
   if (!gid) return { data: [], error: null, headersFound: [] };
-
   try {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}&t=${Date.now()}`;
     const response = await fetch(csvUrl);
     if (!response.ok) throw new Error(`Error al descargar los datos del año ${year} (HTTP ${response.status}).`);
     const text = await response.text();
     if (!text || text.trim().length === 0) throw new Error(`Sin datos para el año ${year}.`);
-
     const rows = parseCSV(text);
     if (rows.length < 2) return { data: [], error: `Sin registros para el año ${year}.`, headersFound: [] };
-
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
     const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(normalize(k))));
-
     const idx = {
         nombre: findCol(['nombre', 'participante', 'docente', 'alumno', 'name']),
         correo: findCol(['emailaddress', 'correo', 'email', 'mail', 'e-mail']),
         curso:  findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
-        fecha:  findCol(['ã±o', 'fecha', 'periodo', 'year', 'date', 'año']),
+        fecha:  findCol(['fecha', 'periodo', 'year', 'date', 'año']),
         status: findCol(['status', 'estatus', 'estado']),
         link:   findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
     };
-
     if (idx.correo === -1) {
-        return {
-            data: [],
-            error: `No se encontro la columna de Correo (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
-            headersFound: rawHeaders
-        };
+        return { data: [], error: `No se encontró la columna de Correo. Encabezados detectados: ${rawHeaders.join(', ')}`, headersFound: rawHeaders };
     }
-
     const cleanData = rows.slice(1).map((r, i) => {
         if (r.length <= 1 && !r[0]) return null;
         const statusRaw = idx.status !== -1 ? (r[idx.status] || 'PENDIENTE') : 'ENVIADO';
@@ -114,15 +105,11 @@ const fetchSheetData = async (year) => {
             year:   year
         };
     }).filter(item => item && item.correo);
-
     return { data: cleanData, error: null, headersFound: rawHeaders };
-
   } catch (error) {
-    console.error(`Error al leer datos ${year}:`, error);
     return { data: [], error: error.message, headersFound: [] };
   }
-};;
-
+};
 const decodeJwtResponse = (token) => {
     try {
         const base64Url = token.split('.')[1];
@@ -136,7 +123,6 @@ const decodeJwtResponse = (token) => {
         return null;
     }
 };
-
 const useCountdown = (targetDate) => {
   const calc = () => {
     const diff = targetDate - new Date();
@@ -175,6 +161,7 @@ const Login = ({ onLogin }) => {
   const [constActivada, setConstActivada] = useState(() => {
     try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
   });
+  // Abrir Apps Script con el usuario ingresado en el input
   const abrirConstancia = () => {
     const input  = document.getElementById('inputUsuarioConstancia');
     const prefijo = (input ? input.value : '').replace(/@.*$/, '').trim().toLowerCase();
@@ -186,8 +173,10 @@ const Login = ({ onLogin }) => {
     window.location.href = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
   };
 
+  // Ref de intención: distingue qué botón Google fue presionado
   const googleIntencion = React.useRef('login');
 
+  // Toggle activar/desactivar Tarjeta 2
   const handleAdminToggle = () => {
     if (adminPass !== ADMIN_PASSWORD) { setAdminError('Clave incorrecta.'); return; }
     const nuevo = !constActivada;
@@ -198,6 +187,7 @@ const Login = ({ onLogin }) => {
     setAdminError('');
   };
 
+  // Callback único — distingue por googleIntencion (ref seteada en onMouseDown)
   const handleCredentialResponse = (response) => {
     const token   = response.credential;
     const payload = decodeJwtResponse(token);
@@ -220,6 +210,7 @@ const Login = ({ onLogin }) => {
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
+            // UN SOLO initialize — callback unificado, intención por onMouseDown
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse
@@ -590,11 +581,38 @@ const Dashboard = ({ user, onLogout }) => {
     document.body.appendChild(link);
     link.click();
   };
+;
 
+  const [downloading, setDownloading] = useState(null);
 
-
-  const handleDownloadClick = (item) => {
-      console.log(`[Analytics] Descarga iniciada: ${item.curso} por ${user.email}`);
+  const handleDownloadClick = async (item) => {
+    setDownloading(item.id);
+    try {
+      // Convertir link de Drive a URL de descarga directa
+      let downloadUrl = item.link;
+      const driveMatch = item.link.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (driveMatch) {
+        downloadUrl = `https://drive.google.com/uc?export=download&id=${driveMatch[1]}`;
+      }
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error('No se pudo descargar el archivo.');
+      const blob = await response.blob();
+      const ext = blob.type.includes('pdf') ? '.pdf' : blob.type.includes('zip') ? '.zip' : '';
+      const filename = `${item.nombre.replace(/\s+/g, '_')}_${item.curso.slice(0, 30).replace(/\s+/g, '_')}${ext}`;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      // Si falla el blob (CORS), abrir en nueva pestaña como respaldo
+      window.open(item.link, '_blank');
+    } finally {
+      setDownloading(null);
+    }
   };
 
   return (
@@ -672,7 +690,7 @@ const Dashboard = ({ user, onLogout }) => {
                         <p className="text-red-700 font-medium mb-3">{errorStr}</p>
                         <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
                             <strong>Ayuda:</strong>
-                            <p className="mt-1">Revisa que la hoja <code>db_{year}</code> exista en Google Sheets y que el archivo sea público. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
+                            <p className="mt-1">Revisa que el archivo <code>db_{year}.csv</code> esté en GitHub. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
                         </div>
                     </div>
                 </div>
@@ -727,14 +745,17 @@ const Dashboard = ({ user, onLogout }) => {
                             </div>
                             <div className="col-span-1 md:col-span-3 flex justify-start md:justify-end gap-2">
                                 {item.link && item.link !== '#' && item.status === 'ENVIADO' ? (
-                                    <a
-                                        href={item.link} target="_blank"
+                                    <button
                                         onClick={() => handleDownloadClick(item)}
-                                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md"
+                                        disabled={downloading === item.id}
+                                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md disabled:opacity-50"
                                     >
-                                        <FileDown className="w-4 h-4"/>
-                                        <span>Descargar</span>
-                                    </a>
+                                        {downloading === item.id
+                                          ? <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"/>
+                                          : <FileDown className="w-4 h-4"/>
+                                        }
+                                        <span>{downloading === item.id ? 'Descargando...' : 'Descargar'}</span>
+                                    </button>
                                 ) : (
                                     <span className="text-xs text-gray-400 italic px-4 py-2 bg-gray-50 rounded border border-gray-100 w-full md:w-auto text-center">
                                         {item.status !== 'ENVIADO' ? 'No Aprobado, Revisar con su instructor' : 'No disponible'}
@@ -755,8 +776,8 @@ const Dashboard = ({ user, onLogout }) => {
                 {user.isAdmin && (
                    <div className="mt-6 inline-block px-4 py-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 text-left">
                         <strong>Diagnóstico Admin:</strong><br/>
-                        Leyendo hoja Google Sheets: <code>db_{year}</code><br/>
-                        Asegúrate que la hoja exista en el Google Sheets y que el documento sea público.
+                        Leyendo archivo: <code>db_{year}.csv</code><br/>
+                        Asegúrate que el archivo esté subido en GitHub en la carpeta raíz.
                    </div>
                 )}
             </div>
