@@ -2,21 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
 
-// ==========================================
-// CONFIGURACIÓN DE GOOGLE (OBLIGATORIO)
-// ==========================================
 const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
 
-// ==========================================
-// CONFIGURACIÓN LOCAL
-// ==========================================
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
-// CONFIGURACIÓN DE GOOGLE SHEETS
-// ID del spreadsheet principal — las hojas se llaman: db_2024, db_2025, db_2026, db_2027...
 const SPREADSHEET_ID = '1CVXtvWAQSSL2efNBxfJH6SrLE2McmNXLlS-58-beScQ';
 
-// Años disponibles — agrega un año aquí cuando crees la hoja correspondiente en Google Sheets
 const DATA_SOURCES = {
   '2026': 'db_2026',
   '2025': 'db_2025',
@@ -28,29 +19,19 @@ const ADMIN_EMAILS = [
     'coord_actualizaciondocente@itdurango.edu.mx',
     'usuario@itdurango.edu.mx' 
 ];
-// Clave de acceso rápido admin (doble click en logo)
 const ADMIN_PASSWORD = "X987ela";
 
-// ==========================================
-// MÓDULO: GENERACIÓN DE CONSTANCIAS
-// ==========================================
 const CONSTANCIAS_URL = "https://script.google.com/macros/s/AKfycbxRpN34MVIg3XVJYfV80WOzNilDpVJEMSw9RuMc7PI49zH1Wl-z2Si8hLxCzOMiJaQSpA/exec";
-// Fecha de apertura automática (si el admin no ha activado/desactivado manualmente)
 const CONSTANCIAS_FECHA_APERTURA = new Date('2026-06-29T00:00:00');
 
-// Consulta si el admin activó/desactivó manualmente desde el portal principal
 const fetchConstanciasActivada = async () => {
   try {
     const res = await fetch(CONSTANCIAS_URL + '?action=getConstanciasStatus');
     const data = await res.json();
     if (data.success) return data.status === 'OPEN';
   } catch(e) { /* si falla, usa la fecha automática */ }
-  return null; // null = respetar fecha automática
+  return null;
 };
-
-// ==========================================
-// LÓGICA DE DATOS
-// ==========================================
 
 const detectDelimiter = (text) => {
     if (!text) return ',';
@@ -84,7 +65,6 @@ const parseCSV = (text) => {
 
 const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
-// Obtiene el gid de una hoja por nombre desde Google Sheets
 const fetchSheetGid = async (spreadsheetId, sheetName) => {
   const metaUrl = `https://spreadsheets.google.com/feeds/worksheets/${spreadsheetId}/public/basic?alt=json&t=${Date.now()}`;
   try {
@@ -108,18 +88,15 @@ const fetchSheetData = async (year) => {
   if (!sheetName) return { data: [], error: null, headersFound: [] };
 
   try {
-    // 1. Obtener el gid de la hoja por nombre
     const gid = await fetchSheetGid(SPREADSHEET_ID, sheetName);
     if (!gid) throw new Error(`No se encontro la hoja "${sheetName}".`);
 
-    // 2. Descargar el CSV de esa hoja
     const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}&t=${Date.now()}`;
     const response = await fetch(csvUrl);
     if (!response.ok) throw new Error(`Error al descargar la hoja "${sheetName}" (HTTP ${response.status}).`);
     const text = await response.text();
     if (!text || text.trim().length === 0) throw new Error(`La hoja "${sheetName}" esta vacia.`);
 
-    // 3. Parsear CSV
     const rows = parseCSV(text);
     if (rows.length < 2) return { data: [], error: `La hoja "${sheetName}" no tiene datos suficientes.`, headersFound: [] };
 
@@ -168,9 +145,6 @@ const fetchSheetData = async (year) => {
   }
 };
 
-// ==========================================
-// AUTH UTILS (GOOGLE JWT DECODER)
-// ==========================================
 const decodeJwtResponse = (token) => {
     try {
         const base64Url = token.split('.')[1];
@@ -185,9 +159,6 @@ const decodeJwtResponse = (token) => {
     }
 };
 
-// ==========================================
-// COMPONENTE: CUENTA REGRESIVA — CONSTANCIAS
-// ==========================================
 const useCountdown = (targetDate) => {
   const calc = () => {
     const diff = targetDate - new Date();
@@ -217,12 +188,6 @@ const UnitBox = ({ valor, label }) => (
   </div>
 );
 
-
-// ==========================================
-// COMPONENTES UI
-// ==========================================
-
-
 const Login = ({ onLogin }) => {
   const [error,         setError]         = useState('');
   const [logoError,     setLogoError]     = useState(false);
@@ -232,7 +197,6 @@ const Login = ({ onLogin }) => {
   const [constActivada, setConstActivada] = useState(() => {
     try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
   });
-  // Abrir Apps Script con el usuario ingresado en el input
   const abrirConstancia = () => {
     const input  = document.getElementById('inputUsuarioConstancia');
     const prefijo = (input ? input.value : '').replace(/@.*$/, '').trim().toLowerCase();
@@ -244,10 +208,8 @@ const Login = ({ onLogin }) => {
     window.location.href = CONSTANCIAS_URL + '?email=' + encodeURIComponent(email);
   };
 
-  // Ref de intención: distingue qué botón Google fue presionado
   const googleIntencion = React.useRef('login');
 
-  // Toggle activar/desactivar Tarjeta 2
   const handleAdminToggle = () => {
     if (adminPass !== ADMIN_PASSWORD) { setAdminError('Clave incorrecta.'); return; }
     const nuevo = !constActivada;
@@ -258,7 +220,6 @@ const Login = ({ onLogin }) => {
     setAdminError('');
   };
 
-  // Callback único — distingue por googleIntencion (ref seteada en onMouseDown)
   const handleCredentialResponse = (response) => {
     const token   = response.credential;
     const payload = decodeJwtResponse(token);
@@ -281,7 +242,6 @@ const Login = ({ onLogin }) => {
   useEffect(() => {
     if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
         try {
-            // UN SOLO initialize — callback unificado, intención por onMouseDown
             window.google.accounts.id.initialize({
                 client_id: GOOGLE_CLIENT_ID,
                 callback: handleCredentialResponse
@@ -302,8 +262,6 @@ const Login = ({ onLogin }) => {
         }
     }
   }, [constActivada]);
-
-
 
   const S = {
     page: {
@@ -561,7 +519,6 @@ const Login = ({ onLogin }) => {
             )}
           </div>
         </div>
-
 
         {/* Tarjeta 3: Desarrollo Académico — Uso Interno */}
         <a href="./otras-constancias.html" style={{...S.card('rgba(107,26,42,.1)'), cursor:'pointer', textDecoration:'none', transition:'transform .2s, box-shadow .2s'}}
@@ -839,8 +796,6 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
             </div>
         )}
-
-
 
       </main>
 
