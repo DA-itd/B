@@ -647,7 +647,6 @@ const Dashboard = ({ user, onLogout }) => {
                         className="ml-2 flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors border border-transparent hover:border-red-100" 
                         title="Salir"
                     >
-                        <span className="text-sm font-medium hidden sm:inline">Salir</span>
                         <LogOut className="w-4 h-4"/>
                     </button>
                 </div>
@@ -796,7 +795,7 @@ const Dashboard = ({ user, onLogout }) => {
 
 const App = () => {
   const [user, setUser] = useState(null);
-  const handleLogout = () => { window.location.href = "https://da-itd.github.io/A/"; };
+  const handleLogout = () => { window.location.replace("https://da-itd.github.io/A/"); };
   return user ? <Dashboard user={user} onLogout={handleLogout} /> : <Login onLogin={setUser} />;
 };
 
