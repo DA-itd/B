@@ -727,8 +727,20 @@ const Dashboard = ({ user, onLogout }) => {
                             </div>
                             <div className="col-span-1 md:col-span-3 flex justify-start md:justify-end gap-2">
                                 {item.link && item.link !== '#' && item.status === 'ENVIADO' ? (
-                                    <>
-
+                                    <a
+                                        href={item.link} target="_blank"
+                                        onClick={() => handleDownloadClick(item)}
+                                        className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md"
+                                    >
+                                        <FileDown className="w-4 h-4"/>
+                                        <span>Descargar</span>
+                                    </a>
+                                ) : (
+                                    <span className="text-xs text-gray-400 italic px-4 py-2 bg-gray-50 rounded border border-gray-100 w-full md:w-auto text-center">
+                                        {item.status !== 'ENVIADO' ? 'No Aprobado, Revisar con su instructor' : 'No disponible'}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
