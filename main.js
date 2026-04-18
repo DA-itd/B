@@ -8,15 +8,19 @@ import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, F
 const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
 
 // ==========================================
-// CONFIGURACIÓN LOCAL (GITHUB)
+// CONFIGURACIÓN LOCAL
 // ==========================================
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
-// CONFIGURACIÓN DE ARCHIVOS
+// CONFIGURACIÓN DE GOOGLE SHEETS
+// ID del spreadsheet principal — las hojas se llaman: db_2024, db_2025, db_2026, db_2027...
+const SPREADSHEET_ID = '1CVXtvWAQSSL2efNBxfJH6SrLE2McmNXLlS-58-beScQ';
+
+// Años disponibles — agrega un año aquí cuando crees la hoja correspondiente en Google Sheets
 const DATA_SOURCES = {
-  '2026': './db_2026.csv',
-  '2025': './db_2025.csv', 
-  '2024': './db_2024.csv'
+  '2026': 'db_2026',
+  '2025': 'db_2025',
+  '2024': 'db_2024'
 };
 
 const ADMIN_EMAILS = [
@@ -80,21 +84,44 @@ const parseCSV = (text) => {
 
 const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
 
-const fetchLocalData = async (year) => {
-  const fileUrl = DATA_SOURCES[year];
-  if (!fileUrl) return { data: [], error: null, headersFound: [] };
-  
+// Obtiene el gid de una hoja por nombre desde Google Sheets
+const fetchSheetGid = async (spreadsheetId, sheetName) => {
+  const metaUrl = `https://spreadsheets.google.com/feeds/worksheets/${spreadsheetId}/public/basic?alt=json&t=${Date.now()}`;
   try {
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-         if (response.status === 404) throw new Error(`El archivo "db_${year}.csv" no se encuentra en el repositorio.`);
-         throw new Error(`Error al cargar el archivo local (${response.status})`);
-    }
-    const text = await response.text();
-    if (!text || text.trim().length === 0) throw new Error("El archivo CSV está vacío.");
+    const res = await fetch(metaUrl);
+    if (!res.ok) throw new Error('No se pudo acceder al spreadsheet. Verifica que sea publico.');
+    const json = await res.json();
+    const entries = json.feed.entry || [];
+    const entry = entries.find(e => e.title && e.title.$t === sheetName);
+    if (!entry) throw new Error(`No se encontro la hoja "${sheetName}" en Google Sheets.`);
+    const link = entry.link.find(l => l.rel === 'http://schemas.google.com/spreadsheets/2006#cellsfeed');
+    if (!link) throw new Error(`No se pudo obtener el GID de la hoja "${sheetName}".`);
+    const match = link.href.match(/\/([^\/]+)\/public/);
+    return match ? match[1] : null;
+  } catch (e) {
+    throw e;
+  }
+};
 
+const fetchSheetData = async (year) => {
+  const sheetName = DATA_SOURCES[year];
+  if (!sheetName) return { data: [], error: null, headersFound: [] };
+
+  try {
+    // 1. Obtener el gid de la hoja por nombre
+    const gid = await fetchSheetGid(SPREADSHEET_ID, sheetName);
+    if (!gid) throw new Error(`No se encontro la hoja "${sheetName}".`);
+
+    // 2. Descargar el CSV de esa hoja
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${gid}&t=${Date.now()}`;
+    const response = await fetch(csvUrl);
+    if (!response.ok) throw new Error(`Error al descargar la hoja "${sheetName}" (HTTP ${response.status}).`);
+    const text = await response.text();
+    if (!text || text.trim().length === 0) throw new Error(`La hoja "${sheetName}" esta vacia.`);
+
+    // 3. Parsear CSV
     const rows = parseCSV(text);
-    if (rows.length < 2) return { data: [], error: "El archivo CSV no tiene datos suficientes.", headersFound: [] };
+    if (rows.length < 2) return { data: [], error: `La hoja "${sheetName}" no tiene datos suficientes.`, headersFound: [] };
 
     const rawHeaders = rows[0];
     const headers = rawHeaders.map(h => normalize(h));
@@ -104,15 +131,15 @@ const fetchLocalData = async (year) => {
         nombre: findCol(['nombre', 'participante', 'docente', 'alumno', 'name']),
         correo: findCol(['emailaddress', 'correo', 'email', 'mail', 'e-mail']),
         curso:  findCol(['codigo', 'curso', 'taller', 'reconocimiento', 'concepto', 'actividad', 'clave', 'code']),
-        fecha:  findCol(['año', 'fecha', 'periodo', 'year', 'date']),
+        fecha:  findCol(['ã±o', 'fecha', 'periodo', 'year', 'date', 'año']),
         status: findCol(['status', 'estatus', 'estado']),
         link:   findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
     };
 
     if (idx.correo === -1) {
-        return { 
-            data: [], 
-            error: `No se encontró la columna de Correo (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
+        return {
+            data: [],
+            error: `No se encontro la columna de Correo en la hoja "${sheetName}" (buscamos: EmailAddress, Correo, Email). Encabezados detectados: ${rawHeaders.join(', ')}`,
             headersFound: rawHeaders
         };
     }
@@ -132,9 +159,11 @@ const fetchLocalData = async (year) => {
         };
     }).filter(item => item && item.correo);
 
+    console.log(`Hoja "${sheetName}": ${cleanData.length} registros cargados.`);
     return { data: cleanData, error: null, headersFound: rawHeaders };
+
   } catch (error) {
-    console.error("Error Fetch Local:", error);
+    console.error(`Error al leer hoja "${sheetName}":`, error);
     return { data: [], error: error.message, headersFound: [] };
   }
 };
@@ -587,7 +616,7 @@ const Dashboard = ({ user, onLogout }) => {
     if (!DATA_SOURCES[year]) { setAllData([]); return; }
     setLoading(true);
     setErrorStr(null);
-    fetchLocalData(year).then(res => {
+    fetchSheetData(year).then(res => {
         setAllData(res.data);
         setHeaders(res.headersFound);
         if (res.error) setErrorStr(res.error);
@@ -712,7 +741,7 @@ const Dashboard = ({ user, onLogout }) => {
                         <p className="text-red-700 font-medium mb-3">{errorStr}</p>
                         <div className="mt-3 text-sm text-red-800 bg-white/50 p-3 rounded">
                             <strong>Ayuda:</strong>
-                            <p className="mt-1">Revisa que el archivo <code>db_{year}.csv</code> esté en GitHub. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
+                            <p className="mt-1">Revisa que la hoja <code>db_{year}</code> exista en Google Sheets y que el archivo sea público. Las columnas soportadas son: EmailAddress, FileAttachments, Codigo, Nombre, etc.</p>
                         </div>
                     </div>
                 </div>
@@ -804,8 +833,8 @@ const Dashboard = ({ user, onLogout }) => {
                 {user.isAdmin && (
                    <div className="mt-6 inline-block px-4 py-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 text-left">
                         <strong>Diagnóstico Admin:</strong><br/>
-                        Leyendo archivo: <code>db_{year}.csv</code><br/>
-                        Asegúrate que el archivo esté subido en GitHub en la carpeta raíz.
+                        Leyendo hoja Google Sheets: <code>db_{year}</code><br/>
+                        Asegúrate que la hoja exista en el Google Sheets y que el documento sea público.
                    </div>
                 )}
             </div>
