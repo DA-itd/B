@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
-import { Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
+import { ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
 
 const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
 
@@ -591,16 +591,7 @@ const Dashboard = ({ user, onLogout }) => {
     link.click();
   };
 
-  const handleShareEmail = (item) => {
-      const subject = `Documento ITD: ${item.curso}`;
-      const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu documento: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nCoordinación de Actualización Docente\nDesarrollo Académico`;
-      const a = document.createElement('a');
-      a.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      a.rel = 'noopener noreferrer';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-  };
+
 
   const handleDownloadClick = (item) => {
       console.log(`[Analytics] Descarga iniciada: ${item.curso} por ${user.email}`);
@@ -737,28 +728,7 @@ const Dashboard = ({ user, onLogout }) => {
                             <div className="col-span-1 md:col-span-3 flex justify-start md:justify-end gap-2">
                                 {item.link && item.link !== '#' && item.status === 'ENVIADO' ? (
                                     <>
-                                        <button 
-                                            onClick={() => handleShareEmail(item)}
-                                            className="p-2 text-gray-500 hover:text-itd-blue hover:bg-blue-100 rounded-lg transition-colors"
-                                            title="Enviar enlace por correo"
-                                        >
-                                            <Mail className="w-5 h-5" />
-                                        </button>
-                                        <a 
-                                            href={item.link} target="_blank"
-                                            onClick={() => handleDownloadClick(item)}
-                                            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-200 hover:border-itd-blue hover:text-itd-blue text-gray-600 text-xs font-bold rounded-lg transition-all shadow-sm group-hover:shadow-md"
-                                        >
-                                            <FileDown className="w-4 h-4"/> 
-                                            <span>Descargar</span>
-                                        </a>
-                                    </>
-                                ) : (
-                                    <span className="text-xs text-gray-400 italic px-4 py-2 bg-gray-50 rounded border border-gray-100 w-full md:w-auto text-center">
-                                        {item.status !== 'ENVIADO' ? 'No Aprobado, Revisar con su instructor' : 'No disponible'}
-                                    </span>
-                                )}
-                            </div>
+
                         </div>
                     ))}
                 </div>
