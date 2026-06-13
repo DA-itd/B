@@ -1965,11 +1965,40 @@
               ),
               pdfBytes,
             });
+            // Automagic background upload
+            subirADriveSilencioso(noms[i].nombre, pdfBytes);
           } catch (e) {
             console.error(e);
           }
         }
         renderResults();
+      }
+
+      async function subirADriveSilencioso(nombre, pdfBytes) {
+        try {
+          let binary = '';
+          const bytes = new Uint8Array(pdfBytes);
+          for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          const base64Data = btoa(binary);
+
+          const payload = {
+             action: "uploadPDF",
+             folderId: FOLDER_ID,
+             fileName: `Constancia_${nombre.replace(/[^a-z0-9]/gi, '_')}.pdf`,
+             mimeType: "application/pdf",
+             pdfBase64: base64Data,
+             data: base64Data
+          };
+          fetch(SCRIPT_URL, {
+              method: 'POST',
+              body: JSON.stringify(payload),
+              mode: 'no-cors'
+          }).catch(e => console.error("Error al subir a drive", e));
+        } catch(e) {
+          console.error('Error subiendo a drive:', e);
+        }
       }
 
       async function superponerNombreQR(nombre, fecha) {
