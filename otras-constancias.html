@@ -1594,9 +1594,14 @@
               <div class="gen-h2">Gestión de Usuarios</div>
               <div class="gen-sub" id="usr-cnt">—</div>
             </div>
-            <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">
-              + Nuevo usuario
-            </button>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="cl-btn" onclick="limpiarInvitados()" title="Eliminar a todos los invitados" style="color:var(--err-txt);font-weight:600">
+                🧹 Limpiar invitados
+              </button>
+              <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">
+                + Nuevo usuario
+              </button>
+            </div>
           </div>
 
           <div
@@ -2687,6 +2692,23 @@
           toast("Usuario eliminado", "info");
         } catch (err) {
           toast("❌ " + err.message, "error");
+        }
+      }
+
+      async function limpiarInvitados() {
+        if (!confirm("¿Estás seguro de eliminar a TODOS los usuarios INVITADOS? (Los administradores no serán eliminados)")) return;
+        const btn = document.getElementById("cl-btn");
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Limpiando...'; }
+        try {
+          const resp = await fetch(`${SCRIPT_URL}?action=clearGuests`);
+          const data = await resp.json();
+          if (!data.ok) throw new Error(data.error);
+          renderUsers();
+          toast(`🧹 Se eliminaron ${data.deleted} invitados exitosamente`, "success");
+        } catch (err) {
+          toast("❌ " + err.message, "error");
+        } finally {
+          if (btn) { btn.disabled = false; btn.textContent = '🧹 Limpiar invitados'; }
         }
       }
 
