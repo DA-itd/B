@@ -1582,7 +1582,7 @@
     <script>
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbxMyVFB5HXwxhRCzJBvKczI5GVmzk4Y_3kFNpcOOjxqHZmkVwJH77BJZID6K3WgoAd8_w/exec";
-      const FOLDER_ID = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
+      const FOLDER_ID = "1jFRMOdEYD2us53DheYRYvdec19wycH_k";
       document.getElementById("yr").textContent = new Date().getFullYear();
 
       let CU = null,
@@ -1646,6 +1646,7 @@
           coords.concepto.set;
         const s4done = !!coords.nombre.set;
         const s5ready = s1done && s2done && s3done && s4done;
+        const s5done = GEN.length > 0;
 
         [
           { id: "st-1", card: "sc-1", done: s1done, active: !s1done },
@@ -1662,7 +1663,12 @@
             done: s4done,
             active: s1done && s2done && s3done && !s4done,
           },
-          { id: "st-5", card: "sc-5", done: false, active: s5ready },
+          {
+            id: "st-5",
+            card: "sc-5",
+            done: s5done,
+            active: s5ready && !s5done,
+          },
         ].forEach((s) => {
           document.getElementById(s.id).className =
             "step-item" + (s.done ? " done" : s.active ? " active" : "");
@@ -1976,7 +1982,7 @@
 
       async function subirADriveSilencioso(nombre, pdfBytes) {
         try {
-          let binary = '';
+          let binary = "";
           const bytes = new Uint8Array(pdfBytes);
           for (let i = 0; i < bytes.length; i++) {
             binary += String.fromCharCode(bytes[i]);
@@ -1984,20 +1990,20 @@
           const base64Data = btoa(binary);
 
           const payload = {
-             action: "uploadPDF",
-             folderId: FOLDER_ID,
-             fileName: `Constancia_${nombre.replace(/[^a-z0-9]/gi, '_')}.pdf`,
-             mimeType: "application/pdf",
-             pdfBase64: base64Data,
-             data: base64Data
+            action: "uploadPDF",
+            folderId: FOLDER_ID,
+            fileName: `Constancia_${nombre.replace(/[^a-z0-9]/gi, "_")}.pdf`,
+            mimeType: "application/pdf",
+            pdfBase64: base64Data,
+            data: base64Data,
           };
           fetch(SCRIPT_URL, {
-              method: 'POST',
-              body: JSON.stringify(payload),
-              mode: 'no-cors'
-          }).catch(e => console.error("Error al subir a drive", e));
-        } catch(e) {
-          console.error('Error subiendo a drive:', e);
+            method: "POST",
+            body: JSON.stringify(payload),
+            mode: "no-cors",
+          }).catch((e) => console.error("Error al subir a drive", e));
+        } catch (e) {
+          console.error("Error subiendo a drive:", e);
         }
       }
 
@@ -2157,6 +2163,7 @@
       }
 
       function renderResults() {
+        updateStepper();
         const list = document.getElementById("res-list");
         list.innerHTML = "";
         document.getElementById("res-title").textContent =
