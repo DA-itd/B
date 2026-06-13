@@ -1029,12 +1029,16 @@
             <div class="nav-sub">Instituto Tecnológico de Durango</div>
           </div>
           <div style="flex: 1"></div>
-          <div style="display: flex; gap: 4px; display: none">
-            <button class="tab-btn active" onclick="showTab('generar')">
-              📜 Generar
+          <div style="display: flex; gap: 4px">
+            <button
+              class="tab-btn active"
+              id="tab-gen-btn"
+              onclick="showTab('generar')"
+            >
+              🏠 Inicio
             </button>
             <button
-              class="tab-btn hidden"
+              class="tab-btn"
               id="tab-usr-btn"
               onclick="showTab('usuarios')"
             >
@@ -1685,6 +1689,11 @@
         document
           .getElementById("tab-usuarios")
           .classList.toggle("hidden", t !== "usuarios");
+
+        const btnGen = document.getElementById("tab-gen-btn");
+        const btnUsr = document.getElementById("tab-usr-btn");
+        if (btnGen) btnGen.classList.toggle("active", t === "generar");
+        if (btnUsr) btnUsr.classList.toggle("active", t === "usuarios");
       }
 
       function setMode(m) {
