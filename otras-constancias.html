@@ -1804,6 +1804,85 @@
       const qrUrl = (n, f) =>
         `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData(n, f))}`;
 
+      /* ═══ PLANTILLAS (LocalStorage) ════════════════════════════════════════ */
+      function getPlantillas() {
+        try {
+          return JSON.parse(localStorage.getItem("itd_tpls")) || [];
+        } catch {
+          return [];
+        }
+      }
+      function guardarPlantilla() {
+        const nombreEvento = document.getElementById("f-evento-nombre").value.trim();
+        if (!nombreEvento || !pdfBase64) return;
+        const tpls = getPlantillas();
+        const tpl = {
+          nombre: nombreEvento,
+          pdfBase64, pdfPageW, pdfPageH, coords,
+          fontFamily: document.getElementById("f-fontfamily").value,
+          fontSize: document.getElementById("f-fontsize").value,
+          fontColor: document.getElementById("f-fontcolor").value,
+          italic: document.getElementById("f-italic").checked,
+          bold: document.getElementById("f-bold").checked,
+          qrOn: document.getElementById("f-qr-on").checked,
+          conceptoOn: document.getElementById("f-concepto-on").checked,
+          conceptoTxt: document.getElementById("f-concepto-txt").value,
+          lastUsed: Date.now()
+        };
+        const idx = tpls.findIndex(t => t.nombre.toLowerCase() === nombreEvento.toLowerCase());
+        if (idx >= 0) tpls[idx] = tpl;
+        else tpls.push(tpl);
+        localStorage.setItem("itd_tpls", JSON.stringify(tpls));
+        renderTpls(nombreEvento);
+      }
+      function renderTpls(selectedName = "") {
+        const tpls = getPlantillas().sort((a,b) => b.lastUsed - a.lastUsed);
+        const sel = document.getElementById("f-evento");
+        if(!sel) return;
+        sel.innerHTML = '<option value="">— Nueva —</option>' + 
+          tpls.map(t => `<option value="${t.nombre}" ${t.nombre===selectedName?'selected':''}>${t.nombre}</option>`).join('');
+      }
+      async function cargarEvento() {
+        const sel = document.getElementById("f-evento");
+        if(sel.value === "") {
+          // Reset to default
+          document.getElementById("f-evento-nombre").value = "";
+          pdfBase64 = ""; pdfPageW = 0; pdfPageH = 0;
+          coords = { nombre: { set: false }, qr: { set: false }, concepto: { set: false } };
+          document.getElementById("pdf-ok").classList.add("hidden");
+          const canvas = document.getElementById("calib-canvas");
+          canvas.getContext("2d").clearRect(0,0, canvas.width, canvas.height);
+          document.getElementById("calib-placeholder").style.display = "flex";
+          updateMkRects();
+          updateStepper();
+          return;
+        }
+        const tpl = getPlantillas().find(t => t.nombre === sel.value);
+        if(!tpl) return;
+        document.getElementById("f-evento-nombre").value = tpl.nombre;
+        pdfBase64 = tpl.pdfBase64; pdfPageW = tpl.pdfPageW; pdfPageH = tpl.pdfPageH;
+        coords = tpl.coords;
+        document.getElementById("f-fontfamily").value = tpl.fontFamily || "Georgia, serif";
+        document.getElementById("f-fontsize").value = tpl.fontSize || "60";
+        document.getElementById("f-fontcolor").value = tpl.fontColor || "#1a1a1a";
+        document.getElementById("f-italic").checked = !!tpl.italic;
+        document.getElementById("f-bold").checked = tpl.bold !== false; // default true
+        document.getElementById("f-qr-on").checked = !!tpl.qrOn;
+        document.getElementById("f-concepto-on").checked = !!tpl.conceptoOn;
+        if(tpl.conceptoTxt) document.getElementById("f-concepto-txt").value = tpl.conceptoTxt;
+        
+        // Show PDF OK state
+        const okBadge = document.getElementById("pdf-ok");
+        if(okBadge) {
+          okBadge.textContent = "✅ Plantilla cargada desde Drive/Local";
+          okBadge.classList.remove("hidden");
+        }
+        
+        renderPDFCanvas(pdfBase64);
+        updateStepper();
+        toast("Plantilla cargada", "info");
+      }
+
       function updateStepper() {
         const s1done = !!(
           pdfBase64 && document.getElementById("f-evento-nombre").value.trim()
@@ -1984,6 +2063,35 @@
         }
       }
 
+      function updateMkRects() {
+        const cv = document.getElementById("calib-canvas");
+        const cRect = cv.getBoundingClientRect();
+        if (!cRect.width) return;
+        const s = cRect.width / cv.width; // scale relative to canvas internal width
+        const cs = calibScale * s; // Combined scale
+        
+        // Wrap rect for offset
+        const r = document.getElementById("calib-wrap").getBoundingClientRect();
+        const ox = cRect.left - r.left;
+        const oy = cRect.top - r.top;
+
+        ["nombre", "qr", "concepto"].forEach((m) => {
+          const el = document.getElementById("mk-" + m + "-rect");
+          const lbl = document.getElementById("pos-" + m + "-lbl");
+          if (coords[m] && coords[m].set) {
+            const x = coords[m].x * cs + ox;
+            const y = coords[m].y * cs + oy;
+            const w = coords[m].w * cs;
+            const h = coords[m].h * cs;
+            el.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;display:block`;
+            if(lbl) lbl.textContent = `✅ Set`;
+          } else {
+            el.style.display = "none";
+            if(lbl) lbl.textContent = `Sin definir`;
+          }
+        });
+      }
+
       async function renderPDFCanvas(b64) {
         if (!window.pdfjsLib)
           await loadScript(
@@ -2008,7 +2116,14 @@
           canvasContext: canvas.getContext("2d"),
           viewport: vp,
         }).promise;
+        updateMkRects();
       }
+
+      window.addEventListener("resize", () => {
+        if (pdfBase64 && document.getElementById("calib-canvas").width) {
+          updateMkRects();
+        }
+      });
 
       function setCalibMode(m) {
         calibMode = m;
@@ -2180,6 +2295,8 @@
         } else {
           toast(`⚠ ${okCount}/${noms.length} generadas`, "warn");
         }
+        
+        guardarPlantilla(); // Guardar configuración automáticamente
       }
 
       async function subirADriveSilencioso(nombre, pdfBytes, fecha) {
@@ -2557,6 +2674,15 @@
           if (usrBtn) usrBtn.classList.add("hidden");
         }
         renderUsers();
+        
+        // Cargar plantillas y preseleccionar la más reciente
+        const tpls = getPlantillas().sort((a,b) => b.lastUsed - a.lastUsed);
+        if(tpls.length > 0) {
+          renderTpls(tpls[0].nombre);
+          cargarEvento();
+        } else {
+          renderTpls();
+        }
       }
 
       /* ═══ USUARIOS (via Apps Script) ═══════════════════════════════════════ */
