@@ -890,10 +890,15 @@
       @media (max-width: 680px) {
         .usr-hdr,
         .usr-row {
-          grid-template-columns: 1fr 90px 50px;
+          grid-template-columns: 1fr 65px 50px 30px;
+          padding: 10px 12px;
+          gap: 6px;
         }
         .hide-sm {
           display: none;
+        }
+        .usr-row {
+          font-size: 13px;
         }
       }
       .tog-btn {
@@ -1572,51 +1577,165 @@
 
         <!-- TAB USUARIOS -->
         <div id="tab-usuarios" class="hidden">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-            <div><div class="gen-h2">Gestión de Usuarios</div><div class="gen-sub" id="usr-cnt">—</div></div>
-            <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 10px;
+              background: #fff;
+              border-radius: 14px;
+              padding: 18px 22px;
+              box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <div>
+              <div class="gen-h2">Gestión de Usuarios</div>
+              <div class="gen-sub" id="usr-cnt">—</div>
+            </div>
+            <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">
+              + Nuevo usuario
+            </button>
           </div>
 
-          <div class="card hidden" id="uf-card" style="margin-top:14px;border:2px solid #1B396A18">
-            <div class="card-title" style="color:#1B396A">➕ Crear usuario</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
-              <div class="field"><label>Nombre completo *</label><input type="text" id="uf-nm" placeholder="Nombre Apellido"/></div>
-              <div class="field"><label>Usuario *</label>
-                <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff" id="uf-wrap">
-                  <input type="text" id="uf-em" placeholder="usuario"
-                    style="flex:1;padding:10px 0 10px 14px;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;background:transparent"
-                    onfocus="document.getElementById('uf-wrap').style.borderColor='#1B396A'"
-                    onblur="document.getElementById('uf-wrap').style.borderColor='#e0e0e0'"/>
-                  <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
+          <div
+            class="card hidden"
+            id="uf-card"
+            style="margin-top: 14px; border: 2px solid #1b396a18"
+          >
+            <div class="card-title" style="color: #1b396a">
+              ➕ Crear usuario
+            </div>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 16px;
+              "
+            >
+              <div class="field">
+                <label>Nombre completo *</label
+                ><input type="text" id="uf-nm" placeholder="Nombre Apellido" />
+              </div>
+              <div class="field">
+                <label>Usuario *</label>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    border: 1.5px solid #e0e0e0;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    background: #fff;
+                  "
+                  id="uf-wrap"
+                >
+                  <input
+                    type="text"
+                    id="uf-em"
+                    placeholder="usuario"
+                    style="
+                      flex: 1;
+                      padding: 10px 0 10px 14px;
+                      border: none;
+                      outline: none;
+                      font-size: 14px;
+                      font-family: &quot;DM Sans&quot;, sans-serif;
+                      background: transparent;
+                    "
+                    onfocus="
+                      document.getElementById('uf-wrap').style.borderColor =
+                        '#1B396A'
+                    "
+                    onblur="
+                      document.getElementById('uf-wrap').style.borderColor =
+                        '#e0e0e0'
+                    "
+                  />
+                  <span
+                    style="
+                      padding: 10px 14px 10px 4px;
+                      font-size: 14px;
+                      color: #aaa;
+                      white-space: nowrap;
+                    "
+                    >@itdurango.edu.mx</span
+                  >
                 </div>
               </div>
-              <div class="field"><label>Contraseña *</label>
+              <div class="field">
+                <label>Contraseña *</label>
                 <div class="pass-wrap">
-                  <input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/>
-                  <button type="button" class="pass-toggle" onclick="togglePass('uf-pw',this)" title="Mostrar/ocultar">👁</button>
+                  <input
+                    type="password"
+                    id="uf-pw"
+                    placeholder="Mín. 6 caracteres"
+                  />
+                  <button
+                    type="button"
+                    class="pass-toggle"
+                    onclick="togglePass('uf-pw', this)"
+                    title="Mostrar/ocultar"
+                  >
+                    👁
+                  </button>
                 </div>
               </div>
-              <div class="field"><label>Rol</label>
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:14px">
-                  <input type="checkbox" id="uf-adm"/> Administrador
-                </label>
+              <div class="field">
+                <label>Rol</label>
+                <select
+                  id="uf-adm"
+                  style="
+                    padding: 10px 14px;
+                    border-radius: 10px;
+                    border: 1.5px solid #e0e0e0;
+                    font-size: 14px;
+                    background: #fff;
+                    outline: none;
+                    cursor: pointer;
+                  "
+                >
+                  <option value="false">Invitado</option>
+                  <option value="true">Administrador</option>
+                </select>
               </div>
             </div>
-            <div id="uf-err" class="err-box hidden" style="margin-top:10px"></div>
-            <div style="display:flex;gap:8px;margin-top:14px">
-              <button class="btn btn-primary" id="uf-sv" onclick="crearUsuario()">💾 Crear usuario</button>
-              <button class="btn btn-ghost" onclick="toggleUF(true)">Cancelar</button>
+            <div
+              id="uf-err"
+              class="err-box hidden"
+              style="margin-top: 10px"
+            ></div>
+            <div style="display: flex; gap: 8px; margin-top: 14px">
+              <button
+                class="btn btn-primary"
+                id="uf-sv"
+                onclick="crearUsuario()"
+              >
+                💾 Crear usuario
+              </button>
+              <button class="btn btn-ghost" onclick="toggleUF(true)">
+                Cancelar
+              </button>
             </div>
           </div>
 
-          <div class="card" style="margin-top:14px;padding:0;overflow:hidden">
+          <div
+            class="card"
+            style="margin-top: 14px; padding: 0; overflow: hidden"
+          >
             <div class="usr-hdr">
-              <span>Nombre</span><span class="hide-sm">Correo</span><span>Rol</span><span>Estado</span><span></span>
+              <span>Nombre</span><span class="hide-sm">Correo</span
+              ><span>Rol</span><span>Estado</span><span></span>
             </div>
             <div id="usr-list"></div>
-            <div id="usr-empty" class="hidden" style="padding:40px 24px;text-align:center;color:#aaa">
-              <div style="font-size:36px;margin-bottom:8px">👤</div>
-              <div style="font-weight:700">Sin usuarios — crea el primero</div>
+            <div
+              id="usr-empty"
+              class="hidden"
+              style="padding: 40px 24px; text-align: center; color: #aaa"
+            >
+              <div style="font-size: 36px; margin-bottom: 8px">👤</div>
+              <div style="font-weight: 700">Sin usuarios — crea el primero</div>
             </div>
           </div>
         </div>
@@ -1628,6 +1747,7 @@
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbxMyVFB5HXwxhRCzJBvKczI5GVmzk4Y_3kFNpcOOjxqHZmkVwJH77BJZID6K3WgoAd8_w/exec";
       const FOLDER_ID = "1jFRMOdEYD2us53DheYRYvdec19wycH_k";
+      const ADM_EMAIL = "alejandro.calderon@itdurango.edu.mx";
       document.getElementById("yr").textContent = new Date().getFullYear();
 
       let CU = null,
@@ -1999,14 +2119,14 @@
             : XL;
 
         if (noms.length === 0) {
-           toast("⚠ Ingresa el nombre del destinatario.", "warn");
-           return;
+          toast("⚠ Ingresa el nombre del destinatario.", "warn");
+          return;
         }
 
         const btn = document.getElementById("gen-btn");
         if (btn) {
-           btn.disabled = true;
-           btn.innerHTML = '<div class="spinner"></div> Generando...';
+          btn.disabled = true;
+          btn.innerHTML = '<div class="spinner"></div> Generando...';
         }
 
         GEN = [];
@@ -2039,47 +2159,49 @@
             console.error(e);
           }
         }
-        
+
         renderResults();
 
         if (btn) {
-           btn.disabled = false;
-           btn.innerHTML = "🚀 Generar Constancia(s)";
-           btn.style.background = "linear-gradient(135deg, #0f7a4a, #15a05f)";
-           btn.style.boxShadow = "0 4px 18px rgba(15,122,74,.35)";
+          btn.disabled = false;
+          btn.innerHTML = "🚀 Generar Constancia(s)";
+          btn.style.background = "linear-gradient(135deg, #0f7a4a, #15a05f)";
+          btn.style.boxShadow = "0 4px 18px rgba(15,122,74,.35)";
         }
-        
-        const okCount = GEN.filter(g => g.blobUrl).length;
+
+        const okCount = GEN.filter((g) => g.blobUrl).length;
         if (okCount === noms.length) {
-            toast(`🎉 ${okCount} constancia(s) generada(s)`, "success");
+          toast(`🎉 ${okCount} constancia(s) generada(s)`, "success");
         } else {
-            toast(`⚠ ${okCount}/${noms.length} generadas`, "warn");
+          toast(`⚠ ${okCount}/${noms.length} generadas`, "warn");
         }
       }
 
       async function subirADriveSilencioso(nombre, pdfBytes, fecha) {
         try {
-          const uint8=new Uint8Array(pdfBytes);
-          let bin='';
-          const CHUNK=8192;
-          for(let i=0;i<uint8.length;i+=CHUNK){
-            bin+=String.fromCharCode(...uint8.subarray(i,i+CHUNK));
+          const uint8 = new Uint8Array(pdfBytes);
+          let bin = "";
+          const CHUNK = 8192;
+          for (let i = 0; i < uint8.length; i += CHUNK) {
+            bin += String.fromCharCode(...uint8.subarray(i, i + CHUNK));
           }
-          const base64Data=btoa(bin);
-          const eventoNombre = document.getElementById("f-evento-nombre").value.trim() || 'Constancias';
-          const filename = `Constancia_${nombre.replace(/\s+/g,'_')}_${fecha}.pdf`;
+          const base64Data = btoa(bin);
+          const eventoNombre =
+            document.getElementById("f-evento-nombre").value.trim() ||
+            "Constancias";
+          const filename = `Constancia_${nombre.replace(/\s+/g, "_")}_${fecha}.pdf`;
 
           const payload = {
             action: "uploadPDF",
             filename: filename,
             nombreEvento: eventoNombre,
             folderId: FOLDER_ID,
-            pdfBase64: base64Data
+            pdfBase64: base64Data,
           };
 
           fetch(SCRIPT_URL, {
             method: "POST",
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
           }).catch((e) => console.error("Error al subir a drive", e));
         } catch (e) {
           console.error("Error subiendo a drive:", e);
@@ -2339,150 +2461,233 @@
           okEl.disabled = false;
         }
       }
-      const getSS     = ()  => { try{return JSON.parse(sessionStorage.getItem('itd_oc_s'))}catch{return null} };
-      const setSS     = (u) => sessionStorage.setItem('itd_oc_s', JSON.stringify(u));
-      const delSS     = ()  => sessionStorage.removeItem('itd_oc_s');
+      const getSS = () => {
+        try {
+          return JSON.parse(sessionStorage.getItem("itd_oc_s"));
+        } catch {
+          return null;
+        }
+      };
+      const setSS = (u) =>
+        sessionStorage.setItem("itd_oc_s", JSON.stringify(u));
+      const delSS = () => sessionStorage.removeItem("itd_oc_s");
 
-      async function h256(s){
-        const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
-        return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+      async function h256(s) {
+        const b = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(s),
+        );
+        return Array.from(new Uint8Array(b))
+          .map((x) => x.toString(16).padStart(2, "0"))
+          .join("");
       }
 
       async function doLogin() {
-        const _u=document.getElementById('li-email').value.trim().toLowerCase();
-        const email=_u.includes('@')?_u:_u+'@itdurango.edu.mx';
-        const pass =document.getElementById('li-pass').value.trim();
-        const errEl=document.getElementById('li-err');
-        const btn  =document.getElementById('li-btn');
-        errEl.classList.add('hidden');
-        if(!email||!pass){errEl.textContent='⚠ Completa todos los campos.';errEl.classList.remove('hidden');return;}
-        btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Verificando…';
-        try{
-          const hash=await h256(pass);
-          const url=`${SCRIPT_URL}?action=login&email=${encodeURIComponent(email)}&hash=${encodeURIComponent(hash)}`;
-          const resp=await fetch(url);
-          const data=await resp.json();
-          if(data.ok){
-            CU={email:data.email,name:data.name,isAdmin:data.isAdmin};
-            setSS(CU);showApp();
+        const _u = document
+          .getElementById("li-email")
+          .value.trim()
+          .toLowerCase();
+        const email = _u.includes("@") ? _u : _u + "@itdurango.edu.mx";
+        const pass = document.getElementById("li-pass").value.trim();
+        const errEl = document.getElementById("li-err");
+        const btn = document.getElementById("li-btn");
+        errEl.classList.add("hidden");
+        if (!email || !pass) {
+          errEl.textContent = "⚠ Completa todos los campos.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Verificando…';
+        try {
+          const hash = await h256(pass);
+          const url = `${SCRIPT_URL}?action=login&email=${encodeURIComponent(email)}&hash=${encodeURIComponent(hash)}`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          if (email === ADM_EMAIL) data.isAdmin = true;
+          if (data.ok) {
+            CU = { email: data.email, name: data.name, isAdmin: data.isAdmin };
+            setSS(CU);
+            showApp();
           } else {
-            errEl.textContent='⚠ '+(data.error||'Credenciales incorrectas o usuario inactivo.');
-            errEl.classList.remove('hidden');
+            errEl.textContent =
+              "⚠ " +
+              (data.error || "Credenciales incorrectas o usuario inactivo.");
+            errEl.classList.remove("hidden");
           }
-        }catch(err){
-          errEl.textContent='⚠ Error de conexión: '+err.message;
-          errEl.classList.remove('hidden');
-        }finally{btn.disabled=false;btn.innerHTML='🔐 Iniciar sesión';}
+        } catch (err) {
+          errEl.textContent = "⚠ Error de conexión: " + err.message;
+          errEl.classList.remove("hidden");
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = "🔐 Iniciar sesión";
+        }
       }
 
       function doLogout() {
-        delSS();CU=null;
-        document.getElementById('page-app').classList.add('hidden');
-        document.getElementById('page-login').style.display='flex';
-        document.getElementById('li-pass').value='';
-        document.getElementById('li-err').classList.add('hidden');
+        delSS();
+        CU = null;
+        document.getElementById("page-app").classList.add("hidden");
+        document.getElementById("page-login").style.display = "flex";
+        document.getElementById("li-pass").value = "";
+        document.getElementById("li-err").classList.add("hidden");
       }
 
-      function showApp(){
-        document.getElementById('page-login').style.display='none';
-        document.getElementById('page-app').classList.remove('hidden');
-        document.getElementById('nav-av').textContent=(CU.name||CU.email).charAt(0).toUpperCase();
-        const navNm = document.getElementById('nav-nm');
-        if (navNm) navNm.textContent=CU.name||CU.email;
-        const navBdg = document.getElementById('nav-bdg');
-        const usrBtn = document.getElementById('tab-usr-btn');
-        if(CU.isAdmin){
-          if(navBdg) navBdg.innerHTML='<span class="badge badge-red">Admin</span>';
-          if(usrBtn) usrBtn.classList.remove('hidden');
+      function showApp() {
+        document.getElementById("page-login").style.display = "none";
+        document.getElementById("page-app").classList.remove("hidden");
+        document.getElementById("nav-av").textContent = (CU.name || CU.email)
+          .charAt(0)
+          .toUpperCase();
+        const navNm = document.getElementById("nav-nm");
+        if (navNm) navNm.textContent = CU.name || CU.email;
+        const navBdg = document.getElementById("nav-bdg");
+        const usrBtn = document.getElementById("tab-usr-btn");
+        if (CU.isAdmin || CU.email === ADM_EMAIL) {
+          if (navBdg)
+            navBdg.innerHTML = '<span class="badge badge-red">Admin</span>';
+          if (usrBtn) usrBtn.classList.remove("hidden");
         } else {
-          if(navBdg) navBdg.innerHTML='';
-          if(usrBtn) usrBtn.classList.add('hidden');
+          if (navBdg) navBdg.innerHTML = "";
+          if (usrBtn) usrBtn.classList.add("hidden");
         }
         renderUsers();
       }
 
       /* ═══ USUARIOS (via Apps Script) ═══════════════════════════════════════ */
-      async function renderUsers(){
-        const list=document.getElementById('usr-list'), empty=document.getElementById('usr-empty');
-        if(!list || !empty) return;
-        list.innerHTML='<div style="padding:20px;text-align:center;color:#aaa">Cargando…</div>';
-        try{
-          const resp=await fetch(`${SCRIPT_URL}?action=listUsers`);
-          const data=await resp.json();
-          if(!data.ok) throw new Error(data.error);
-          const users=data.users;
-          const usrCnt = document.getElementById('usr-cnt');
-          if (usrCnt) usrCnt.textContent=`${users.length} usuario(s) registrado(s)`;
-          if(!users.length){list.innerHTML='';empty.classList.remove('hidden');return;}
-          empty.classList.add('hidden');
-          list.innerHTML=users.map(u=>`
-            <div class="usr-row" style="${!u.active?'opacity:.6;background:#fafafa':''}">
-              <div><div style="font-weight:700;font-size:14px">${u.name}</div><div style="font-size:10px;color:#bbb">${new Date(u.createdAt).toLocaleDateString('es-MX')}</div></div>
+      async function renderUsers() {
+        const list = document.getElementById("usr-list"),
+          empty = document.getElementById("usr-empty");
+        if (!list || !empty) return;
+        list.innerHTML =
+          '<div style="padding:20px;text-align:center;color:#aaa">Cargando…</div>';
+        try {
+          const resp = await fetch(`${SCRIPT_URL}?action=listUsers`);
+          const data = await resp.json();
+          if (!data.ok) throw new Error(data.error);
+          const users = data.users;
+          const usrCnt = document.getElementById("usr-cnt");
+          if (usrCnt)
+            usrCnt.textContent = `${users.length} usuario(s) registrado(s)`;
+          if (!users.length) {
+            list.innerHTML = "";
+            empty.classList.remove("hidden");
+            return;
+          }
+          empty.classList.add("hidden");
+          list.innerHTML = users
+            .map(
+              (u) => `
+            <div class="usr-row" style="${!u.active ? "opacity:.6;background:#fafafa" : ""}">
+              <div><div style="font-weight:700;font-size:14px">${u.name}</div><div style="font-size:10px;color:#bbb">${new Date(u.createdAt).toLocaleDateString("es-MX")}</div></div>
               <div class="hide-sm" style="font-size:12px;color:#666;word-break:break-all">${u.email}</div>
-              <div><span class="badge ${u.isAdmin?'badge-red':'badge-blue'}">${u.isAdmin?'Admin':'Usuario'}</span></div>
-              <div><button class="tog-btn ${u.active?'tog-on':'tog-off'}" onclick="toggleU('${u.id}')">${u.active?'Activo':'Inactivo'}</button></div>
-              <div style="text-align:right">${u.email!==(CU?CU.email:'')?'<button class="btn-sm-red" onclick="delUser(\''+u.id+'\')">🗑</button>':''}</div>
-            </div>`).join('');
-        }catch(err){
-          list.innerHTML=`<div style="padding:20px;text-align:center;color:#e05050">⚠ Error al cargar usuarios: ${err.message}</div>`;
+              <div><span class="badge ${u.isAdmin || u.email === ADM_EMAIL ? "badge-red" : "badge-blue"}">${u.isAdmin || u.email === ADM_EMAIL ? "Admin" : "Invitado"}</span></div>
+              <div><button class="tog-btn ${u.active ? "tog-on" : "tog-off"}" onclick="toggleU('${u.id}')">${u.active ? "Activo" : "Inactivo"}</button></div>
+              <div style="text-align:right">${u.email !== (CU ? CU.email : "") ? '<button class="btn-sm-red" onclick="delUser(\'' + u.id + "')\">🗑</button>" : ""}</div>
+            </div>`,
+            )
+            .join("");
+        } catch (err) {
+          list.innerHTML = `<div style="padding:20px;text-align:center;color:#e05050">⚠ Error al cargar usuarios: ${err.message}</div>`;
         }
       }
-      function toggleUF(hide){
-        const c=document.getElementById('uf-card'), b=document.getElementById('nw-btn');
-        if(hide||!c.classList.contains('hidden')){c.classList.add('hidden');b.textContent='+ Nuevo usuario';b.className='btn btn-primary';}
-        else{c.classList.remove('hidden');b.textContent='✕ Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
+      function toggleUF(hide) {
+        const c = document.getElementById("uf-card"),
+          b = document.getElementById("nw-btn");
+        if (hide || !c.classList.contains("hidden")) {
+          c.classList.add("hidden");
+          b.textContent = "+ Nuevo usuario";
+          b.className = "btn btn-primary";
+        } else {
+          c.classList.remove("hidden");
+          b.textContent = "✕ Cancelar";
+          b.className = "btn btn-ghost";
+          document.getElementById("uf-err").classList.add("hidden");
+        }
       }
-      async function crearUsuario(){
-        const name=document.getElementById('uf-nm').value.trim();
-        const _ue=document.getElementById('uf-em').value.trim().toLowerCase();
-        const email=_ue.includes('@')?_ue:_ue+'@itdurango.edu.mx';
-        const pass=document.getElementById('uf-pw').value.trim();
-        const isAdm=document.getElementById('uf-adm').checked;
-        const errEl=document.getElementById('uf-err'), btn=document.getElementById('uf-sv');
-        errEl.classList.add('hidden');
-        if(!name||!email||!pass){errEl.textContent='⚠ Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
-        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='⚠ Correo inválido.';errEl.classList.remove('hidden');return;}
-        btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
-        try{
-          const hash=await h256(pass);
-          const resp=await fetch(SCRIPT_URL,{
-            method:'POST',
-            body:JSON.stringify({action:'createUser',name,email,hash,isAdmin:isAdm}),
+      async function crearUsuario() {
+        const name = document.getElementById("uf-nm").value.trim();
+        const _ue = document.getElementById("uf-em").value.trim().toLowerCase();
+        const email = _ue.includes("@") ? _ue : _ue + "@itdurango.edu.mx";
+        const pass = document.getElementById("uf-pw").value.trim();
+        const isAdm = document.getElementById("uf-adm").value === "true";
+        const errEl = document.getElementById("uf-err"),
+          btn = document.getElementById("uf-sv");
+        errEl.classList.add("hidden");
+        if (!name || !email || !pass) {
+          errEl.textContent = "⚠ Todos los campos son requeridos.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          errEl.textContent = "⚠ Correo inválido.";
+          errEl.classList.remove("hidden");
+          return;
+        }
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Guardando…';
+        try {
+          const hash = await h256(pass);
+          const resp = await fetch(SCRIPT_URL, {
+            method: "POST",
+            body: JSON.stringify({
+              action: "createUser",
+              name,
+              email,
+              hash,
+              isAdmin: isAdm,
+            }),
             // Use plain text to avoid CORS preflight, it depends if the script handles POST text plain
           });
           const text = await resp.text();
           let data;
           try {
-             data = JSON.parse(text);
-          } catch(e) {
-             throw new Error('Respuesta inválida: ' + text.substring(0,60));
+            data = JSON.parse(text);
+          } catch (e) {
+            throw new Error("Respuesta inválida: " + text.substring(0, 60));
           }
-          if(!data.ok) throw new Error(data.error||'Error al crear usuario');
-          toggleUF(true); renderUsers();
-          ['uf-nm','uf-em','uf-pw'].forEach(id=>document.getElementById(id).value='');
-          document.getElementById('uf-adm').checked=false;
-          toast(`✅ Usuario ${email} creado`,'success');
-        }catch(err){
-          errEl.textContent='⚠ '+err.message;
-          errEl.classList.remove('hidden');
-        }finally{btn.disabled=false;btn.innerHTML='💾 Crear usuario';}
+          if (!data.ok) throw new Error(data.error || "Error al crear usuario");
+          toggleUF(true);
+          renderUsers();
+          ["uf-nm", "uf-em", "uf-pw"].forEach(
+            (id) => (document.getElementById(id).value = ""),
+          );
+          document.getElementById("uf-adm").value = "false";
+          toast(`✅ Usuario ${email} creado`, "success");
+        } catch (err) {
+          errEl.textContent = "⚠ " + err.message;
+          errEl.classList.remove("hidden");
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = "💾 Crear usuario";
+        }
       }
-      async function toggleU(id){
-        try{
-          const resp=await fetch(`${SCRIPT_URL}?action=toggleUser&id=${encodeURIComponent(id)}`);
-          const data=await resp.json();
-          if(!data.ok) throw new Error(data.error);
-          renderUsers(); toast('Estado actualizado','info');
-        }catch(err){ toast('❌ '+err.message,'error'); }
+      async function toggleU(id) {
+        try {
+          const resp = await fetch(
+            `${SCRIPT_URL}?action=toggleUser&id=${encodeURIComponent(id)}`,
+          );
+          const data = await resp.json();
+          if (!data.ok) throw new Error(data.error);
+          renderUsers();
+          toast("Estado actualizado", "info");
+        } catch (err) {
+          toast("❌ " + err.message, "error");
+        }
       }
-      async function delUser(id){
-        if(!confirm('¿Eliminar este usuario?')) return;
-        try{
-          const resp=await fetch(`${SCRIPT_URL}?action=deleteUser&id=${encodeURIComponent(id)}`);
-          const data=await resp.json();
-          if(!data.ok) throw new Error(data.error);
-          renderUsers(); toast('Usuario eliminado','info');
-        }catch(err){ toast('❌ '+err.message,'error'); }
+      async function delUser(id) {
+        if (!confirm("¿Eliminar este usuario?")) return;
+        try {
+          const resp = await fetch(
+            `${SCRIPT_URL}?action=deleteUser&id=${encodeURIComponent(id)}`,
+          );
+          const data = await resp.json();
+          if (!data.ok) throw new Error(data.error);
+          renderUsers();
+          toast("Usuario eliminado", "info");
+        } catch (err) {
+          toast("❌ " + err.message, "error");
+        }
       }
 
       function toast(msg, type = "info") {
@@ -2493,15 +2698,25 @@
       }
 
       // Add initialization for login auto-check
-      window.onload = function() {
-        const s=getSS(); if(s){CU=s;showApp();}
-        const liPassEl = document.getElementById('li-pass');
-        if (liPassEl) liPassEl.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-        const liEmailEl = document.getElementById('li-email');
-        if (liEmailEl) liEmailEl.addEventListener('keydown',e=>{if(e.key==='Enter') {
-          const lp = document.getElementById('li-pass');
-          if (lp) lp.focus();
-        }});
+      window.onload = function () {
+        const s = getSS();
+        if (s) {
+          CU = s;
+          showApp();
+        }
+        const liPassEl = document.getElementById("li-pass");
+        if (liPassEl)
+          liPassEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") doLogin();
+          });
+        const liEmailEl = document.getElementById("li-email");
+        if (liEmailEl)
+          liEmailEl.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              const lp = document.getElementById("li-pass");
+              if (lp) lp.focus();
+            }
+          });
       };
     </script>
   </body>
