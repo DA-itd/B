@@ -1,2063 +1,2237 @@
+<!doctype html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Otras Constancias — ITD</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet"/>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    /* ═══════════════════════════════════════════════════════
-       SISTEMA DE DISEÑO — Herramienta para capturista ITD
-       Principios: alto contraste · jerarquía clara · sin ruido
-    ═══════════════════════════════════════════════════════ */
-    :root {
-      /* Paleta institucional */
-      --navy:       #1B396A;
-      --navy-dk:    #112644;
-      --navy-lt:    #2B5899;
-      --navy-ghost: rgba(27,57,106,.08);
-      --gold:       #C49A35;
-      --cream:      #F5E4A8;
-      /* Estado activo / confirmado */
-      --ok:         #0f7a4a;
-      --ok-bg:      #e8f8f0;
-      --ok-border:  #6fcfa0;
-      /* Fondo y superficies */
-      --bg:         #edf0f5;
-      --surface:    #ffffff;
-      --surface-2:  #f6f8fc;
-      --border:     #d4dae8;
-      --border-dk:  #b8c2d6;
-      /* Texto — 3 niveles bien diferenciados */
-      --t1:         #111827;   /* titulos, datos */
-      --t2:         #374151;   /* labels, descripciones */
-      --t3:         #6b7280;   /* hints, secundario */
-      /* Alertas */
-      --warn-bg:    #fffbeb;
-      --warn-bdr:   #f59e0b;
-      --err-bg:     #fef2f2;
-      --err-bdr:    #f87171;
-      --err-txt:    #7f1d1d;
-      /* Tipografía */
-      --font:       'DM Sans', sans-serif;
-      --radius-sm:  8px;
-      --radius:     12px;
-      --radius-lg:  16px;
-      /* Sombras */
-      --sh-sm:  0 1px 2px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
-      --sh-md:  0 4px 12px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.05);
-      --sh-lg:  0 12px 28px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
-    }
-
-    /* ── RESET ──────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family:var(--font); background:var(--bg); color:var(--t1); min-height:100vh; font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; }
-    .hidden { display:none !important; }
-    ::-webkit-scrollbar { width:5px; }
-    ::-webkit-scrollbar-thumb { background:#c0cad8; border-radius:3px; }
-
-    /* ── ANIMACIONES ────────────────────────────────────── */
-    @keyframes shimmer  { 0%{background-position:200% 0}  100%{background-position:-200% 0} }
-    @keyframes spin     { to{ transform:rotate(360deg); } }
-    @keyframes fadeUp   { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes slideIn  { from{opacity:0;transform:translateY(4px)}  to{opacity:1;transform:translateY(0)} }
-    @keyframes toastIn  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-
-    /* ── STRIPE INSTITUCIONAL ───────────────────────────── */
-    .stripe { height:4px; background:linear-gradient(90deg,#3D0A14,#8B1A2A,#C49A35,#8B1A2A,#3D0A14); background-size:300% 100%; animation:shimmer 6s linear infinite; }
-
-    /* ── BOTONES PRIMARIOS Y GHOST ──────────────────────── */
-    .btn {
-      display:inline-flex; align-items:center; justify-content:center;
-      gap:8px; padding:10px 22px; border-radius:var(--radius-sm);
-      font-weight:700; font-size:14px; cursor:pointer; border:none;
-      font-family:var(--font); transition:all .15s; outline:none;
-      letter-spacing:.01em; white-space:nowrap;
-    }
-    .btn:active    { transform:scale(.975); }
-    .btn:disabled  { opacity:.4; cursor:not-allowed; }
-    .btn-primary   { background:var(--navy); color:var(--cream); box-shadow:0 3px 10px rgba(27,57,106,.30); }
-    .btn-primary:hover { background:var(--navy-lt); box-shadow:0 5px 16px rgba(27,57,106,.38); }
-    .btn-ghost     { background:var(--surface); color:var(--t2); border:1.5px solid var(--border-dk); }
-    .btn-ghost:hover { border-color:var(--navy); color:var(--navy); background:#f0f4ff; }
-    .btn-full      { width:100%; }
-
-    /* ── BOTONES PEQUEÑOS (acciones contextuales) ───────── */
-    /* Diseñados para ser claramente distintos entre sí por color + borde sólido */
-    .btn-sm {
-      display:inline-flex; align-items:center; gap:5px;
-      padding:6px 14px; border-radius:var(--radius-sm);
-      font-size:12px; font-weight:700; cursor:pointer;
-      font-family:var(--font); transition:all .15s;
-      white-space:nowrap; border:1.5px solid;
-    }
-    .btn-sm:hover { filter:brightness(.93); transform:translateY(-1px); }
-    .btn-sm:active{ transform:translateY(0) scale(.97); }
-    /* Azul — Nombre */
-    .btn-sm-blue { background:#dbeafe; color:#1e3a8a; border-color:#60a5fa; }
-    /* Verde — QR */
-    .btn-sm-grn  { background:#dcfce7; color:#14532d; border-color:#4ade80; }
-    /* Amarillo — Guardar */
-    .btn-sm-yel  { background:#fef9c3; color:#78350f; border-color:#fbbf24; }
-    /* Morado — Concepto */
-    .btn-sm-prp  { background:#ede9fe; color:#4c1d95; border-color:#a78bfa; text-decoration:none; }
-    /* Rojo — Eliminar */
-    .btn-sm-red  { background:#fee2e2; color:var(--err-txt); border-color:#f87171; }
-
-    /* ── CAMPOS DE FORMULARIO ───────────────────────────── */
-    .field { display:flex; flex-direction:column; gap:6px; }
-    .field label {
-      font-size:11px; font-weight:800; color:var(--t2);
-      letter-spacing:.07em; text-transform:uppercase;
-    }
-    .field input, .field select, .field textarea {
-      padding:10px 14px; border-radius:var(--radius-sm);
-      font-size:14px; border:2px solid var(--border);
-      outline:none; font-family:var(--font);
-      background:var(--surface); color:var(--t1);
-      transition:border-color .15s, box-shadow .15s; width:100%;
-    }
-    .field input::placeholder, .field textarea::placeholder { color:#9ca3af; }
-    .field input:focus, .field select:focus, .field textarea:focus {
-      border-color:var(--navy);
-      box-shadow:0 0 0 3px var(--navy-ghost);
-    }
-    .pass-wrap { position:relative; display:flex; align-items:center; }
-    .pass-wrap input { padding-right:44px !important; width:100%; }
-    .pass-toggle { position:absolute; right:12px; background:none; border:none; cursor:pointer; font-size:16px; color:#9ca3af; padding:0; line-height:1; transition:color .15s; }
-    .pass-toggle:hover { color:var(--navy); }
-
-    /* ── CASE BUTTONS ───────────────────────────────────── */
-    .case-btn {
-      flex:1; padding:7px 10px; border-radius:var(--radius-sm);
-      font-size:12px; font-weight:700; cursor:pointer;
-      border:2px solid var(--border); font-family:var(--font);
-      transition:all .15s; background:var(--surface-2); color:var(--t2);
-    }
-    .case-btn:hover { border-color:var(--border-dk); }
-    .case-btn.active { background:var(--navy); color:var(--cream); border-color:var(--navy); }
-
-    /* ── BADGES ─────────────────────────────────────────── */
-    .badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
-    .badge-blue { background:#dbeafe; color:#1e3a8a; border:1.5px solid #93c5fd; }
-    .badge-red  { background:#fee2e2; color:var(--err-txt); border:1.5px solid #fca5a5; }
-
-    /* ── PROGRESS BAR ───────────────────────────────────── */
-    .prog-wrap { background:#e2e8f0; border-radius:20px; height:9px; overflow:hidden; margin-top:10px; }
-    .prog-bar  { height:100%; background:linear-gradient(90deg,var(--ok),#1aab69); border-radius:20px; transition:width .35s ease; }
-    .prog-lbl  { font-size:12px; font-weight:700; color:var(--t2); margin-top:6px; text-align:center; }
-
-    /* ── ORTOGRAFÍA ─────────────────────────────────────── */
-    .orto-item { display:flex; align-items:flex-start; gap:8px; background:var(--warn-bg); border:1.5px solid var(--warn-bdr); border-radius:var(--radius-sm); padding:8px 11px; font-size:12px; }
-    .orto-item.ok { background:var(--ok-bg); border-color:var(--ok-border); }
-    .orto-word { font-weight:700; color:#92400e; text-decoration:underline wavy #f59e0b; }
-    .orto-sug  { color:var(--t2); font-size:11px; }
-    .orto-fix  { background:var(--navy); color:var(--cream); border:none; border-radius:6px; padding:3px 10px; font-size:11px; font-weight:700; cursor:pointer; font-family:var(--font); white-space:nowrap; flex-shrink:0; }
-    .orto-fix:hover { background:var(--navy-lt); }
-
-    /* ── SPINNER ────────────────────────────────────────── */
-    .spinner { width:18px; height:18px; border-radius:50%; border:2.5px solid rgba(27,57,106,.15); border-top-color:var(--navy); animation:spin .7s linear infinite; flex-shrink:0; }
-
-    /* ── TOAST ──────────────────────────────────────────── */
-    #toast { position:fixed; bottom:24px; right:24px; z-index:9999; padding:13px 18px; border-radius:var(--radius); box-shadow:var(--sh-lg); font-size:14px; font-weight:600; max-width:360px; display:flex; align-items:center; gap:10px; animation:toastIn .25s ease both; }
-    #toast.info    { background:#dbeafe; color:#1e3a8a;      border:2px solid #60a5fa; }
-    #toast.success { background:var(--ok-bg); color:#14532d; border:2px solid var(--ok-border); }
-    #toast.error   { background:var(--err-bg); color:var(--err-txt); border:2px solid #f87171; }
-    #toast.warn    { background:var(--warn-bg); color:#78350f; border:2px solid var(--warn-bdr); }
-    #toast button  { background:none; border:none; cursor:pointer; font-size:20px; line-height:1; color:inherit; padding:0; opacity:.6; flex-shrink:0; }
-    #toast button:hover { opacity:1; }
-
-    /* ── TABS ───────────────────────────────────────────── */
-    .tab-btn { padding:8px 18px; border-radius:var(--radius-sm); font-size:13px; font-weight:700; cursor:pointer; border:none; font-family:var(--font); transition:all .15s; background:transparent; color:var(--t3); }
-    .tab-btn:hover { color:var(--t1); background:var(--navy-ghost); }
-    .tab-btn.active { background:var(--navy); color:var(--cream); }
-    .mode-btn { flex:1; padding:10px; border-radius:var(--radius-sm); font-size:13px; font-weight:700; cursor:pointer; border:2px solid var(--border); font-family:var(--font); transition:all .15s; background:var(--surface-2); color:var(--t2); }
-    .mode-btn:hover { border-color:var(--border-dk); color:var(--t1); }
-    .mode-btn.active { background:var(--navy); color:var(--cream); border-color:var(--navy); }
-
-    /* ── ERROR BOX ──────────────────────────────────────── */
-    .err-box { padding:10px 14px; background:var(--err-bg); border-radius:var(--radius-sm); font-size:13px; color:var(--err-txt); border:1.5px solid #fca5a5; font-weight:600; }
-
-    /* ── CARD BASE ──────────────────────────────────────── */
-    .card { background:var(--surface); border-radius:var(--radius); box-shadow:var(--sh-sm); padding:22px; border:1px solid var(--border); }
-    .card-title { font-size:15px; font-weight:800; color:var(--t1); margin-bottom:16px; }
-
-    /* ── LOGIN ──────────────────────────────────────────── */
-    #page-login {
-      min-height:100vh;
-      background:linear-gradient(145deg,#e8eef8 0%,#edf3f0 50%,#ede8f0 100%);
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      padding:2rem 1rem; position:relative; overflow:hidden;
-    }
-    #page-login::before {
-      content:''; position:absolute; inset:0; pointer-events:none;
-      background:
-        radial-gradient(ellipse 60% 45% at 5% 5%,  rgba(27,57,106,.07) 0%,transparent 55%),
-        radial-gradient(ellipse 50% 40% at 95% 95%, rgba(196,154,53,.06) 0%,transparent 50%);
-    }
-    .login-wrap { position:relative; width:100%; max-width:400px; animation:fadeUp .5s ease both; }
-    .login-logo { text-align:center; margin-bottom:1.8rem; }
-    .logo-img   { width:84px; height:84px; border-radius:50%; object-fit:contain; background:#fff; padding:6px; box-shadow:0 0 0 3px rgba(196,154,53,.45), var(--sh-lg); }
-    .logo-fb    { width:84px; height:84px; border-radius:50%; background:linear-gradient(135deg,#3D0A14,#6B1A2A); display:inline-flex; align-items:center; justify-content:center; box-shadow:0 0 0 3px rgba(196,154,53,.45); }
-    .login-card { background:var(--surface); border-radius:var(--radius-lg); overflow:hidden; box-shadow:var(--sh-lg); border:1px solid rgba(0,0,0,.05); }
-    .login-body { padding:2rem; display:flex; flex-direction:column; gap:16px; }
-
-    /* ── NAVBAR ─────────────────────────────────────────── */
-    #navbar { background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .nav-inner { max-width:1140px; margin:0 auto; padding:0 24px; display:flex; align-items:center; height:62px; gap:16px; }
-    .nav-logo  { width:36px; height:36px; border-radius:50%; object-fit:contain; padding:3px; box-shadow:0 0 0 2px rgba(196,154,53,.5); background:#fff; flex-shrink:0; }
-    .nav-div   { width:1px; height:30px; background:var(--border); }
-    .nav-title { font-size:14px; font-weight:800; color:var(--navy); line-height:1.2; }
-    .nav-sub   { font-size:10px; color:var(--t3); font-weight:600; letter-spacing:.02em; }
-    .nav-sp    { flex:1; }
-    .nav-av    { width:34px; height:34px; border-radius:50%; background:var(--navy); display:flex; align-items:center; justify-content:center; color:var(--cream); font-size:13px; font-weight:800; flex-shrink:0; }
-    .btn-exit  { padding:7px 13px; border-radius:var(--radius-sm); font-size:12px; font-weight:700; cursor:pointer; background:var(--err-bg); color:var(--err-txt); border:1.5px solid #fca5a5; margin-left:4px; font-family:var(--font); transition:all .15s; }
-    .btn-exit:hover { background:#fecaca; }
-
-    /* ── MAIN / LAYOUT ──────────────────────────────────── */
-    #main { max-width:1140px; margin:0 auto; padding:28px 24px; }
-    .gen-hdr  { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; background:var(--surface); border-radius:var(--radius); padding:20px 24px; box-shadow:var(--sh-sm); border:1px solid var(--border); }
-    .gen-h2   { font-size:22px; font-weight:800; color:var(--t1); letter-spacing:-.01em; }
-    .gen-sub  { font-size:13px; color:var(--t3); margin-top:3px; font-weight:500; }
-    .gen-grid { display:grid; grid-template-columns:minmax(310px,1fr) minmax(290px,430px); gap:20px; align-items:start; margin-top:20px; }
-    @media(max-width:760px){ .gen-grid { grid-template-columns:1fr; } }
-    .form-col  { display:flex; flex-direction:column; gap:16px; }
-    .right-col { display:flex; flex-direction:column; gap:16px; }
-
-    /* ── PREVIEW DE CONSTANCIA ──────────────────────────── */
-    .prev-box  { background:linear-gradient(135deg,#f8f4ec,#ede5d0); border-radius:var(--radius-sm); padding:20px; text-align:center; border:2px solid #dcc897; position:relative; min-height:220px; }
-    .prev-ibdr { position:absolute; top:7px; left:7px; right:7px; bottom:7px; border:1px solid rgba(196,154,53,.25); border-radius:6px; pointer-events:none; }
-    .prev-qrw  { position:absolute; bottom:10px; left:12px; display:flex; flex-direction:column; align-items:center; gap:2px; }
-    .prev-qrf  { padding:3px; background:#fff; border:1px solid var(--gold); border-radius:4px; }
-    .prev-qrl  { font-size:6px; color:#8B1A2A; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
-    .prev-note { margin:8px 0 0; font-size:10px; color:var(--t3); text-align:center; }
-
-    /* ── RESULTADOS ─────────────────────────────────────── */
-    .result-item { background:var(--surface-2); border-radius:var(--radius-sm); padding:13px 16px; border:1.5px solid #d1e0f5; display:flex; flex-direction:column; gap:8px; animation:slideIn .25s ease both; }
-    .result-info { display:flex; align-items:center; gap:12px; }
-    .result-qr   { width:46px; height:46px; border-radius:6px; border:2px solid var(--gold); flex-shrink:0; background:#fff; padding:2px; }
-    .result-acts { display:flex; flex-wrap:wrap; gap:6px; }
-
-    /* ── STEPPER VISUAL ─────────────────────────────────── */
-    .stepper { display:flex; align-items:flex-start; }
-    .step-item { display:flex; flex-direction:column; align-items:center; position:relative; flex:1; }
-    .step-item:not(:last-child)::after {
-      content:''; position:absolute; top:19px; left:calc(50% + 20px);
-      right:calc(-50% + 20px); height:2px;
-      background:var(--border); z-index:0; transition:background .4s;
-    }
-    .step-item.done:not(:last-child)::after { background:var(--ok); }
-    .step-circle {
-      width:38px; height:38px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      font-size:13px; font-weight:800; z-index:1; position:relative;
-      border:2px solid var(--border); background:var(--surface-2); color:var(--t3);
-      transition:all .3s; flex-shrink:0;
-    }
-    .step-item.active .step-circle {
-      border-color:var(--navy); background:var(--navy); color:var(--cream);
-      box-shadow:0 0 0 5px var(--navy-ghost);
-    }
-    .step-item.done .step-circle { border-color:var(--ok); background:var(--ok); color:#fff; }
-    .step-item.done .step-circle::after { content:'✓'; font-size:15px; }
-    .step-item.done .step-circle span   { display:none; }
-    .step-lbl {
-      margin-top:7px; font-size:10px; font-weight:700; color:var(--t3);
-      text-align:center; letter-spacing:.05em; text-transform:uppercase;
-      transition:color .3s; white-space:nowrap;
-    }
-    .step-item.active .step-lbl { color:var(--navy); font-weight:800; }
-    .step-item.done   .step-lbl { color:var(--ok); }
-
-    /* ── STEP CARDS ─────────────────────────────────────── */
-    .step-card {
-      background:var(--surface); border-radius:var(--radius);
-      box-shadow:var(--sh-sm); padding:22px;
-      border:2px solid var(--border);
-      transition:border-color .2s, box-shadow .2s, opacity .2s;
-    }
-    /* Paso activo: borde azul sólido + leve sombra coloreada */
-    .step-card.active-step {
-      border-color:var(--navy);
-      box-shadow:0 0 0 4px var(--navy-ghost), var(--sh-md);
-    }
-    /* Paso completado: suavizado, visible pero no compite */
-    .step-card.done-step { opacity:.78; border-color:var(--border); }
-
-    .step-card-header {
-      display:flex; align-items:center; gap:12px;
-      margin-bottom:18px; padding-bottom:14px;
-      border-bottom:1px solid var(--border);
-    }
-    .step-num-badge {
-      width:28px; height:28px; border-radius:50%;
-      background:var(--navy); color:var(--cream);
-      font-size:12px; font-weight:800;
-      display:flex; align-items:center; justify-content:center; flex-shrink:0;
-    }
-    .step-card.done-step .step-num-badge { background:var(--ok); color:#fff; }
-    .step-card-title { font-size:15px; font-weight:800; color:var(--t1); }
-    .step-done-badge {
-      margin-left:auto; background:var(--ok-bg); color:#14532d;
-      border:1.5px solid var(--ok-border); border-radius:20px;
-      font-size:10px; font-weight:800; padding:3px 10px; letter-spacing:.04em;
-      display:none;
-    }
-    .step-card.done-step .step-done-badge { display:inline-flex; align-items:center; gap:4px; }
-
-    /* ── CALIBRADOR ─────────────────────────────────────── */
-    /* Fondo damero — ayuda a ver el PDF sobre un fondo neutro */
-    .calib-wrap {
-      position:relative;
-      border:2px solid var(--border);
-      border-radius:var(--radius-sm);
-      overflow:hidden;
-      background: repeating-conic-gradient(#e4e8f0 0% 25%,#eceff5 0% 50%) 0 0/18px 18px;
-      min-height:340px;
-      transition:border-color .2s, box-shadow .2s;
-    }
-    /* Modo de calibración activo — resalta el área */
-    .calib-wrap.calibrando {
-      border-color:var(--navy);
-      box-shadow:0 0 0 4px var(--navy-ghost);
-      cursor:none;
-    }
-
-    /* ── RECTS DE CALIBRACIÓN (drag en canvas) ──────────── */
-    .calib-rect-overlay {
-      pointer-events:none; position:absolute; z-index:12;
-      border-radius:3px; display:none;
-    }
-    .mk-rect {
-      pointer-events:none; position:absolute; z-index:11;
-      border-radius:3px; display:none;
-    }
-    .mk-rect-lbl {
-      position:absolute; top:-22px; left:0;
-      color:#fff; font-size:9px; font-weight:800;
-      padding:2px 8px; border-radius:4px;
-      white-space:nowrap; letter-spacing:.05em;
-    }
-    /* Colores por modo */
-    #overlay-nombre { border:2px dashed #1e3a8a; background:rgba(30,58,138,.08); }
-    #mk-nombre-rect { border:2px solid #1e3a8a; background:rgba(30,58,138,.06); }
-    #mk-nombre-rect .mk-rect-lbl { background:#1e3a8a; }
-
-    #overlay-qr     { border:2px dashed #14532d; background:rgba(20,83,45,.08); }
-    #mk-qr-rect     { border:2px solid #14532d; background:rgba(20,83,45,.06); }
-    #mk-qr-rect .mk-rect-lbl { background:#14532d; }
-
-    #overlay-concepto { border:2px dashed #7c3aed; background:rgba(109,40,217,.08); }
-    #mk-concepto-rect { border:2px solid #7c3aed; background:rgba(109,40,217,.06); }
-    #mk-concepto-rect .mk-rect-lbl { background:#4c1d95; }
-    #calib-modo-tag {
-      position:absolute; top:10px; left:50%; transform:translateX(-50%);
-      padding:5px 14px; border-radius:20px; font-size:11px; font-weight:800;
-      letter-spacing:.06em; text-transform:uppercase; z-index:15;
-      pointer-events:none; display:none; white-space:nowrap;
-      box-shadow:0 2px 8px rgba(0,0,0,.18);
-    }
-    #calib-modo-tag.visible { display:block; }
-
-    /* ── HINT DEL CALIBRADOR ────────────────────────────── */
-    .calib-hint {
-      font-size:12px; font-weight:700; color:var(--t2);
-      min-height:20px; margin-bottom:10px;
-      padding:6px 10px; border-radius:var(--radius-sm);
-      background:transparent; transition:all .2s;
-    }
-    .calib-hint.activo {
-      background:#dbeafe; color:#1e3a8a;
-      border:1px solid #93c5fd;
-    }
-
-    /* ── ETIQUETAS DE POSICIÓN ──────────────────────────── */
-    .pos-labels { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
-    .pos-lbl {
-      display:inline-flex; align-items:center; gap:5px;
-      padding:4px 11px; border-radius:20px;
-      font-size:11px; font-weight:700; border:1.5px solid;
-    }
-    .pos-lbl-nombre  { background:#dbeafe; color:#1e3a8a; border-color:#60a5fa; }
-    .pos-lbl-qr      { background:#dcfce7; color:#14532d; border-color:#4ade80; }
-    .pos-lbl-concepto{ background:#ede9fe; color:#4c1d95; border-color:#a78bfa; }
-    .pos-lbl.no-set  { opacity:.45; font-style:italic; }
-
-    /* ── TABLA DE USUARIOS ──────────────────────────────── */
-    .usr-hdr { display:grid; grid-template-columns:1fr 1fr 90px 90px 50px; gap:8px; padding:10px 20px; background:var(--surface-2); border-bottom:2px solid var(--border); font-size:10px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.07em; }
-    .usr-row { display:grid; grid-template-columns:1fr 1fr 90px 90px 50px; gap:8px; padding:13px 20px; align-items:center; border-bottom:1px solid #edf0f7; transition:background .1s; }
-    .usr-row:hover { background:var(--surface-2); }
-    @media(max-width:680px){ .usr-hdr,.usr-row{ grid-template-columns:1fr 90px 50px; } .hide-sm{ display:none; } }
-    .tog-btn { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; cursor:pointer; border:1.5px solid; font-family:var(--font); transition:all .15s; }
-    .tog-on  { background:var(--ok-bg); color:#14532d; border-color:var(--ok-border); }
-    .tog-off { background:var(--err-bg); color:var(--err-txt); border-color:#fca5a5; }
-  </style>
-</head>
-<body>
-
-<!-- LOGIN -->
-<div id="page-login">
-  <div class="login-wrap">
-    <div class="login-logo">
-      <img id="li" class="logo-img"
-        src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD"
-        onerror="this.style.display='none';document.getElementById('lf').style.display='inline-flex'"/>
-      <span id="lf" class="logo-fb" style="display:none">
-        <span style="font-size:14px;font-weight:900;color:#F5E4A8">ITD</span>
-      </span>
-      <h1 style="font-family:'Playfair Display',serif;font-size:26px;font-weight:900;color:#3D0A14;margin:12px 0 4px">Otras Constancias</h1>
-      <p style="font-size:13px;color:#888">Instituto Tecnológico de Durango</p>
-    </div>
-    <div class="login-card">
-      <div class="stripe"></div>
-      <div class="login-body">
-        <div class="field">
-          <label>Usuario <span style="color:#e05050">*</span></label>
-          <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff" id="li-wrap">
-            <input type="text" id="li-email" placeholder="usuario"
-              style="flex:1;padding:10px 0 10px 14px;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;background:transparent"
-              autocomplete="username"
-              onfocus="document.getElementById('li-wrap').style.borderColor='#1B396A'"
-              onblur="document.getElementById('li-wrap').style.borderColor='#e0e0e0'"/>
-            <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
-          </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Otras Constancias — ITD</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      :root {
+        --navy: #4f46e5;
+        --navy-dk: #3730a3;
+        --navy-lt: #6366f1;
+        --navy-ghost: rgba(79, 70, 229, 0.08);
+        --gold: #0ea5e9;
+        --cream: #ffffff;
+        --ok: #10b981;
+        --ok-bg: #ecfdf5;
+        --ok-border: #6ee7b7;
+        --bg: #f1f5f9;
+        --surface: #ffffff;
+        --surface-2: #f8fafc;
+        --border: #e2e8f0;
+        --border-dk: #cbd5e1;
+        --t1: #0f172a;
+        --t2: #475569;
+        --t3: #64748b;
+        --warn-bg: #fffbeb;
+        --warn-bdr: #fcd34d;
+        --err-bg: #fef2f2;
+        --err-bdr: #fca5a5;
+        --err-txt: #991b1b;
+        --font: ui-sans-serif, system-ui, sans-serif;
+        --radius-sm: 8px;
+        --radius: 12px;
+        --radius-lg: 16px;
+        --sh-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --sh-md:
+          0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        --sh-lg:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--t1);
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .hidden {
+        display: none !important;
+      }
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #c0cad8;
+        border-radius: 3px;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes toastIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #4f46e5, #0ea5e9, #4f46e5);
+        background-size: 200% 100%;
+        animation: shimmer 4s linear infinite;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 22px;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+        outline: none;
+        white-space: nowrap;
+      }
+      .btn:active {
+        transform: scale(0.975);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: var(--navy);
+        color: var(--cream);
+        box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+      }
+      .btn-primary:hover {
+        background: var(--navy-lt);
+        box-shadow: 0 5px 16px rgba(79, 70, 229, 0.38);
+      }
+      .btn-ghost {
+        background: var(--surface);
+        color: var(--t2);
+        border: 1.5px solid var(--border-dk);
+      }
+      .btn-ghost:hover {
+        border-color: var(--navy);
+        color: var(--navy);
+        background: #f0f4ff;
+      }
+      .btn-full {
+        width: 100%;
+      }
+      .btn-sm {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+        border: 1.5px solid;
+      }
+      .btn-sm:hover {
+        filter: brightness(0.93);
+        transform: translateY(-1px);
+      }
+      .btn-sm-blue {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border-color: #60a5fa;
+      }
+      .btn-sm-grn {
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #4ade80;
+      }
+      .btn-sm-yel {
+        background: #fef9c3;
+        color: #78350f;
+        border-color: #fbbf24;
+      }
+      .btn-sm-prp {
+        background: #ede9fe;
+        color: #4c1d95;
+        border-color: #a78bfa;
+        text-decoration: none;
+      }
+      .btn-sm-red {
+        background: #fee2e2;
+        color: var(--err-txt);
+        border-color: #f87171;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--t2);
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        border: 2px solid var(--border);
+        outline: none;
+        background: var(--surface);
+        color: var(--t1);
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+        width: 100%;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--navy);
+        box-shadow: 0 0 0 3px var(--navy-ghost);
+      }
+      .pass-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .pass-wrap input {
+        padding-right: 44px !important;
+        width: 100%;
+      }
+      .pass-toggle {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: #9ca3af;
+        padding: 0;
+        transition: color 0.15s;
+      }
+      .pass-toggle:hover {
+        color: var(--navy);
+      }
+      .case-btn {
+        flex: 1;
+        padding: 7px 10px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 2px solid var(--border);
+        transition: all 0.15s;
+        background: var(--surface-2);
+        color: var(--t2);
+      }
+      .case-btn.active {
+        background: var(--navy);
+        color: var(--cream);
+        border-color: var(--navy);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .badge-blue {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 1.5px solid #93c5fd;
+      }
+      .badge-red {
+        background: #fee2e2;
+        color: var(--err-txt);
+        border: 1.5px solid #fca5a5;
+      }
+      .prog-wrap {
+        background: #e2e8f0;
+        border-radius: 20px;
+        height: 9px;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+      .prog-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--navy), var(--gold));
+        border-radius: 20px;
+        transition: width 0.35s ease;
+      }
+      .prog-lbl {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--t2);
+        margin-top: 6px;
+        text-align: center;
+      }
+      .orto-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        background: var(--warn-bg);
+        border: 1.5px solid var(--warn-bdr);
+        border-radius: var(--radius-sm);
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+      .orto-item.ok {
+        background: var(--ok-bg);
+        border-color: var(--ok-border);
+      }
+      .orto-word {
+        font-weight: 700;
+        color: #92400e;
+        text-decoration: underline wavy #f59e0b;
+      }
+      .orto-sug {
+        color: var(--t2);
+        font-size: 11px;
+      }
+      .orto-fix {
+        background: var(--navy);
+        color: var(--cream);
+        border: none;
+        border-radius: 6px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2.5px solid rgba(27, 57, 106, 0.15);
+        border-top-color: var(--navy);
+        animation: spin 0.7s linear infinite;
+      }
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        padding: 13px 18px;
+        border-radius: var(--radius);
+        box-shadow: var(--sh-lg);
+        font-size: 14px;
+        font-weight: 600;
+        max-width: 360px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: toastIn 0.25s ease both;
+      }
+      #toast.info {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 2px solid #60a5fa;
+      }
+      #toast.success {
+        background: var(--ok-bg);
+        color: #14532d;
+        border: 2px solid var(--ok-border);
+      }
+      #toast.error {
+        background: var(--err-bg);
+        color: var(--err-txt);
+        border: 2px solid #f87171;
+      }
+      #toast.warn {
+        background: var(--warn-bg);
+        color: #78350f;
+        border: 2px solid var(--warn-bdr);
+      }
+      .tab-btn {
+        padding: 8px 18px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+      }
+      .tab-btn.active {
+        background: var(--navy);
+        color: var(--cream);
+      }
+      .mode-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 2px solid var(--border);
+        background: var(--surface-2);
+        color: var(--t2);
+      }
+      .mode-btn.active {
+        background: var(--navy);
+        color: var(--cream);
+        border-color: var(--navy);
+      }
+      .err-box {
+        padding: 10px 14px;
+        background: var(--err-bg);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--err-txt);
+        border: 1.5px solid #fca5a5;
+        font-weight: 600;
+      }
+      .card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--sh-sm);
+        padding: 22px;
+        border: 1px solid var(--border);
+      }
+      .card-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--t1);
+        margin-bottom: 16px;
+      }
+      #page-login {
+        min-height: 100vh;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .login-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        animation: fadeUp 0.5s ease both;
+      }
+      .login-logo {
+        text-align: center;
+        margin-bottom: 1.8rem;
+      }
+      .logo-img {
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        object-fit: contain;
+        background: #fff;
+        padding: 6px;
+        box-shadow:
+          0 0 0 3px var(--navy-ghost),
+          var(--sh-lg);
+        border: 1px solid var(--border);
+      }
+      .login-card {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--sh-lg);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+      .login-body {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      #navbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .nav-inner {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        height: 62px;
+        gap: 16px;
+      }
+      .nav-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: contain;
+        padding: 3px;
+        background: #fff;
+        flex-shrink: 0;
+      }
+      .nav-title {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--navy);
+      }
+      .nav-sub {
+        font-size: 10px;
+        color: var(--t3);
+        font-weight: 600;
+      }
+      .nav-av {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--navy);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cream);
+        font-weight: 800;
+      }
+      .btn-exit {
+        padding: 7px 13px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        background: var(--err-bg);
+        color: var(--err-txt);
+        border: 1.5px solid #fca5a5;
+        margin-left: 4px;
+        transition: all 0.15s;
+      }
+      #main {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 28px 24px;
+      }
+      .gen-hdr {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        box-shadow: var(--sh-sm);
+        border: 1px solid var(--border);
+      }
+      .gen-h2 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--t1);
+      }
+      .gen-grid {
+        display: grid;
+        grid-template-columns: minmax(310px, 1fr) minmax(290px, 430px);
+        gap: 20px;
+        align-items: start;
+        margin-top: 20px;
+      }
+      @media (max-width: 760px) {
+        .gen-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .form-col,
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .result-item {
+        background: var(--surface-2);
+        border-radius: var(--radius-sm);
+        padding: 13px 16px;
+        border: 1.5px solid #d1e0f5;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        animation: slideIn 0.25s ease both;
+      }
+      .result-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .result-qr {
+        width: 46px;
+        height: 46px;
+        border-radius: 6px;
+        border: 2px solid var(--gold);
+        background: #fff;
+        padding: 2px;
+      }
+      .stepper {
+        display: flex;
+        align-items: flex-start;
+      }
+      .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+      }
+      .step-item:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 19px;
+        left: calc(50% + 20px);
+        right: calc(-50% + 20px);
+        height: 2px;
+        background: var(--border);
+        z-index: 0;
+      }
+      .step-item.done:not(:last-child)::after {
+        background: var(--ok);
+      }
+      .step-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 800;
+        z-index: 1;
+        position: relative;
+        border: 2px solid var(--border);
+        background: var(--surface-2);
+        color: var(--t3);
+      }
+      .step-item.active .step-circle {
+        border-color: var(--navy);
+        background: var(--navy);
+        color: var(--cream);
+        box-shadow: 0 0 0 5px var(--navy-ghost);
+      }
+      .step-item.done .step-circle {
+        border-color: var(--ok);
+        background: var(--ok);
+        color: #fff;
+      }
+      .step-item.done .step-circle::after {
+        content: "✓";
+        font-size: 15px;
+      }
+      .step-item.done .step-circle span {
+        display: none;
+      }
+      .step-lbl {
+        margin-top: 7px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--t3);
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .step-item.active .step-lbl {
+        color: var(--navy);
+        font-weight: 800;
+      }
+      .step-item.done .step-lbl {
+        color: var(--ok);
+      }
+      .step-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--sh-sm);
+        padding: 22px;
+        border: 2px solid var(--border);
+      }
+      .step-card.active-step {
+        border-color: var(--navy);
+        box-shadow:
+          0 0 0 4px var(--navy-ghost),
+          var(--sh-md);
+      }
+      .step-card.done-step {
+        opacity: 0.78;
+        border-color: var(--border);
+      }
+      .step-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .step-num-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--navy);
+        color: var(--cream);
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .step-card.done-step .step-num-badge {
+        background: var(--ok);
+        color: #fff;
+      }
+      .step-card-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--t1);
+      }
+      .step-done-badge {
+        margin-left: auto;
+        background: var(--ok-bg);
+        color: #14532d;
+        border: 1.5px solid var(--ok-border);
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 10px;
+        display: none;
+      }
+      .step-card.done-step .step-done-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .calib-wrap {
+        position: relative;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        background: repeating-conic-gradient(#e4e8f0 0% 25%, #eceff5 0% 50%) 0
+          0/18px 18px;
+        min-height: 340px;
+      }
+      .calib-wrap.calibrando {
+        border-color: var(--navy);
+        box-shadow: 0 0 0 4px var(--navy-ghost);
+        cursor: none;
+      }
+      .calib-rect-overlay,
+      .mk-rect {
+        pointer-events: none;
+        position: absolute;
+        z-index: 12;
+        border-radius: 3px;
+        display: none;
+      }
+      .mk-rect-lbl {
+        position: absolute;
+        top: -22px;
+        left: 0;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      #overlay-nombre,
+      #mk-nombre-rect {
+        border: 2px solid #1e3a8a;
+        background: rgba(30, 58, 138, 0.06);
+      }
+      #mk-nombre-rect .mk-rect-lbl {
+        background: #1e3a8a;
+      }
+      #overlay-qr,
+      #mk-qr-rect {
+        border: 2px solid #14532d;
+        background: rgba(20, 83, 45, 0.06);
+      }
+      #mk-qr-rect .mk-rect-lbl {
+        background: #14532d;
+      }
+      #overlay-concepto,
+      #mk-concepto-rect {
+        border: 2px solid #7c3aed;
+        background: rgba(109, 40, 217, 0.06);
+      }
+      #mk-concepto-rect .mk-rect-lbl {
+        background: #4c1d95;
+      }
+      #calib-modo-tag {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        z-index: 15;
+        display: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      }
+      #calib-modo-tag.visible {
+        display: block;
+      }
+      .calib-hint {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--t2);
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+      }
+      .calib-hint.activo {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 1px solid #93c5fd;
+      }
+      .pos-labels {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .pos-lbl {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1.5px solid;
+      }
+      .pos-lbl-nombre {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border-color: #60a5fa;
+      }
+      .pos-lbl-qr {
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #4ade80;
+      }
+      .pos-lbl-concepto {
+        background: #ede9fe;
+        color: #4c1d95;
+        border-color: #a78bfa;
+      }
+      .usr-hdr,
+      .usr-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 90px 90px 50px;
+        gap: 8px;
+        padding: 10px 20px;
+        align-items: center;
+      }
+      .usr-hdr {
+        background: var(--surface-2);
+        border-bottom: 2px solid var(--border);
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--t3);
+        text-transform: uppercase;
+      }
+      .usr-row {
+        border-bottom: 1px solid #edf0f7;
+      }
+      .usr-row:hover {
+        background: var(--surface-2);
+      }
+      @media (max-width: 680px) {
+        .usr-hdr,
+        .usr-row {
+          grid-template-columns: 1fr 90px 50px;
+        }
+        .hide-sm {
+          display: none;
+        }
+      }
+      .tog-btn {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1.5px solid;
+      }
+      .tog-on {
+        background: var(--ok-bg);
+        color: #14532d;
+        border-color: var(--ok-border);
+      }
+      .tog-off {
+        background: var(--err-bg);
+        color: var(--err-txt);
+        border-color: #fca5a5;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="page-login">
+      <div class="login-wrap">
+        <div class="login-logo">
+          <img
+            id="li"
+            class="logo-img"
+            src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true"
+            alt="ITD"
+          />
+          <h1
+            style="
+              font-size: 26px;
+              font-weight: 900;
+              color: var(--t1);
+              margin: 12px 0 4px;
+              letter-spacing: -0.03em;
+            "
+          >
+            Otras Constancias
+          </h1>
+          <p style="font-size: 13px; color: #888">
+            Instituto Tecnológico de Durango
+          </p>
         </div>
-        <div class="field">
-          <label>Contraseña <span style="color:#e05050">*</span></label>
-          <div class="pass-wrap">
-            <input type="password" id="li-pass" placeholder="••••••••" autocomplete="current-password"/>
-            <button type="button" class="pass-toggle" onclick="togglePass('li-pass',this)" title="Mostrar/ocultar">👁</button>
-          </div>
-        </div>
-        <div id="li-err" class="err-box hidden"></div>
-        <button class="btn btn-primary btn-full" id="li-btn" onclick="doLogin()">🔐 Iniciar sesión</button>
-        <p style="text-align:center;font-size:11px;color:#bbb">Acceso restringido — Portal ITD</p>
-      </div>
-    </div>
-  </div>
-  <p style="margin-top:2rem;font-size:11px;color:rgba(80,65,55,.45);position:relative;text-align:center">
-    © <span id="yr"></span> Dr. Alejandro Calderón Rentería — Coordinación Docente
-  </p>
-</div>
-
-<!-- APP -->
-<div id="page-app" class="hidden">
-  <nav id="navbar">
-    <div class="nav-inner">
-      <img class="nav-logo" src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true" alt="ITD"
-           onerror="this.style.background='linear-gradient(135deg,#3D0A14,#6B1A2A)'"/>
-      <div class="nav-div"></div>
-      <div>
-        <div class="nav-title">Otras Constancias</div>
-        <div class="nav-sub">Instituto Tecnológico de Durango</div>
-      </div>
-      <div class="nav-sp"></div>
-      <div style="display:flex;gap:4px">
-        <button class="tab-btn active" onclick="showTab('generar')">📜 Generar</button>
-        <button class="tab-btn hidden" id="tab-usr-btn" onclick="showTab('usuarios')">👥 Usuarios</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-left:8px">
-        <div class="nav-av" id="nav-av">?</div>
-        <div style="display:flex;flex-direction:column;line-height:1.3">
-          <span style="font-size:12px;font-weight:700;color:#333" id="nav-nm">—</span>
-          <span id="nav-bdg"></span>
-        </div>
-        <a href="https://da-itd.github.io/A/index.html" class="btn-exit" style="text-decoration:none">← Portal</a>
-      </div>
-    </div>
-  </nav>
-
-  <div id="main">
-
-    <!-- TAB GENERAR -->
-    <div id="tab-generar">
-      <div class="gen-hdr">
-        <div>
-          <div class="gen-h2">Generar Constancias</div>
-          <div class="gen-sub">Sigue los pasos para generar constancias con nombre y QR</div>
-        </div>
-        <span class="badge badge-blue">📄 PDF + QR</span>
-      </div>
-
-      <!-- STEPPER VISUAL -->
-      <div style="background:#fff;border-radius:14px;padding:18px 24px 14px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-        <div class="stepper" id="main-stepper">
-          <div class="step-item active" id="st-1">
-            <div class="step-circle"><span>1</span></div>
-            <div class="step-lbl">Plantilla</div>
-          </div>
-          <div class="step-item" id="st-2">
-            <div class="step-circle"><span>2</span></div>
-            <div class="step-lbl">Destinatario</div>
-          </div>
-          <div class="step-item" id="st-3">
-            <div class="step-circle"><span>3</span></div>
-            <div class="step-lbl">Concepto</div>
-          </div>
-          <div class="step-item" id="st-4">
-            <div class="step-circle"><span>4</span></div>
-            <div class="step-lbl">Calibrar</div>
-          </div>
-          <div class="step-item" id="st-5">
-            <div class="step-circle"><span>5</span></div>
-            <div class="step-lbl">Generar</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="gen-grid">
-
-        <!-- FORM -->
-        <div class="form-col">
-
-          <!-- PLANTILLA -->
-          <div class="step-card active-step" id="sc-1">
-            <div class="step-card-header">
-              <div class="step-num-badge">1</div>
-              <div class="step-card-title">🖼 Plantilla del evento</div>
-              <span class="step-done-badge">✓ Listo</span>
+        <div class="login-card">
+          <div class="stripe"></div>
+          <div class="login-body">
+            <div class="field">
+              <label>Usuario <span style="color: #e05050">*</span></label>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  border: 1.5px solid #e0e0e0;
+                  border-radius: 10px;
+                  overflow: hidden;
+                  background: #fff;
+                "
+                id="li-wrap"
+              >
+                <input
+                  type="text"
+                  id="li-email"
+                  placeholder="usuario"
+                  style="
+                    flex: 1;
+                    padding: 10px 0 10px 14px;
+                    border: none;
+                    outline: none;
+                    font-size: 14px;
+                    background: transparent;
+                  "
+                />
+                <span
+                  style="
+                    padding: 10px 14px 10px 4px;
+                    font-size: 14px;
+                    color: #aaa;
+                  "
+                  >@itdurango.edu.mx</span
+                >
+              </div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div class="field">
-                <label>Evento / Plantilla guardada</label>
-                <div style="display:flex;gap:8px">
-                  <select id="f-evento" style="flex:1" onchange="cargarEvento()">
-                    <option value="">— Nueva plantilla —</option>
+            <div class="field">
+              <label>Contraseña <span style="color: #e05050">*</span></label>
+              <div class="pass-wrap">
+                <input type="password" id="li-pass" placeholder="••••••••" />
+                <button
+                  type="button"
+                  class="pass-toggle"
+                  onclick="togglePass('li-pass', this)"
+                >
+                  👁
+                </button>
+              </div>
+            </div>
+            <div id="li-err" class="err-box hidden"></div>
+            <button
+              class="btn btn-primary btn-full"
+              id="li-btn"
+              onclick="doLogin()"
+            >
+              🔐 Iniciar sesión
+            </button>
+          </div>
+        </div>
+      </div>
+      <p
+        style="
+          margin-top: 2rem;
+          font-size: 11px;
+          color: rgba(80, 65, 55, 0.45);
+          text-align: center;
+        "
+      >
+        © <span id="yr"></span> Dr. Alejandro Calderón - Act. Docente
+      </p>
+    </div>
+
+    <div id="page-app" class="hidden">
+      <nav id="navbar">
+        <div class="nav-inner">
+          <img
+            class="nav-logo"
+            src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true"
+            alt=""
+          />
+          <div>
+            <div class="nav-title">Otras Constancias</div>
+            <div class="nav-sub">Instituto Tecnológico de Durango</div>
+          </div>
+          <div style="flex: 1"></div>
+          <div style="display: flex; gap: 4px; display: none">
+            <button class="tab-btn active" onclick="showTab('generar')">
+              📜 Generar
+            </button>
+            <button
+              class="tab-btn hidden"
+              id="tab-usr-btn"
+              onclick="showTab('usuarios')"
+            >
+              👥 Usuarios
+            </button>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-left: 8px;
+            "
+          >
+            <div
+              style="display: flex; flex-direction: column; line-height: 1.3"
+            >
+              <span
+                style="
+                  font-size: 12px;
+                  font-weight: 700;
+                  color: #333;
+                  display: none;
+                "
+                id="nav-nm"
+                >—</span
+              >
+              <span id="nav-bdg"></span>
+            </div>
+            <a
+              href="#"
+              onclick="doLogout()"
+              class="btn-exit"
+              style="text-decoration: none"
+              >Salir</a
+            >
+          </div>
+        </div>
+      </nav>
+
+      <div id="main">
+        <!-- TAB GENERAR -->
+        <div id="tab-generar">
+          <div class="gen-hdr">
+            <div>
+              <div class="gen-h2">Generar Constancias</div>
+              <div class="gen-sub">
+                Sigue los pasos para generar constancias con nombre y QR
+              </div>
+            </div>
+            <span class="badge badge-blue">📄 PDF + QR</span>
+          </div>
+
+          <div
+            style="
+              background: #fff;
+              border-radius: 14px;
+              padding: 18px 24px 14px;
+              margin-top: 18px;
+              box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <div class="stepper" id="main-stepper">
+              <div class="step-item active" id="st-1">
+                <div class="step-circle"><span>1</span></div>
+                <div class="step-lbl">Plantilla</div>
+              </div>
+              <div class="step-item" id="st-2">
+                <div class="step-circle"><span>2</span></div>
+                <div class="step-lbl">Destinatario</div>
+              </div>
+              <div class="step-item" id="st-3">
+                <div class="step-circle"><span>3</span></div>
+                <div class="step-lbl">Concepto</div>
+              </div>
+              <div class="step-item" id="st-4">
+                <div class="step-circle"><span>4</span></div>
+                <div class="step-lbl">Calibrar</div>
+              </div>
+              <div class="step-item" id="st-5">
+                <div class="step-circle"><span>5</span></div>
+                <div class="step-lbl">Generar</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gen-grid">
+            <div class="form-col">
+              <div class="step-card active-step" id="sc-1">
+                <div class="step-card-header">
+                  <div class="step-num-badge">1</div>
+                  <div class="step-card-title">🖼 Plantilla</div>
+                </div>
+                <div class="field">
+                  <label>Plantilla guardada</label>
+                  <select id="f-evento" onchange="cargarEvento()">
+                    <option value="">— Nueva —</option>
                   </select>
-                  <button class="btn-sm-red" id="del-evt-btn" onclick="eliminarEvento()" title="Eliminar evento" style="display:none">🗑</button>
+                </div>
+                <div class="field">
+                  <label>Nombre del evento *</label
+                  ><input
+                    type="text"
+                    id="f-evento-nombre"
+                    oninput="updateStepper()"
+                  />
+                </div>
+                <div class="field">
+                  <label>PDF de la plantilla *</label>
+                  <input
+                    type="file"
+                    id="pdf-input"
+                    accept=".pdf"
+                    style="display: none"
+                    onchange="cargarPDF(this)"
+                  />
+                  <div style="display: flex; gap: 8px">
+                    <button
+                      class="btn btn-ghost"
+                      style="flex: 1"
+                      onclick="document.getElementById('pdf-input').click()"
+                    >
+                      💾 Local
+                    </button>
+                    <button
+                      class="btn btn-ghost"
+                      style="flex: 1"
+                      id="btn-drive-picker"
+                      onclick="abrirDrivePicker()"
+                    >
+                      ☁ Drive
+                    </button>
+                  </div>
+                  <div
+                    id="pdf-ok"
+                    class="hidden"
+                    style="
+                      margin-top: 6px;
+                      font-size: 12px;
+                      color: #14532d;
+                      font-weight: 700;
+                    "
+                  ></div>
                 </div>
               </div>
-              <div class="field">
-                <label>Nombre del evento <span style="color:#e05050">*</span></label>
-                <input type="text" id="f-evento-nombre" placeholder="Ej: ExpoTecno 2026" oninput="updateStepper()"/>
-              </div>
-              <div class="field">
-                <label>PDF de la plantilla <span style="color:#e05050">*</span></label>
-                <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="cargarPDF(this)"/>
-                <div style="display:flex;gap:8px">
-                  <button class="btn btn-ghost" style="flex:1" onclick="document.getElementById('pdf-input').click()">
-                    💾 Local
+
+              <div class="step-card" id="sc-2">
+                <div class="step-card-header">
+                  <div class="step-num-badge">2</div>
+                  <div class="step-card-title">👤 Destinatario(s)</div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 14px">
+                  <button
+                    class="mode-btn active"
+                    id="mb-manual"
+                    onclick="setMode('manual')"
+                  >
+                    ✍️ Manual
                   </button>
-                  <button class="btn btn-ghost" style="flex:1" id="btn-drive-picker" onclick="abrirDrivePicker()">
-                    ☁ Drive
+                  <button
+                    class="mode-btn"
+                    id="mb-excel"
+                    onclick="setMode('excel')"
+                  >
+                    📊 Excel
                   </button>
                 </div>
-                <div id="pdf-ok" class="hidden" style="margin-top:6px;font-size:12px;color:#14532d;font-weight:700"></div>
+                <div id="pnl-manual">
+                  <div class="field">
+                    <label>Nombre completo *</label
+                    ><input type="text" id="f-nom" oninput="updateStepper()" />
+                  </div>
+                </div>
+                <div id="pnl-excel" class="hidden">
+                  <input
+                    type="file"
+                    id="xl-input"
+                    accept=".xlsx,.xls"
+                    style="display: none"
+                    onchange="loadExcel(this)"
+                  />
+                  <button
+                    class="btn btn-ghost btn-full"
+                    onclick="document.getElementById('xl-input').click()"
+                  >
+                    📂 Seleccionar Excel
+                  </button>
+                  <div id="xl-ok" class="hidden" style="margin-top: 10px">
+                    <strong id="xl-cnt" style="color: #14532d"></strong>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <!-- DESTINATARIO -->
-          <div class="step-card" id="sc-2">
-            <div class="step-card-header">
-              <div class="step-num-badge">2</div>
-              <div class="step-card-title">👤 Destinatario(s)</div>
-              <span class="step-done-badge">✓ Listo</span>
-            </div>
-            <div style="display:flex;gap:8px;margin-bottom:14px">
-              <button class="mode-btn active" id="mb-manual" onclick="setMode('manual')">✍️ Manual</button>
-              <button class="mode-btn" id="mb-excel" onclick="setMode('excel')">📊 Excel</button>
-            </div>
-            <div id="pnl-manual">
-              <div class="field">
-                <label>Nombre completo <span style="color:#e05050">*</span></label>
-                <div style="display:flex;gap:6px;margin-bottom:6px">
-                  <button type="button" class="case-btn active" id="cb-title" onclick="setCaseMode('title')"
-                    title="Ej: Dra. Gerardina de las Maravillas Valenciano">Aa Minúsculas</button>
-                  <button type="button" class="case-btn" id="cb-upper" onclick="setCaseMode('upper')"
-                    title="Ej: DRA. GERARDINA DE LAS MARAVILLAS VALENCIANO">AA Mayúsculas</button>
+              <div class="step-card" id="sc-3">
+                <div class="step-card-header">
+                  <div class="step-num-badge">3</div>
+                  <div class="step-card-title">📝 Concepto</div>
                 </div>
-                <input type="text" id="f-nom" placeholder="Ej: Dra. María García López"
-                  oninput="ortografiaManual();updateStepper()"/>
-                <div id="orto-manual" style="margin-top:6px;display:flex;flex-direction:column;gap:4px"></div>
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    cursor: pointer;
+                  "
+                  ><input
+                    type="checkbox"
+                    id="f-concepto-on"
+                    onchange="toggleConcepto()"
+                  />
+                  <span style="font-size: 13px; font-weight: 700"
+                    >Incluir concepto (opcional)</span
+                  ></label
+                >
+                <div
+                  id="pnl-concepto"
+                  style="
+                    display: none;
+                    flex-direction: column;
+                    gap: 10px;
+                    margin-top: 10px;
+                  "
+                >
+                  <div class="field">
+                    <textarea
+                      id="f-concepto-txt"
+                      rows="3"
+                      oninput="updateStepper()"
+                    ></textarea>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div id="pnl-excel" class="hidden">
-              <p style="font-size:13px;color:#666;line-height:1.6;margin-bottom:10px">
-                Archivo <strong>.xlsx / .xls</strong>. Primera fila = encabezados.<br>
-                Columna: <em>Nombre</em>, Participante, Docente o Alumno.<br>
-                Opcional: columna <em>Correo / Email</em>.
-              </p>
-              <input type="file" id="xl-input" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(this)"/>
-              <button class="btn btn-ghost btn-full" onclick="document.getElementById('xl-input').click()">📂 Seleccionar Excel</button>
-              <div id="xl-err" class="err-box hidden" style="margin-top:8px"></div>
-              <div id="xl-ok" class="hidden" style="background:#f0fdf4;border-radius:10px;padding:10px 14px;border:1px solid #86efac;margin-top:10px">
-                <strong style="font-size:13px;color:#14532d" id="xl-cnt">0 cargados</strong>
-                <div id="xl-prev" style="margin-top:6px;font-size:12px;color:#166534;display:flex;flex-direction:column;gap:2px;max-height:100px;overflow-y:auto"></div>
-              </div>
-              <div id="orto-excel" style="margin-top:8px;display:flex;flex-direction:column;gap:4px"></div>
-            </div>
-          </div>
 
-          <!-- CONCEPTO -->
-          <div class="step-card" id="sc-3">
-            <div class="step-card-header">
-              <div class="step-num-badge">3</div>
-              <div class="step-card-title">📝 Concepto de la constancia</div>
-              <span class="step-done-badge">✓ Listo</span>
-            </div>
-            <!-- Toggle opcional -->
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px;user-select:none">
-              <input type="checkbox" id="f-concepto-on" onchange="toggleConcepto()"/>
-              <span style="font-size:13px;font-weight:700;color:#555">Incluir texto de concepto en la constancia</span>
-              <span style="font-size:10px;color:#aaa;font-weight:400">(opcional)</span>
-            </label>
-            <!-- Panel concepto (oculto por defecto) -->
-            <div id="pnl-concepto" style="display:none;flex-direction:column;gap:10px">
-              <div class="field">
-                <label>Texto del concepto</label>
-                <textarea id="f-concepto-txt" rows="3"
-                  placeholder="Ej: por su participación como ponente en el..."
-                  oninput="updateConceptoPreview();updateStepper()"
-                  style="padding:10px 14px;border-radius:10px;font-size:14px;border:1.5px solid #e0e0e0;outline:none;font-family:'DM Sans',sans-serif;background:#fff;transition:border-color .15s;width:100%;resize:vertical"
-                  onfocus="this.style.borderColor='#1B396A'" onblur="this.style.borderColor='#e0e0e0'"></textarea>
-              </div>
-              <!-- Controles de fuente del concepto -->
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px">
-                  <label style="font-size:11px;font-weight:700;color:#555;white-space:nowrap">Fuente</label>
-                  <select id="c-fontfamily" onchange="updateConceptoPreview()"
-                    style="flex:1;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:#fff">
-                    <option value="Georgia, 'Times New Roman', serif"           data-style="italic">Georgia (Cursiva serif)</option>
-                    <option value="'Times New Roman', Times, serif"             data-style="italic">Times New Roman</option>
-                    <option value="'Palatino Linotype', Palatino, serif"        data-style="italic">Palatino</option>
-                    <option value="Garamond, 'EB Garamond', serif"              data-style="italic">Garamond</option>
-                    <option value="Arial, Helvetica, sans-serif"                data-style="normal">Arial</option>
-                    <option value="'Trebuchet MS', sans-serif"                  data-style="normal">Trebuchet MS</option>
-                    <option value="Verdana, Geneva, sans-serif"                 data-style="normal">Verdana</option>
-                    <option value="Calibri, Candara, sans-serif"                data-style="normal">Calibri</option>
-                    <option value="'Century Gothic', CenturyGothic, sans-serif" data-style="normal">Century Gothic</option>
-                  </select>
-                </div>
-                <div style="display:flex;align-items:center;gap:4px">
-                  <label style="font-size:11px;font-weight:700;color:#555">Tam.</label>
-                  <input type="number" id="c-fontsize" value="22" min="8" max="80" onchange="updateConceptoPreview()"
-                    style="width:52px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
-                  <label style="font-size:11px;color:#888">pt</label>
-                </div>
-                <div style="display:flex;align-items:center;gap:4px">
-                  <label style="font-size:11px;font-weight:700;color:#555">Color</label>
-                  <input type="color" id="c-fontcolor" value="#1a1a1a" onchange="updateConceptoPreview()"
-                    style="width:32px;height:28px;padding:2px;border:1.5px solid #e0e0e0;border-radius:6px;cursor:pointer"/>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
-                    <input type="checkbox" id="c-italic" onchange="updateConceptoPreview()"/> <em>I</em>
-                  </label>
-                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
-                    <input type="checkbox" id="c-bold" onchange="updateConceptoPreview()"/> <strong>B</strong>
-                  </label>
-                </div>
-              </div>
-              <!-- Preview del concepto -->
-              <div id="concepto-preview" style="background:#f8f4f0;border:1px solid #e8e0d0;border-radius:8px;padding:10px 14px;text-align:center;min-height:36px;transition:all .2s">
-                <span id="concepto-preview-text" style="font-family:'Georgia',serif;font-size:14px;color:#555;font-style:italic">Vista previa del concepto…</span>
-              </div>
-              <!-- Botón para calibrar posición del concepto -->
-              <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;font-size:12px;color:#1B396A;display:flex;align-items:center;gap:8px">
-                <span>💡</span>
-                <span>Después calibra la posición del texto en el <strong>Paso 4 → botón "📝 Concepto"</strong></span>
+              <div
+                class="step-card"
+                id="sc-5"
+                style="
+                  padding: 0;
+                  border: none;
+                  background: transparent;
+                  box-shadow: none;
+                "
+              >
+                <button
+                  class="btn btn-full"
+                  id="gen-btn"
+                  onclick="generar()"
+                  style="
+                    background: var(--navy);
+                    color: #fff;
+                    padding: 14px;
+                    font-size: 16px;
+                    box-shadow: var(--sh-lg);
+                    border-radius: var(--radius);
+                    transition: all 0.2s;
+                  "
+                >
+                  🚀 Paso 5 — Generar
+                </button>
               </div>
             </div>
-          </div>
 
-          <div class="step-card" id="sc-5" style="padding:0;overflow:hidden;border:none;box-shadow:none;background:transparent">
-          <button class="btn btn-full" id="gen-btn" onclick="generar()"
-            style="font-size:15px;padding:14px 20px;background:linear-gradient(135deg,#0f7a4a,#15a05f);color:#fff;box-shadow:0 4px 18px rgba(15,122,74,.35);letter-spacing:.01em;">
-            🚀 Paso 5 — Generar Constancia(s)
-          </button>
-          </div>
-          <div id="prog-wrap" class="hidden">
-            <div class="prog-wrap"><div class="prog-bar" id="prog-bar" style="width:0%"></div></div>
-            <div class="prog-lbl" id="prog-lbl">Preparando…</div>
-          </div>
-        </div>
+            <div class="right-col">
+              <div class="step-card" id="sc-4">
+                <div class="step-card-header">
+                  <div class="step-num-badge">4</div>
+                  <div class="step-card-title">📍 Calibrar posición</div>
+                </div>
+                <div style="display: flex; gap: 6px; margin-bottom: 10px">
+                  <button class="btn-sm-blue" onclick="setCalibMode('nombre')">
+                    ✍ Nombre
+                  </button>
+                  <button class="btn-sm-grn" onclick="setCalibMode('qr')">
+                    ▪ QR
+                  </button>
+                  <button
+                    class="btn-sm-prp"
+                    id="calib-concepto-btn"
+                    onclick="setCalibMode('concepto')"
+                    style="display: none"
+                  >
+                    ¶ Concepto
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    margin-bottom: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      gap: 8px;
+                      align-items: center;
+                      flex-wrap: wrap;
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        flex: 1;
+                        min-width: 160px;
+                      "
+                    >
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                        "
+                        >Fuente</label
+                      >
+                      <select
+                        id="f-fontfamily"
+                        style="
+                          flex: 1;
+                          padding: 4px 8px;
+                          border: 1.5px solid var(--border);
+                          border-radius: 8px;
+                          font-size: 12px;
+                          outline: none;
+                        "
+                      >
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="'Times New Roman', serif">
+                          Times New Roman
+                        </option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Trebuchet MS', sans-serif">
+                          Trebuchet MS
+                        </option>
+                        <option value="'Century Gothic', sans-serif">
+                          Century Gothic
+                        </option>
+                        <option value="'Playfair Display', serif">
+                          Playfair Display
+                        </option>
+                      </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px">
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                        "
+                        title="Tamaño máximo que se ajustará si el texto es muy largo"
+                        >Tam. Max</label
+                      >
+                      <input
+                        type="number"
+                        id="f-fontsize"
+                        value="60"
+                        min="10"
+                        max="150"
+                        style="
+                          width: 52px;
+                          padding: 4px 8px;
+                          border: 1.5px solid var(--border);
+                          border-radius: 8px;
+                          font-size: 13px;
+                          outline: none;
+                        "
+                      />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px">
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                        "
+                        >Color</label
+                      >
+                      <input
+                        type="color"
+                        id="f-fontcolor"
+                        value="#1a1a1a"
+                        style="
+                          width: 32px;
+                          height: 28px;
+                          padding: 2px;
+                          border: 1.5px solid var(--border);
+                          border-radius: 6px;
+                          cursor: pointer;
+                          outline: none;
+                        "
+                      />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px">
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                          cursor: pointer;
+                        "
+                      >
+                        <input type="checkbox" id="f-italic" /> <em>I</em>
+                      </label>
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                          cursor: pointer;
+                        "
+                      >
+                        <input type="checkbox" id="f-bold" checked />
+                        <strong>B</strong>
+                      </label>
+                    </div>
+                  </div>
+                </div>
 
-        <!-- CALIBRADOR + RESULTADOS -->
-        <div class="right-col">
-          <!-- CALIBRADOR -->
-          <div class="step-card" id="sc-4">
-            <div class="step-card-header">
-              <div class="step-num-badge">4</div>
-              <div class="step-card-title">📍 Calibrar posición</div>
-              <span class="step-done-badge">✓ Listo</span>
-            </div>
-            <div style="display:flex;justify-content:flex-end;margin-top:-10px;margin-bottom:10px">
-              <div style="display:flex;gap:6px">
-                <button class="btn-sm-blue" id="calib-nom-btn" onclick="setCalibMode('nombre')" title="Clic en el PDF para marcar donde va el nombre">✍ Nombre</button>
-                <button class="btn-sm-grn"  id="calib-qr-btn"  onclick="setCalibMode('qr')"     title="Clic para marcar donde va el QR">▪ QR</button>
-                <button class="btn-sm-prp"  id="calib-concepto-btn" onclick="setCalibMode('concepto')" title="Arrastra para definir el área del concepto" style="display:none">¶ Concepto</button>
-                <button class="btn-sm-yel"  onclick="guardarEvento()">💾 Guardar</button>
-              </div>
-            </div>
-            <!-- Opciones de texto -->
-            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px">
-              <!-- Fila 1: Fuente + Tamaño + Color -->
-              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-                <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px">
-                  <label style="font-size:11px;font-weight:700;color:#555;white-space:nowrap">Fuente</label>
-                  <select id="f-fontfamily" onchange="updateFontPreview()"
-                    style="flex:1;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:'DM Sans',sans-serif;background:#fff">
-                    <option value="Georgia, 'Times New Roman', serif"            data-style="italic">Georgia (Cursiva serif)</option>
-                    <option value="'Times New Roman', Times, serif"              data-style="italic">'Times New Roman'</option>
-                    <option value="'Palatino Linotype', Palatino, serif"         data-style="italic">Palatino</option>
-                    <option value="Garamond, 'EB Garamond', serif"               data-style="italic">Garamond</option>
-                    <option value="'Book Antiqua', Palatino, serif"              data-style="italic">Book Antiqua</option>
-                    <option value="Arial, Helvetica, sans-serif"                 data-style="normal">Arial</option>
-                    <option value="'Arial Narrow', Arial, sans-serif"            data-style="normal">Arial Narrow</option>
-                    <option value="'Trebuchet MS', sans-serif"                   data-style="normal">Trebuchet MS</option>
-                    <option value="Verdana, Geneva, sans-serif"                  data-style="normal">Verdana</option>
-                    <option value="'Century Gothic', CenturyGothic, sans-serif"  data-style="normal">Century Gothic</option>
-                    <option value="'Segoe UI', Tahoma, sans-serif"               data-style="normal">Segoe UI</option>
-                    <option value="Calibri, Candara, sans-serif"                 data-style="normal">Calibri</option>
-                    <option value="'Courier New', Courier, monospace"            data-style="normal">Courier New</option>
-                  </select>
-                </div>
-                <div style="display:flex;align-items:center;gap:4px">
-                  <label style="font-size:11px;font-weight:700;color:#555">Tam.</label>
-                  <input type="number" id="f-fontsize" value="36" min="8" max="120" onchange="updateFontPreview()"
-                    style="width:52px;padding:4px 8px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif"/>
-                  <label style="font-size:11px;color:#888">pt</label>
-                </div>
-                <div style="display:flex;align-items:center;gap:4px">
-                  <label style="font-size:11px;font-weight:700;color:#555">Color</label>
-                  <input type="color" id="f-fontcolor" value="#1a1a1a" onchange="updateFontPreview()"
-                    style="width:32px;height:28px;padding:2px;border:1.5px solid #e0e0e0;border-radius:6px;cursor:pointer"/>
-                </div>
-                <div style="display:flex;align-items:center;gap:4px">
-                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
-                    <input type="checkbox" id="f-italic" checked onchange="updateFontPreview()"/> <em>I</em>
-                  </label>
-                  <label style="font-size:11px;font-weight:700;color:#555;cursor:pointer">
-                    <input type="checkbox" id="f-bold" onchange="updateFontPreview()"/> <strong>B</strong>
-                  </label>
-                </div>
-              </div>
-              <!-- Fila 2: Preview de fuente -->
-              <div id="font-preview" style="background:#f8f4f0;border:1px solid #e8e0d0;border-radius:8px;padding:8px 14px;text-align:center;min-height:36px;transition:all .2s">
-                <span id="font-preview-text" style="font-family:'Georgia',serif;font-style:italic;font-size:18px;color:#1a1a1a">Nombre de Ejemplo</span>
-              </div>
-              <!-- Fila 3: QR opciones -->
-              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:11px;font-weight:700;color:var(--t2);user-select:none">
-                  <input type="checkbox" id="f-qr-on" checked onchange="toggleQROptions()"/> Incluir QR
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    id="f-qr-on"
+                    checked
+                    onchange="toggleQROptions()"
+                  />
+                  Incluir QR
                 </label>
+
+                <div class="calib-wrap" id="calib-wrap">
+                  <canvas
+                    id="calib-canvas"
+                    style="display: block; width: 100%; height: auto"
+                  ></canvas>
+                  <div id="calib-modo-tag"></div>
+                  <div id="overlay-nombre" class="calib-rect-overlay"></div>
+                  <div id="overlay-qr" class="calib-rect-overlay"></div>
+                  <div id="overlay-concepto" class="calib-rect-overlay"></div>
+                  <div id="mk-nombre-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">NOMBRE</div>
+                  </div>
+                  <div id="mk-qr-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">QR</div>
+                  </div>
+                  <div id="mk-concepto-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">CONCEPTO</div>
+                  </div>
+                  <div
+                    id="calib-placeholder"
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      background: rgba(237, 240, 245, 0.95);
+                    "
+                  >
+                    Selecciona un PDF para calibrar
+                  </div>
+                </div>
+                <div class="pos-labels">
+                  <span
+                    class="pos-lbl pos-lbl-nombre no-set"
+                    id="pos-nombre-lbl"
+                    >✍ Nombre: —</span
+                  >
+                  <span class="pos-lbl pos-lbl-qr no-set" id="pos-qr-lbl"
+                    >▪ QR: —</span
+                  >
+                  <span
+                    class="pos-lbl pos-lbl-concepto no-set"
+                    id="pos-concepto-lbl"
+                    style="display: none"
+                    >¶ Concepto: —</span
+                  >
+                </div>
               </div>
-            </div>
-            <div id="calib-hint" class="calib-hint"></div>
-            <!-- Canvas calibrador -->
-            <div class="calib-wrap" id="calib-wrap">
-              <canvas id="calib-canvas" style="display:block;width:100%;height:auto"></canvas>
-              <!-- Etiqueta de modo activo -->
-              <div id="calib-modo-tag"></div>
-              <!-- Overlays de drag (vivos durante el arrastre) -->
-              <div id="overlay-nombre"  class="calib-rect-overlay"></div>
-              <div id="overlay-qr"      class="calib-rect-overlay"></div>
-              <div id="overlay-concepto" class="calib-rect-overlay"></div>
-              <!-- Rectángulos persistentes (después de definidos) -->
-              <div id="mk-nombre-rect"  class="mk-rect"><div class="mk-rect-lbl">✍ NOMBRE</div></div>
-              <div id="mk-qr-rect"      class="mk-rect"><div class="mk-rect-lbl">▪ QR</div></div>
-              <div id="mk-concepto-rect" class="mk-rect"><div class="mk-rect-lbl">¶ CONCEPTO</div></div>
-              <!-- Placeholder antes de cargar PDF -->
-              <div id="calib-placeholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(237,240,245,.95)">
-                <div style="font-size:40px;opacity:.35">📄</div>
-                <div style="font-size:13px;font-weight:800;color:var(--t2)">Selecciona un PDF para calibrar</div>
-                <div style="font-size:12px;color:var(--t3)">Luego marca la posición del nombre y el QR</div>
+
+              <div class="card hidden" id="res-card">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <div class="card-title" id="res-title" style="margin: 0">
+                    ✅ Generadas
+                  </div>
+                  <div style="display: flex; gap: 8px">
+                    <button
+                      class="btn btn-ghost"
+                      id="print-all-btn"
+                      onclick="printTodos()"
+                      style="display: none; padding: 4px 12px; font-size: 13px"
+                    >
+                      🖨 Imprimir
+                    </button>
+                    <button
+                      class="btn-sm-grn"
+                      id="dl-all-btn"
+                      onclick="dlTodos()"
+                      style="display: none"
+                    >
+                      ⬇ Descargar Lote
+                    </button>
+                  </div>
+                </div>
+                <div
+                  id="res-list"
+                  style="display: flex; flex-direction: column; gap: 10px"
+                ></div>
               </div>
-            </div>
-            <!-- Etiquetas de posición guardada -->
-            <div class="pos-labels">
-              <span class="pos-lbl pos-lbl-nombre no-set" id="pos-nombre-lbl">✍ Nombre: —</span>
-              <span class="pos-lbl pos-lbl-qr no-set"     id="pos-qr-lbl">▪ QR: —</span>
-              <span class="pos-lbl pos-lbl-concepto no-set" id="pos-concepto-lbl" style="display:none">¶ Concepto: —</span>
             </div>
           </div>
+        </div>
 
-          <!-- RESULTADOS -->
-          <div class="card hidden" id="res-card">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div class="card-title" id="res-title" style="margin:0">✅ Generadas</div>
-              <button class="btn-sm-grn" id="dl-all-btn" onclick="dlTodos()" style="display:none">⬇ Descargar todos (ZIP)</button>
-            </div>
-            <div id="res-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <!-- TAB USUARIOS -->
+        <div id="tab-usuarios" class="hidden">
+          <div class="gen-hdr">
+            <div><div class="gen-h2">Usuarios</div></div>
+          </div>
+          <div class="card" style="margin-top: 14px; padding: 0">
+            <div id="usr-list"></div>
           </div>
         </div>
       </div>
     </div>
+    <div id="toast" class="hidden"></div>
 
-    <!-- TAB USUARIOS -->
-    <div id="tab-usuarios" class="hidden">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;background:#fff;border-radius:14px;padding:18px 22px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-        <div><div class="gen-h2">Gestión de Usuarios</div><div class="gen-sub" id="usr-cnt">—</div></div>
-        <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">+ Nuevo usuario</button>
-      </div>
+    <script>
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbxMyVFB5HXwxhRCzJBvKczI5GVmzk4Y_3kFNpcOOjxqHZmkVwJH77BJZID6K3WgoAd8_w/exec";
+      const FOLDER_ID = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
+      document.getElementById("yr").textContent = new Date().getFullYear();
 
-      <div class="card hidden" id="uf-card" style="margin-top:14px;border:2px solid #1B396A18">
-        <div class="card-title" style="color:#1B396A">➕ Crear usuario</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">
-          <div class="field"><label>Nombre completo *</label><input type="text" id="uf-nm" placeholder="Nombre Apellido"/></div>
-          <div class="field"><label>Usuario *</label>
-            <div style="display:flex;align-items:center;border:1.5px solid #e0e0e0;border-radius:10px;overflow:hidden;background:#fff" id="uf-wrap">
-              <input type="text" id="uf-em" placeholder="usuario"
-                style="flex:1;padding:10px 0 10px 14px;border:none;outline:none;font-size:14px;font-family:'DM Sans',sans-serif;background:transparent"
-                onfocus="document.getElementById('uf-wrap').style.borderColor='#1B396A'"
-                onblur="document.getElementById('uf-wrap').style.borderColor='#e0e0e0'"/>
-              <span style="padding:10px 14px 10px 4px;font-size:14px;color:#aaa;white-space:nowrap">@itdurango.edu.mx</span>
-            </div>
-          </div>
-          <div class="field"><label>Contraseña *</label>
-            <div class="pass-wrap">
-              <input type="password" id="uf-pw" placeholder="Mín. 6 caracteres"/>
-              <button type="button" class="pass-toggle" onclick="togglePass('uf-pw',this)" title="Mostrar/ocultar">👁</button>
-            </div>
-          </div>
-          <div class="field"><label>Rol</label>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0e0;font-size:14px">
-              <input type="checkbox" id="uf-adm"/> Administrador
-            </label>
-          </div>
-        </div>
-        <div id="uf-err" class="err-box hidden" style="margin-top:10px"></div>
-        <div style="display:flex;gap:8px;margin-top:14px">
-          <button class="btn btn-primary" id="uf-sv" onclick="crearUsuario()">💾 Crear usuario</button>
-          <button class="btn btn-ghost" onclick="toggleUF(true)">Cancelar</button>
-        </div>
-      </div>
+      let CU = null,
+        XL = [],
+        mode = "manual",
+        GEN = [];
+      let calibMode = null,
+        calibScale = 1,
+        pdfPageW = 0,
+        pdfPageH = 0,
+        pdfBase64 = "";
+      let coords = {
+        nombre: { set: false },
+        qr: { set: false },
+        concepto: { set: false },
+      };
 
-      <div class="card" style="margin-top:14px;padding:0;overflow:hidden">
-        <div class="usr-hdr">
-          <span>Nombre</span><span class="hide-sm">Correo</span><span>Rol</span><span>Estado</span><span></span>
-        </div>
-        <div id="usr-list"></div>
-        <div id="usr-empty" class="hidden" style="padding:40px 24px;text-align:center;color:#aaa">
-          <div style="font-size:36px;margin-bottom:8px">👤</div>
-          <div style="font-weight:700">Sin usuarios — crea el primero</div>
-        </div>
-      </div>
-    </div>
+      // NUEVO: Fecha con hora local
+      const isoToday = () => {
+        const d = new Date();
+        return d
+          .toLocaleString("es-MX", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          })
+          .replace(/[\/,\s:]/g, "_");
+      };
 
-  </div>
-</div>
+      const getDisplayDate = () => {
+        const d = new Date();
+        const dateParts = d.toLocaleDateString("es-MX", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        const timeParts = d.toLocaleTimeString("es-MX", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+        return `${dateParts} - ${timeParts}`;
+      };
 
-<div id="toast" class="hidden"></div>
+      const qrData = (n, f) => `DA ${n} ${f || isoToday()}`;
+      const qrUrl = (n, f) =>
+        `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData(n, f))}`;
 
-<script>
-/* ═══ CONFIG ═══════════════════════════════════════ */
-const LOGO            = "https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true";
-const ADM_EMAIL       = "alejandro.calderon@itdurango.edu.mx";
-const FOLDER_ID       = "1ZSvT7fvVDGZ9Cqyi3ur4sIuumuaLT0zZ";
-const SCRIPT_URL      = "https://script.google.com/macros/s/AKfycbxMyVFB5HXwxhRCzJBvKczI5GVmzk4Y_3kFNpcOOjxqHZmkVwJH77BJZID6K3WgoAd8_w/exec";
+      function updateStepper() {
+        const s1done = !!(
+          pdfBase64 && document.getElementById("f-evento-nombre").value.trim()
+        );
+        const s2done = !!(mode === "excel"
+          ? XL.length > 0
+          : document.getElementById("f-nom").value.trim());
+        const s3done =
+          !document.getElementById("f-concepto-on").checked ||
+          coords.concepto.set;
+        const s4done = !!coords.nombre.set;
+        const s5ready = s1done && s2done && s3done && s4done;
 
-document.getElementById('yr').textContent = new Date().getFullYear();
+        [
+          { id: "st-1", card: "sc-1", done: s1done, active: !s1done },
+          { id: "st-2", card: "sc-2", done: s2done, active: s1done && !s2done },
+          {
+            id: "st-3",
+            card: "sc-3",
+            done: s3done,
+            active: s1done && s2done && !s3done,
+          },
+          {
+            id: "st-4",
+            card: "sc-4",
+            done: s4done,
+            active: s1done && s2done && s3done && !s4done,
+          },
+          { id: "st-5", card: "sc-5", done: false, active: s5ready },
+        ].forEach((s) => {
+          document.getElementById(s.id).className =
+            "step-item" + (s.done ? " done" : s.active ? " active" : "");
+          document.getElementById(s.card).className =
+            "step-card" +
+            (s.done ? " done-step" : s.active ? " active-step" : "");
+        });
+      }
 
-/* ═══ STEPPER ═══════════════════════════════════════ */
-function updateStepper(){
-  const s1done = !!(pdfBase64 && document.getElementById('f-evento-nombre').value.trim());
-  const s2done = !!(mode==='excel' ? XL.length>0 : document.getElementById('f-nom').value.trim());
-  const conceptoOn = document.getElementById('f-concepto-on').checked;
-  const conceptoTxt = document.getElementById('f-concepto-txt').value.trim();
-  // Paso 3 (concepto): si está desactivado se considera "listo" automáticamente
-  const s3done = !conceptoOn || !!(conceptoTxt && coords.concepto.set);
-  const s4done = !!(coords.nombre.set);
-  const s5ready = s1done && s2done && s3done && s4done;
+      function showTab(t) {
+        document
+          .getElementById("tab-generar")
+          .classList.toggle("hidden", t !== "generar");
+        document
+          .getElementById("tab-usuarios")
+          .classList.toggle("hidden", t !== "usuarios");
+      }
 
-  const steps = [
-    {id:'st-1', card:'sc-1', done:s1done,  active:!s1done},
-    {id:'st-2', card:'sc-2', done:s2done,  active:s1done && !s2done},
-    {id:'st-3', card:'sc-3', done:s3done,  active:s1done && s2done && !s3done},
-    {id:'st-4', card:'sc-4', done:s4done,  active:s1done && s2done && s3done && !s4done},
-    {id:'st-5', card:'sc-5', done:false,   active:s5ready},
-  ];
+      function setMode(m) {
+        mode = m;
+        document
+          .getElementById("pnl-manual")
+          .classList.toggle("hidden", m !== "manual");
+        document
+          .getElementById("pnl-excel")
+          .classList.toggle("hidden", m !== "excel");
+        updateStepper();
+      }
 
-  steps.forEach(s => {
-    const el   = document.getElementById(s.id);
-    const card = document.getElementById(s.card);
-    if(!el || !card) return;
-    el.className   = 'step-item' + (s.done?' done': s.active?' active':'');
-    card.className = 'step-card'  + (s.done?' done-step': s.active?' active-step':'');
-  });
-}
+      function cargarPDF(inp) {
+        const file = inp.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          pdfBase64 = e.target.result.split(",")[1];
+          document.getElementById("pdf-ok").textContent = "✅ " + file.name;
+          document.getElementById("pdf-ok").classList.remove("hidden");
+          renderPDFCanvas(pdfBase64);
+          updateStepper();
+        };
+        reader.readAsDataURL(file);
+      }
 
-function togglePass(inputId, btn){
-  var input=document.getElementById(inputId);
-  if(input.type==='password'){input.type='text';btn.textContent='🙈';}
-  else{input.type='password';btn.textContent='👁';}
-}
+      async function abrirDrivePicker() {
+        const btn = document.getElementById("btn-drive-picker");
+        btn.disabled = true;
+        btn.textContent = "⏳ Cargando…";
 
-/* ═══ STORAGE ═══════════════════════════════════════ */
-const getU      = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_u')||'[]')}catch{return[]} };
-const setU      = (u) => localStorage.setItem('itd_oc_u', JSON.stringify(u));
-const getEvts   = ()  => { try{return JSON.parse(localStorage.getItem('itd_oc_evts')||'[]')}catch{return[]} };
-const setEvts   = (e) => localStorage.setItem('itd_oc_evts', JSON.stringify(e));
-const getSS     = ()  => { try{return JSON.parse(sessionStorage.getItem('itd_oc_s'))}catch{return null} };
-const setSS     = (u) => sessionStorage.setItem('itd_oc_s', JSON.stringify(u));
-const delSS     = ()  => sessionStorage.removeItem('itd_oc_s');
+        try {
+          const resp = await fetch(
+            `${SCRIPT_URL}?action=listPDFs&folderId=${FOLDER_ID}`,
+          );
+          const data = await resp.json();
+          if (!data.ok)
+            throw new Error(data.error || "Error listando archivos");
 
-/* ═══ HASH ═══════════════════════════════════════ */
-async function h256(s){
-  const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
-  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
-}
+          btn.disabled = false;
+          btn.textContent = "☁ Drive";
 
-/* ═══ QR ═══════════════════════════════════════ */
-const isoToday = () => new Date().toISOString().split('T')[0];
-const qrData   = (n,f) => `DA ${n} ${f||isoToday()}`;
-const qrUrl    = (n,f) => `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=2&data=${encodeURIComponent(qrData(n,f))}`;
+          if (!data.files || data.files.length === 0) {
+            alert("No hay PDFs en la carpeta de Drive");
+            return;
+          }
+          mostrarModalDrive(data.files);
+        } catch (err) {
+          btn.disabled = false;
+          btn.textContent = "☁ Drive";
+          alert("⚠ " + err.message);
+          console.error(err);
+        }
+      }
 
-/* ═══ TOAST ═══════════════════════════════════════ */
-let tTimer;
-function toast(msg,type='info'){
-  const el=document.getElementById('toast');
-  el.className=type;
-  el.innerHTML=`<span style="flex:1">${msg}</span><button onclick="document.getElementById('toast').className='hidden'" style="background:none;border:none;cursor:pointer;font-size:18px;color:inherit">×</button>`;
-  clearTimeout(tTimer); tTimer=setTimeout(()=>el.className='hidden',4500);
-}
+      function mostrarModalDrive(files) {
+        document.getElementById("drive-modal")?.remove();
 
-/* ═══ STATE ═══════════════════════════════════════ */
-let CU=null, XL=[], mode='manual', GEN=[];
-// Calibrador
-let calibMode=null;           // 'nombre' | 'qr' | 'concepto'
-let calibScale=1;             // canvas display scale vs PDF pts
-let pdfPageW=0, pdfPageH=0;  // PDF page size in pts
-let pdfBase64='';             // base64 of loaded PDF
-let coords={ nombre:{x:0,y:0,w:0,h:0,set:false}, qr:{x:0,y:0,w:0,h:0,set:false}, concepto:{x:0,y:0,w:0,h:0,set:false} };
-
-/* ═══ INIT ═══════════════════════════════════════ */
-(async()=>{
-  document.getElementById('li-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  document.getElementById('li-email').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('li-pass').focus();});
-  const s=getSS(); if(s){CU=s;showApp();}
-  renderEventoSelect();
-})();
-
-/* ═══ LOGIN ═══════════════════════════════════════ */
-async function doLogin(){
-  const _u=document.getElementById('li-email').value.trim().toLowerCase();
-  const email=_u.includes('@')?_u:_u+'@itdurango.edu.mx';
-  const pass =document.getElementById('li-pass').value.trim();
-  const errEl=document.getElementById('li-err');
-  const btn  =document.getElementById('li-btn');
-  errEl.classList.add('hidden');
-  if(!email||!pass){errEl.textContent='⚠ Completa todos los campos.';errEl.classList.remove('hidden');return;}
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Verificando…';
-  try{
-    const hash=await h256(pass);
-    const url=`${SCRIPT_URL}?action=login&email=${encodeURIComponent(email)}&hash=${encodeURIComponent(hash)}`;
-    const resp=await fetch(url);
-    const data=await resp.json();
-    if(data.ok){
-      CU={email:data.email,name:data.name,isAdmin:data.isAdmin};
-      setSS(CU);showApp();
-    } else {
-      errEl.textContent='⚠ '+(data.error||'Credenciales incorrectas o usuario inactivo.');
-      errEl.classList.remove('hidden');
-    }
-  }catch(err){
-    errEl.textContent='⚠ Error de conexión: '+err.message;
-    errEl.classList.remove('hidden');
-  }finally{btn.disabled=false;btn.innerHTML='🔐 Iniciar sesión';}
-}
-function doLogout(){
-  delSS();CU=null;
-  document.getElementById('page-app').classList.add('hidden');
-  document.getElementById('page-login').style.display='flex';
-  document.getElementById('li-pass').value='';
-  document.getElementById('li-err').classList.add('hidden');
-}
-function showApp(){
-  document.getElementById('page-login').style.display='none';
-  document.getElementById('page-app').classList.remove('hidden');
-  document.getElementById('nav-av').textContent=(CU.name||CU.email).charAt(0).toUpperCase();
-  document.getElementById('nav-nm').textContent=CU.name||CU.email;
-  if(CU.isAdmin){
-    document.getElementById('nav-bdg').innerHTML='<span class="badge badge-red">Admin</span>';
-    document.getElementById('tab-usr-btn').classList.remove('hidden');
-  }
-  renderUsers();
-}
-
-/* ═══ TABS ═══════════════════════════════════════ */
-function showTab(tab){
-  ['generar','usuarios'].forEach(t=>{
-    document.getElementById('tab-'+t).classList.toggle('hidden',t!==tab);
-    const b=document.querySelector(`[onclick="showTab('${t}')"]`);
-    if(b) b.classList.toggle('active',t===tab);
-  });
-  if(tab==='usuarios') renderUsers();
-}
-
-/* ═══ CONCEPTO ═══════════════════════════════════════ */
-function toggleConcepto(){
-  const on = document.getElementById('f-concepto-on').checked;
-  const pnl = document.getElementById('pnl-concepto');
-  pnl.style.display = on ? 'flex' : 'none';
-  document.getElementById('calib-concepto-btn').style.display = on ? '' : 'none';
-  document.getElementById('pos-concepto-lbl').style.display   = on ? '' : 'none';
-  if(!on){ coords.concepto={x:0,y:0,w:0,h:0,set:false}; document.getElementById('mk-concepto-rect').style.display='none'; }
-  updateStepper();
-}
-
-function updateConceptoPreview(){
-  const txt    = document.getElementById('f-concepto-txt').value || 'Vista previa del concepto…';
-  const family = document.getElementById('c-fontfamily').value || 'Georgia, serif';
-  const size   = Math.min(Math.max(parseFloat(document.getElementById('c-fontsize').value)||22, 8), 40);
-  const color  = document.getElementById('c-fontcolor').value || '#1a1a1a';
-  const italic = document.getElementById('c-italic').checked;
-  const bold   = document.getElementById('c-bold').checked;
-  const el = document.getElementById('concepto-preview-text');
-  el.style.fontFamily  = family;
-  el.style.fontSize    = (size * 0.65) + 'px';
-  el.style.color       = color;
-  el.style.fontStyle   = italic ? 'italic' : 'normal';
-  el.style.fontWeight  = bold   ? '700'    : '400';
-  el.textContent       = txt;
-}
-
-
-function setMode(m){
-  mode=m;
-  document.getElementById('pnl-manual').classList.toggle('hidden',m!=='manual');
-  document.getElementById('pnl-excel').classList.toggle('hidden',m!=='excel');
-  document.getElementById('mb-manual').classList.toggle('active',m==='manual');
-  document.getElementById('mb-excel').classList.toggle('active',m==='excel');
-  updateStepper();
-}
-
-/* ═══ EVENTOS (plantillas guardadas) ═══════════════ */
-function renderEventoSelect(){
-  const sel=document.getElementById('f-evento');
-  const evts=getEvts();
-  sel.innerHTML='<option value="">— Nueva plantilla —</option>';
-  evts.forEach((e,i)=>{ const o=document.createElement('option'); o.value=i; o.textContent=e.nombre; sel.appendChild(o); });
-}
-
-function cargarEvento(){
-  const idx=document.getElementById('f-evento').value;
-  document.getElementById('del-evt-btn').style.display=idx!==''?'':'none';
-  if(idx===''){
-    // reset
-    pdfBase64=''; coords={nombre:{x:0,y:0,w:0,h:0,set:false},qr:{x:0,y:0,w:0,h:0,set:false},concepto:{x:0,y:0,w:0,h:0,set:false}};
-    limpiarCalibrador(); return;
-  }
-  const evt=getEvts()[parseInt(idx)];
-  if(!evt) return;
-  document.getElementById('f-evento-nombre').value=evt.nombre;
-  coords=JSON.parse(JSON.stringify(evt.coords));
-  pdfBase64=evt.pdfBase64||'';
-  pdfPageW=evt.pdfPageW||0; pdfPageH=evt.pdfPageH||0;
-  if(evt.fontSizePt) document.getElementById('f-fontsize').value=evt.fontSizePt;
-  if(evt.fontColor)  document.getElementById('f-fontcolor').value=evt.fontColor;
-  if(evt.fontFamily){ document.getElementById('f-fontfamily').value=evt.fontFamily; }
-  if(evt.fontItalic!==undefined) document.getElementById('f-italic').checked=evt.fontItalic;
-  if(evt.fontBold!==undefined)   document.getElementById('f-bold').checked=evt.fontBold;
-  updateFontPreview();
-  if(pdfBase64) renderPDFCanvas(pdfBase64, true);
-  actualizarPosLabels();
-  updateStepper();
-  toast('✅ Plantilla cargada: '+evt.nombre,'success');
-}
-
-function eliminarEvento(){
-  const idx=parseInt(document.getElementById('f-evento').value);
-  if(isNaN(idx)) return;
-  const evts=getEvts();
-  const nombre=evts[idx]?.nombre||'';
-  if(!confirm(`¿Eliminar la plantilla "${nombre}"?`)) return;
-  evts.splice(idx,1);
-  setEvts(evts);
-  renderEventoSelect();
-  document.getElementById('f-evento').value='';
-  document.getElementById('del-evt-btn').style.display='none';
-  pdfBase64=''; coords={nombre:{x:0,y:0,w:0,h:0,set:false},qr:{x:0,y:0,w:0,h:0,set:false},concepto:{x:0,y:0,w:0,h:0,set:false}};
-  limpiarCalibrador();
-  toast('Plantilla eliminada','info');
-}
-
-function guardarEvento(){
-  const nombre=document.getElementById('f-evento-nombre').value.trim();
-  if(!nombre){ toast('⚠ Escribe un nombre para el evento','warn'); return; }
-  if(!pdfBase64){ toast('⚠ Carga el PDF de la plantilla primero','warn'); return; }
-  if(!coords.nombre.set){ toast('⚠ Marca la posición del nombre en el calibrador','warn'); return; }
-  if(!coords.qr.set){ toast('⚠ Marca la posición del QR en el calibrador','warn'); return; }
-  const evts=getEvts();
-  const idx=parseInt(document.getElementById('f-evento').value);
-  const entry={nombre,coords:JSON.parse(JSON.stringify(coords)),pdfBase64,pdfPageW,pdfPageH,
-    fontSizePt:parseFloat(document.getElementById('f-fontsize').value)||36,
-    fontColor:document.getElementById('f-fontcolor').value||'#1a1a1a',
-    fontFamily:document.getElementById('f-fontfamily').value||'Georgia, serif',
-    fontItalic:document.getElementById('f-italic').checked,
-    fontBold:document.getElementById('f-bold').checked};
-  if(!isNaN(idx)&&idx>=0&&idx<evts.length){ evts[idx]=entry; }
-  else { evts.push(entry); }
-  setEvts(evts);
-  renderEventoSelect();
-  const sel=document.getElementById('f-evento');
-  sel.value=evts.indexOf(entry)>=0?evts.indexOf(entry):evts.length-1;
-  document.getElementById('del-evt-btn').style.display='';
-  toast('💾 Plantilla guardada: '+nombre,'success');
-}
-
-/* ═══ CARGA PDF ═══════════════════════════════════ */
-function cargarPDF(inp){
-  const file=inp.files[0]; if(!file) return;
-  if(file.type!=='application/pdf'&&!file.name.endsWith('.pdf')){
-    toast('⚠ Selecciona un archivo PDF','warn'); return;
-  }
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const b64=e.target.result.split(',')[1];
-    pdfBase64=b64;
-    document.getElementById('pdf-ok').textContent='✅ '+file.name;
-    document.getElementById('pdf-ok').classList.remove('hidden');
-    renderPDFCanvas(b64, false);
-    updateStepper();
-    toast('PDF cargado — ahora calibra las posiciones','info');
-  };
-  reader.readAsDataURL(file);
-  inp.value='';
-}
-
-/* ═══ GOOGLE DRIVE PICKER ════════════════════════════
-   Lista los PDFs de la carpeta de constancias via Apps Script
-   Sin OAuth — igual para todos los usuarios
-══════════════════════════════════════════════════ */
-async function abrirDrivePicker(){
-  const btn = document.getElementById('btn-drive-picker');
-  btn.disabled = true; btn.textContent = '⏳ Cargando…';
-
-  try{
-    const resp = await fetch(`${SCRIPT_URL}?action=listPDFs&folderId=${FOLDER_ID}`);
-    const data = await resp.json();
-    if(!data.ok) throw new Error(data.error || 'Error listando archivos');
-
-    btn.disabled = false; btn.textContent = '☁ Drive';
-
-    if(!data.files || data.files.length === 0){
-      toast('No hay PDFs en la carpeta de Drive', 'warn'); return;
-    }
-    mostrarModalDrive(data.files);
-  } catch(err){
-    btn.disabled = false; btn.textContent = '☁ Drive';
-    toast('⚠ ' + err.message, 'error');
-    console.error(err);
-  }
-}
-
-function mostrarModalDrive(files){
-  document.getElementById('drive-modal')?.remove();
-
-  const modal = document.createElement('div');
-  modal.id = 'drive-modal';
-  modal.style.cssText = `
+        const modal = document.createElement("div");
+        modal.id = "drive-modal";
+        modal.style.cssText = `
     position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);
     display:flex;align-items:center;justify-content:center;padding:16px`;
 
-  const box = document.createElement('div');
-  box.style.cssText = `
+        const box = document.createElement("div");
+        box.style.cssText = `
     background:#fff;border-radius:16px;width:100%;max-width:420px;
     max-height:70vh;display:flex;flex-direction:column;
     box-shadow:0 8px 40px rgba(0,0,0,.25);overflow:hidden`;
 
-  box.innerHTML = `
+        box.innerHTML = `
     <div style="padding:16px 20px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center">
       <span style="font-weight:800;font-size:15px;color:#1B396A">☁ Plantillas en Drive</span>
       <button onclick="document.getElementById('drive-modal').remove()"
         style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;line-height:1">×</button>
     </div>
     <div style="overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
-      ${files.map(f => `
-        <button onclick="seleccionarPDFDrive('${f.id}','${f.name.replace(/'/g,"\\'")}')"
+      ${files
+        .map(
+          (f) => `
+        <button onclick="seleccionarPDFDrive('${f.id}','${f.name.replace(/'/g, "\\'")}')"
           style="text-align:left;padding:10px 14px;border:1.5px solid #e0e0e0;border-radius:10px;
-                 background:#fff;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif;
+                 background:#fff;cursor:pointer;font-size:13px;font-family:inherit;
                  transition:background .15s;display:flex;align-items:center;gap:10px"
           onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='#fff'">
           <span style="font-size:18px">📄</span>
           <span style="font-weight:600;color:#1B396A">${f.name}</span>
-        </button>`).join('')}
+        </button>`,
+        )
+        .join("")}
     </div>`;
 
-  modal.appendChild(box);
-  modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
-  document.body.appendChild(modal);
-}
-
-async function seleccionarPDFDrive(fileId, fileName){
-  document.getElementById('drive-modal')?.remove();
-  const okEl = document.getElementById('pdf-ok');
-  okEl.textContent = '⏳ Descargando ' + fileName + '…';
-  okEl.classList.remove('hidden');
-
-  try{
-    const resp = await fetch(`${SCRIPT_URL}?action=downloadPDF&fileId=${fileId}`);
-    const data = await resp.json();
-    if(!data.ok) throw new Error(data.error || 'Error descargando');
-
-    pdfBase64 = data.pdfBase64;
-    okEl.textContent = '✅ ☁ ' + fileName;
-    renderPDFCanvas(pdfBase64, false);
-    updateStepper();
-    toast('PDF de Drive cargado — calibra las posiciones', 'info');
-  } catch(err){
-    okEl.textContent = '⚠ Error al descargar';
-    toast('⚠ ' + err.message, 'error');
-    console.error(err);
-  }
-}
-
-async function renderPDFCanvas(b64, keepMarkers){
-  if(!window.pdfjsLib){
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-  try{
-    const binary=atob(b64);
-    const bytes=new Uint8Array(binary.length);
-    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-    const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
-    const page=await pdf.getPage(1);
-    const vp=page.getViewport({scale:1});
-    pdfPageW=vp.width; pdfPageH=vp.height;
-    const scale=1.5;
-    const vp2=page.getViewport({scale});
-    const canvas=document.getElementById('calib-canvas');
-    canvas.width=vp2.width; canvas.height=vp2.height;
-    calibScale=scale;
-    document.getElementById('calib-placeholder').style.display='none';
-    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp2}).promise;
-    if(keepMarkers) redrawMarkers();
-  }catch(err){
-    toast('⚠ Error al leer el PDF: '+err.message,'error');
-  }
-}
-
-function limpiarCalibrador(){
-  const canvas=document.getElementById('calib-canvas');
-  const ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  canvas.width=0; canvas.height=0;
-  document.getElementById('calib-placeholder').style.display='flex';
-  ['mk-nombre','mk-qr','mk-concepto'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('pos-nombre-lbl').textContent='✍️ Nombre: —';
-  document.getElementById('pos-qr-lbl').textContent='⬛ QR: —';
-  document.getElementById('pdf-ok').classList.add('hidden');
-}
-
-/* ═══ CALIBRADOR ═══════════════════════════════════ */
-/* ─── Config de colores por modo de calibración ─── */
-const CALIB_CFG = {
-  nombre:   { tag:'✍  ARRASTRA EL ÁREA DEL NOMBRE',   tagBg:'#1e3a8a', overlay:'overlay-nombre',  mkRect:'mk-nombre-rect',  lbl:'Nombre'  },
-  qr:       { tag:'▪  ARRASTRA EL ÁREA DEL QR',        tagBg:'#14532d', overlay:'overlay-qr',      mkRect:'mk-qr-rect',      lbl:'QR'      },
-  concepto: { tag:'¶  ARRASTRA EL ÁREA DEL CONCEPTO',  tagBg:'#6d28d9', overlay:'overlay-concepto', mkRect:'mk-concepto-rect', lbl:'Concepto'}
-};
-
-let _drag = null;  // { mode, startX, startY }
-
-function setCalibMode(m){
-  calibMode = m;
-  const cfg  = CALIB_CFG[m];
-  const wrap = document.getElementById('calib-wrap');
-  const hint = document.getElementById('calib-hint');
-  const tag  = document.getElementById('calib-modo-tag');
-
-  hint.textContent = `Arrastra para marcar el área donde irá el ${cfg.lbl.toLowerCase()}.`;
-  hint.classList.add('activo');
-
-  tag.textContent        = cfg.tag;
-  tag.style.background   = cfg.tagBg;
-  tag.style.color        = '#fff';
-  tag.classList.add('visible');
-
-  document.getElementById('calib-nom-btn').style.outline      = m==='nombre'  ? '3px solid #1e3a8a' : '';
-  document.getElementById('calib-qr-btn').style.outline       = m==='qr'      ? '3px solid #14532d' : '';
-  document.getElementById('calib-concepto-btn').style.outline = m==='concepto'? '3px solid #6d28d9' : '';
-
-  wrap.classList.add('calibrando');
-  wrap.style.cursor = 'crosshair';
-  _detachDragListeners(wrap);
-
-  wrap._mdown = e => _dragStart(e, wrap, m);
-  wrap._mmov  = e => _dragMove(e, wrap);
-  wrap._mup   = e => _dragEnd(e, wrap, m);
-  wrap.addEventListener('mousedown', wrap._mdown);
-  wrap.addEventListener('mousemove', wrap._mmov);
-  wrap.addEventListener('mouseup',   wrap._mup);
-}
-
-/* ── Drag unificado ─────────────────────────────── */
-function _dragStart(e, wrap, m){
-  if(e.button !== 0) return;
-  e.preventDefault();
-  const r = wrap.getBoundingClientRect();
-  _drag = { mode:m, startX: e.clientX-r.left, startY: e.clientY-r.top };
-  const ov = document.getElementById(CALIB_CFG[m].overlay);
-  ov.style.cssText = `left:${_drag.startX}px;top:${_drag.startY}px;width:0;height:0;display:block`;
-}
-
-function _dragMove(e, wrap){
-  if(!_drag) return;
-  const r  = wrap.getBoundingClientRect();
-  const cx = e.clientX - r.left;
-  const cy = e.clientY - r.top;
-  const x  = Math.min(cx, _drag.startX);
-  const y  = Math.min(cy, _drag.startY);
-  const w  = Math.abs(cx - _drag.startX);
-  const h  = Math.abs(cy - _drag.startY);
-  const ov = document.getElementById(CALIB_CFG[_drag.mode].overlay);
-  ov.style.left = x+'px'; ov.style.top = y+'px';
-  ov.style.width = w+'px'; ov.style.height = h+'px';
-}
-
-function _dragEnd(e, wrap, m){
-  if(!_drag || _drag.mode !== m) return;
-  const r  = wrap.getBoundingClientRect();
-  const cx = e.clientX - r.left;
-  const cy = e.clientY - r.top;
-  const xW = Math.min(cx, _drag.startX);
-  const yW = Math.min(cy, _drag.startY);
-  const wW = Math.abs(cx - _drag.startX);
-  const hW = Math.abs(cy - _drag.startY);
-
-  document.getElementById(CALIB_CFG[m].overlay).style.display = 'none';
-  _drag = null;
-
-  if(wW < 10 || hW < 10){ toast('⚠ Arrastra un área más grande','warn'); return; }
-
-  // Convertir a pts PDF
-  const canvas = document.getElementById('calib-canvas');
-  const cRect  = canvas.getBoundingClientRect();
-  const offX   = cRect.left - r.left;
-  const offY   = cRect.top  - r.top;
-  const ds     = canvas.width / cRect.width;
-  const toPDF  = (v, off) => ((v - off) * ds) / calibScale;
-
-  coords[m] = {
-    x: Math.round(toPDF(xW, offX)),
-    y: Math.round(toPDF(yW, offY)),
-    w: Math.round((wW * ds) / calibScale),
-    h: Math.round((hW * ds) / calibScale),
-    set: true,
-    _wx: xW, _wy: yW, _ww: wW, _wh: hW
-  };
-
-  _detachDragListeners(wrap);
-  calibMode = null;
-  _resetCalibUI();
-  _showRect(m, xW, yW, wW, hW);
-  actualizarPosLabels();
-  updateStepper();
-  document.getElementById('calib-hint').textContent =
-    `✅ Área de ${CALIB_CFG[m].lbl} guardada. Puedes ajustarla o guardar el evento.`;
-}
-
-function _showRect(m, x, y, w, h){
-  const mk = document.getElementById(CALIB_CFG[m].mkRect);
-  mk.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;display:block`;
-  mk.style.position = 'absolute';
-}
-
-function _detachDragListeners(wrap){
-  if(wrap._mmov)  wrap.removeEventListener('mousemove',  wrap._mmov);
-  if(wrap._mout)  wrap.removeEventListener('mouseleave', wrap._mout);
-  if(wrap._mdown) wrap.removeEventListener('mousedown',  wrap._mdown);
-  if(wrap._mup)   wrap.removeEventListener('mouseup',    wrap._mup);
-}
-
-function _resetCalibUI(){
-  const wrap = document.getElementById('calib-wrap');
-  wrap.classList.remove('calibrando');
-  wrap.style.cursor = '';
-  document.getElementById('calib-modo-tag').classList.remove('visible');
-  document.getElementById('calib-hint').classList.remove('activo');
-  _detachDragListeners(wrap);
-  ['calib-nom-btn','calib-qr-btn','calib-concepto-btn'].forEach(id => {
-    const b = document.getElementById(id); if(b) b.style.outline = '';
-  });
-}
-
-function redrawMarkers(){
-  const canvas  = document.getElementById('calib-canvas');
-  const wrap    = document.getElementById('calib-wrap');
-  const cRect   = canvas.getBoundingClientRect();
-  const wRect   = wrap.getBoundingClientRect();
-  const offX    = cRect.left - wRect.left;
-  const offY    = cRect.top  - wRect.top;
-  const ds      = cRect.width / canvas.width;
-
-  function rectVisual(c){
-    if(c._wx !== undefined) return { x:c._wx, y:c._wy, w:c._ww, h:c._wh };
-    return {
-      x: c.x*calibScale*ds + offX,
-      y: c.y*calibScale*ds + offY,
-      w: c.w*calibScale*ds,
-      h: c.h*calibScale*ds
-    };
-  }
-
-  ['nombre','qr','concepto'].forEach(m => {
-    const c = coords[m];
-    const showConcepto = m==='concepto' ? document.getElementById('f-concepto-on').checked : true;
-    if(c.set && showConcepto){
-      const r = rectVisual(c);
-      _showRect(m, r.x, r.y, r.w, r.h);
-    }
-  });
-}
-
-function actualizarPosLabels(){
-  const cfg = {
-    nombre:   { el:'pos-nombre-lbl', icon:'✍', lbl:'Nombre'   },
-    qr:       { el:'pos-qr-lbl',     icon:'▪', lbl:'QR'       },
-    concepto: { el:'pos-concepto-lbl',icon:'¶', lbl:'Concepto' }
-  };
-  Object.entries(cfg).forEach(([m, c]) => {
-    const el = document.getElementById(c.el);
-    if(!el) return;
-    const d = coords[m];
-    if(d.set){
-      el.textContent = `${c.icon} ${c.lbl}: ${d.w}×${d.h} pt`;
-      el.classList.remove('no-set');
-    } else {
-      el.textContent = `${c.icon} ${c.lbl}: —`;
-      el.classList.add('no-set');
-    }
-  });
-}
-
-/* ═══ EXCEL ═══════════════════════════════════════ */
-function loadExcel(inp){
-  const file=inp.files[0]; if(!file)return;
-  document.getElementById('xl-err').classList.add('hidden');
-  if(!window.XLSX){document.getElementById('xl-err').textContent='⚠ SheetJS no disponible.';document.getElementById('xl-err').classList.remove('hidden');return;}
-  const reader=new FileReader();
-  reader.onload=function(e){
-    try{
-      const wb=XLSX.read(e.target.result,{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
-      const hdrs=(rows[0]||[]).map(h=>String(h).toLowerCase().trim());
-      const ni=hdrs.findIndex(h=>['nombre','name','participante','docente','alumno'].some(k=>h.includes(k)));
-      const ei=hdrs.findIndex(h=>['correo','email','mail'].some(k=>h.includes(k)));
-      XL=rows.slice(1).reduce((a,row)=>{
-        if(!row||!row.length)return a;
-        const n=applyCase(String(row[ni>=0?ni:0]||'').trim());
-        const c=ei>=0?String(row[ei]||'').trim():'';
-        if(n)a.push({nombre:n,correo:c});
-        return a;
-      },[]);
-      if(!XL.length)throw new Error('No se encontraron nombres.');
-      document.getElementById('xl-cnt').textContent=`✅ ${XL.length} nombre(s) cargados`;
-      const pv=document.getElementById('xl-prev');
-      pv.innerHTML=XL.slice(0,6).map(n=>`<span>• ${n.nombre}${n.correo?' — '+n.correo:''}</span>`).join('');
-      if(XL.length>6) pv.innerHTML+=`<span style="color:#888">…y ${XL.length-6} más</span>`;
-      document.getElementById('xl-ok').classList.remove('hidden');
-      toast(`✅ ${XL.length} nombre(s) cargados`,'success');
-      ortografiaExcel();
-      updateStepper();
-    }catch(err){
-      document.getElementById('xl-err').textContent='⚠ '+err.message;
-      document.getElementById('xl-err').classList.remove('hidden');
-    }
-    inp.value='';
-  };
-  reader.readAsArrayBuffer(file);
-}
-
-/* ═══ QR TOGGLE ══════════════════════════════════════ */
-function toggleQROptions(){
-  const on=document.getElementById('f-qr-on').checked;
-  document.getElementById('calib-qr-btn').style.opacity=on?'1':'.4';
-  document.getElementById('calib-qr-btn').disabled=!on;
-  document.getElementById('pos-qr-lbl').style.opacity=on?'1':'.4';
-}
-
-/* ═══ FONT PREVIEW ═══════════════════════════════════ */
-function updateFontPreview(){
-  const family  = document.getElementById('f-fontfamily').value||'Georgia, serif';
-  const size    = parseFloat(document.getElementById('f-fontsize').value)||36;
-  const color   = document.getElementById('f-fontcolor').value||'#1a1a1a';
-  const italic  = document.getElementById('f-italic').checked;
-  const bold    = document.getElementById('f-bold').checked;
-  const el      = document.getElementById('font-preview-text');
-  el.style.fontFamily  = family;
-  el.style.fontSize    = Math.min(Math.max(size*0.55, 12), 28)+'px';
-  el.style.color       = color;
-  el.style.fontStyle   = italic?'italic':'normal';
-  el.style.fontWeight  = bold?'700':'400';
-}
-
-/* ═══ GENERAR ═══════════════════════════════════════ */
-async function generar(){
-  // Validar plantilla
-  if(!pdfBase64){ toast('⚠ Carga y calibra una plantilla PDF primero','warn'); return; }
-  if(!coords.nombre.set){ toast('⚠ Calibra la posición del nombre','warn'); return; }
-  const qrOn=document.getElementById('f-qr-on').checked;
-  if(qrOn&&!coords.qr.set){ toast('⚠ Calibra la posición del QR (o desmarca "Incluir QR")','warn'); return; }
-  // Validar destinatarios
-  let noms;
-  if(mode==='manual'){
-    const n=applyCase(document.getElementById('f-nom').value.trim());
-    if(!n){toast('⚠ Ingresa el nombre del destinatario.','warn');return;}
-    noms=[{nombre:n,correo:''}];
-  }else{
-    if(!XL.length){toast('⚠ Carga un archivo Excel primero.','warn');return;}
-    noms=XL;
-  }
-
-  const btn=document.getElementById('gen-btn');
-  const progWrap=document.getElementById('prog-wrap');
-  const progBar=document.getElementById('prog-bar');
-  const progLbl=document.getElementById('prog-lbl');
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Generando…';
-  progWrap.classList.remove('hidden');
-  const fc=isoToday(); GEN=[];
-  const total=noms.length;
-  const eventoNombre=document.getElementById('f-evento-nombre').value.trim()||'Constancias';
-
-  await waitLibs();
-
-  for(let i=0;i<total;i++){
-    const item=noms[i];
-    progBar.style.width=Math.round((i/total)*100)+'%';
-    progLbl.textContent=`${i+1} / ${total} — ${item.nombre}`;
-    try{
-      const pdfBytes=await superponerNombreQR(item.nombre, fc);
-      const blob=new Blob([pdfBytes],{type:'application/pdf'});
-      const url=URL.createObjectURL(blob);
-      const entry={nombre:item.nombre,correo:item.correo,fc,blobUrl:url,pdfBytes,
-                   driveUrl:null,driveStatus:'uploading'};
-      GEN.push(entry);
-      renderResults();  // muestra estado inmediato con "subiendo…"
-      // Subir a Drive en segundo plano (no await — no bloquea el loop)
-      subirDrive(pdfBytes, item.nombre, fc, eventoNombre, i);
-    }catch(err){
-      console.error('Error generando:',item.nombre,err);
-      GEN.push({nombre:item.nombre,correo:item.correo,fc,
-                blobUrl:null,pdfBytes:null,driveUrl:null,driveStatus:'error_gen',error:err.message});
-      renderResults();
-    }
-  }
-  progBar.style.width='100%';
-  progLbl.textContent=`✅ ${total} constancia(s) generada(s)`;
-
-  btn.disabled=false; btn.innerHTML='🚀 Generar Constancia(s)';
-  btn.style.background='linear-gradient(135deg,#0f7a4a,#15a05f)';
-  btn.style.boxShadow='0 4px 18px rgba(15,122,74,.35)';
-  setTimeout(()=>progWrap.classList.add('hidden'),2500);
-  const ok=GEN.filter(g=>g.blobUrl).length;
-  toast(ok===total?`🎉 ${total} constancia(s) generada(s)`:`⚠ ${ok}/${total} generadas`,ok===total?'success':'warn');
-}
-
-/* ═══ SUBIR A DRIVE ══════════════════════════════════════ */
-async function subirDrive(pdfBytes, nombre, fecha, eventoNombre, genIdx){
-  try{
-    // Convertir ArrayBuffer → base64 en chunks para no saturar el stack
-    const uint8=new Uint8Array(pdfBytes);
-    let bin='';
-    const CHUNK=8192;
-    for(let i=0;i<uint8.length;i+=CHUNK){
-      bin+=String.fromCharCode(...uint8.subarray(i,i+CHUNK));
-    }
-    const b64=btoa(bin);
-    const filename=`Constancia_${nombre.replace(/\s+/g,'_')}_${fecha}.pdf`;
-
-    // Enviar como JSON en el body — Apps Script lo lee con e.postData.contents
-    const payload=JSON.stringify({
-      action:'uploadPDF',
-      filename,
-      nombreEvento:eventoNombre,
-      folderId:FOLDER_ID,
-      pdfBase64:b64
-    });
-
-    const resp=await fetch(SCRIPT_URL,{
-      method:'POST',
-      // Sin Content-Type header → Apps Script recibe como text/plain, sin preflight CORS
-      body:payload
-    });
-
-    const text=await resp.text();
-    let data;
-    try{ data=JSON.parse(text); }
-    catch(e){ throw new Error('Respuesta inválida: '+text.substring(0,120)); }
-
-    if(data.ok){
-      GEN[genIdx].driveUrl=data.url;
-      GEN[genIdx].driveDownload=data.downloadUrl;
-      GEN[genIdx].driveStatus='ok';
-    } else {
-      GEN[genIdx].driveStatus='error_drive';
-      GEN[genIdx].driveError=data.error||'Error en Apps Script';
-    }
-  }catch(err){
-    GEN[genIdx].driveStatus='error_drive';
-    GEN[genIdx].driveError=err.message;
-    console.error('subirDrive error:',err);
-  }
-  renderResults();
-}
-
-/* ═══ SUPERPOSICIÓN PDF ═══════════════════════════════════════ */
-async function superponerNombreQR(nombre, fecha){
-  if(!window.pdfjsLib){
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
-    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  }
-
-  const fontSizePt  = parseFloat(document.getElementById('f-fontsize').value)||36;
-  const fontColor   = document.getElementById('f-fontcolor').value||'#1a1a1a';
-  const fontFamily  = document.getElementById('f-fontfamily').value||'Georgia, serif';
-  const isItalic    = document.getElementById('f-italic').checked;
-  const isBold      = document.getElementById('f-bold').checked;
-  const fontStyle   = `${isBold?'bold ':''} ${isItalic?'italic ':''}`.trim()||'normal';
-  const qrOn        = document.getElementById('f-qr-on').checked;
-
-  const binary=atob(pdfBase64);
-  const bytes=new Uint8Array(binary.length);
-  for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-
-  const pdf=await pdfjsLib.getDocument({data:bytes}).promise;
-  const page=await pdf.getPage(1);
-  const SCALE=2;
-  const vp=page.getViewport({scale:SCALE});
-  const canvas=document.createElement('canvas');
-  canvas.width=vp.width; canvas.height=vp.height;
-  await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-
-  const ctx=canvas.getContext('2d');
-
-  // ── Helper: texto centrado y ajustado dentro de un rect ──
-  function drawTextInRect(ctx, text, font, color, rx, ry, rw, rh){
-    if(!text) return;
-    ctx.save();
-    ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    // Extraer el tamaño numérico del string de font (ej: "bold 60px Georgia" → 60)
-    let fs = parseFloat((font.match(/(\d+(?:\.\d+)?)px/) || [0,12])[1]);
-    const baseFont = font;
-    const setFont = s => { ctx.font = baseFont.replace(/(\d+(?:\.\d+)?)px/, s+'px'); };
-    setFont(fs);
-    const wrapLines = () => {
-      const words = text.split(' '), lines = []; let cur = '';
-      for(const w of words){
-        const test = cur ? cur+' '+w : w;
-        if(ctx.measureText(test).width > rw*0.97 && cur){ lines.push(cur); cur=w; } else cur=test;
+        modal.appendChild(box);
+        modal.addEventListener("click", (e) => {
+          if (e.target === modal) modal.remove();
+        });
+        document.body.appendChild(modal);
       }
-      if(cur) lines.push(cur); return lines;
-    };
-    let lines = wrapLines();
-    while(fs > 7 && lines.length * fs * 1.35 > rh * 0.95){ fs=Math.max(7,fs-1); setFont(fs); lines=wrapLines(); }
-    const lineH = Math.round(fs*1.35);
-    const startY = ry + (rh - lines.length*lineH)/2 + lineH/2;
-    lines.forEach((line,i) => ctx.fillText(line, rx+rw/2, startY+i*lineH));
-    ctx.restore();
-  }
 
-  // ── Nombre: centrado en su rect ──
-  const fontSize = Math.round(fontSizePt * SCALE);
-  drawTextInRect(ctx, nombre, `${fontStyle} ${fontSize}px ${fontFamily}`, fontColor,
-    coords.nombre.x*SCALE, coords.nombre.y*SCALE, coords.nombre.w*SCALE, coords.nombre.h*SCALE);
+      async function seleccionarPDFDrive(fileId, fileName) {
+        document.getElementById("drive-modal")?.remove();
+        const okEl = document.getElementById("pdf-ok");
+        okEl.textContent = "⏳ Descargando " + fileName + "…";
+        okEl.classList.remove("hidden");
 
-  // ── Concepto (opcional) ──
-  const conceptoOn = document.getElementById('f-concepto-on').checked;
-  if(conceptoOn && coords.concepto.set){
-    const cTxt    = document.getElementById('f-concepto-txt').value.trim();
-    const cFamily = document.getElementById('c-fontfamily').value || 'Georgia, serif';
-    const cSizePt = parseFloat(document.getElementById('c-fontsize').value) || 22;
-    const cColor  = document.getElementById('c-fontcolor').value || '#1a1a1a';
-    const cItalic = document.getElementById('c-italic').checked;
-    const cBold   = document.getElementById('c-bold').checked;
-    const cStyle  = `${cBold?'bold':''} ${cItalic?'italic':''}`.trim()||'normal';
-    const cFontPx = Math.round(cSizePt * SCALE);
-    drawTextInRect(ctx, cTxt, `${cStyle} ${cFontPx}px ${cFamily}`, cColor,
-      coords.concepto.x*SCALE, coords.concepto.y*SCALE, coords.concepto.w*SCALE, coords.concepto.h*SCALE);
-  }
+        try {
+          const resp = await fetch(
+            `${SCRIPT_URL}?action=downloadPDF&fileId=${fileId}`,
+          );
+          const data = await resp.json();
+          if (!data.ok) throw new Error(data.error || "Error descargando");
 
-  // ── QR: usa el rect para posición y tamaño ──
-  if(qrOn && coords.qr.set){
-    const qx    = coords.qr.x * SCALE;
-    const qy    = coords.qr.y * SCALE;
-    const qw    = coords.qr.w * SCALE;
-    const qh    = coords.qr.h * SCALE;
-    // Usar lado menor para mantener QR cuadrado, centrado en el rect
-    const qSize = Math.min(qw, qh);
-    const qOffX = (qw - qSize) / 2;
-    const qOffY = (qh - qSize) / 2;
-    const qrImg = await loadImage(qrUrl(nombre, fecha));
-    ctx.save();
-    ctx.drawImage(qrImg, qx+qOffX, qy+qOffY, qSize, qSize);
-    const lblPx = Math.round(7 * SCALE);
-    ctx.font = `bold ${lblPx}px sans-serif`;
-    ctx.fillStyle = '#8B1A2A';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText('Verificación ITD', qx+qOffX, qy+qOffY+qSize+4);
-    ctx.restore();
-  }
+          pdfBase64 = data.pdfBase64;
+          okEl.textContent = "✅ ☁ " + fileName;
+          renderPDFCanvas(pdfBase64);
+          updateStepper();
+        } catch (err) {
+          okEl.textContent = "⚠ Error al descargar";
+          alert("⚠ " + err.message);
+          console.error(err);
+        }
+      }
 
-  // ── Canvas → PDF (original page size) ──
-  await waitLibs();
-  const {jsPDF} = window.jspdf;
-  const W = pdfPageW, H = pdfPageH;
-  const doc = new jsPDF({orientation: W>H?'landscape':'portrait', unit:'pt', format:[W,H], compress:true});
-  doc.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, W, H);
-  return doc.output('arraybuffer');
-}
+      async function renderPDFCanvas(b64) {
+        if (!window.pdfjsLib)
+          await loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+          );
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const page = await pdf.getPage(1);
+        const vp = page.getViewport({ scale: 1.5 });
+        pdfPageW = page.getViewport({ scale: 1 }).width;
+        pdfPageH = page.getViewport({ scale: 1 }).height;
+        const canvas = document.getElementById("calib-canvas");
+        canvas.width = vp.width;
+        canvas.height = vp.height;
+        calibScale = 1.5;
+        document.getElementById("calib-placeholder").style.display = "none";
+        await page.render({
+          canvasContext: canvas.getContext("2d"),
+          viewport: vp,
+        }).promise;
+      }
 
-/* ═══ RENDER RESULTS ═══════════════════════════════ */
-function renderResults(){
-  const list=document.getElementById('res-list');
-  const ok=GEN.filter(g=>g.blobUrl).length;
-  document.getElementById('res-title').textContent=`✅ Generadas (${ok}/${GEN.length})`;
-  const dlAllBtn=document.getElementById('dl-all-btn');
-  dlAllBtn.style.display=ok>1?'':'none';
-  dlAllBtn.textContent=`⬇ ZIP (${ok})`;
+      function setCalibMode(m) {
+        calibMode = m;
+        const wrap = document.getElementById("calib-wrap");
+        wrap.classList.add("calibrando");
+        wrap.style.cursor = "crosshair";
+        let startX, startY;
 
-  const prevScroll=list.scrollTop;
-  list.innerHTML='';
-  GEN.forEach((g,i)=>{
-    const div=document.createElement('div');
-    div.className='result-item';
-    div.innerHTML=`
+        const mdown = (e) => {
+          const r = wrap.getBoundingClientRect();
+          startX = e.clientX - r.left;
+          startY = e.clientY - r.top;
+          document.getElementById("overlay-" + m).style.cssText =
+            `left:${startX}px;top:${startY}px;width:0;height:0;display:block`;
+        };
+        const mmov = (e) => {
+          if (startX === undefined) return;
+          const r = wrap.getBoundingClientRect();
+          const w = Math.abs(e.clientX - r.left - startX),
+            h = Math.abs(e.clientY - r.top - startY);
+          const x = Math.min(e.clientX - r.left, startX),
+            y = Math.min(e.clientY - r.top, startY);
+          const ov = document.getElementById("overlay-" + m);
+          ov.style.left = x + "px";
+          ov.style.top = y + "px";
+          ov.style.width = w + "px";
+          ov.style.height = h + "px";
+        };
+        const mup = (e) => {
+          if (startX === undefined) return;
+          const r = wrap.getBoundingClientRect();
+          const w = Math.abs(e.clientX - r.left - startX),
+            h = Math.abs(e.clientY - r.top - startY);
+          const x = Math.min(e.clientX - r.left, startX),
+            y = Math.min(e.clientY - r.top, startY);
+          document.getElementById("overlay-" + m).style.display = "none";
+          startX = undefined;
+          if (w > 10 && h > 10) {
+            const cRect = document
+              .getElementById("calib-canvas")
+              .getBoundingClientRect();
+            const ox = cRect.left - r.left,
+              oy = cRect.top - r.top;
+            const ds =
+              document.getElementById("calib-canvas").width / cRect.width;
+            coords[m] = {
+              x: ((x - ox) * ds) / calibScale,
+              y: ((y - oy) * ds) / calibScale,
+              w: (w * ds) / calibScale,
+              h: (h * ds) / calibScale,
+              set: true,
+            };
+            document.getElementById("mk-" + m + "-rect").style.cssText =
+              `left:${x}px;top:${y}px;width:${w}px;height:${h}px;display:block`;
+            document.getElementById("pos-" + m + "-lbl").textContent = `✅ Set`;
+            wrap.classList.remove("calibrando");
+            wrap.style.cursor = "";
+            wrap.removeEventListener("mousedown", mdown);
+            wrap.removeEventListener("mousemove", mmov);
+            wrap.removeEventListener("mouseup", mup);
+            updateStepper();
+          }
+        };
+        wrap.addEventListener("mousedown", mdown);
+        wrap.addEventListener("mousemove", mmov);
+        wrap.addEventListener("mouseup", mup);
+      }
+
+      function loadExcel(inp) {
+        const file = inp.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const wb = XLSX.read(e.target.result, { type: "array" });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+          XL = rows
+            .slice(1)
+            .map((r) => ({ nombre: r[0] || "", correo: r[1] || "" }))
+            .filter((x) => x.nombre);
+          document.getElementById("xl-cnt").textContent =
+            `✅ ${XL.length} nombres`;
+          document.getElementById("xl-ok").classList.remove("hidden");
+          updateStepper();
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      function toggleQROptions() {
+        document.getElementById("pos-qr-lbl").style.opacity =
+          document.getElementById("f-qr-on").checked ? "1" : ".4";
+      }
+
+      function toggleConcepto() {
+        const on = document.getElementById("f-concepto-on").checked;
+        document.getElementById("pnl-concepto").style.display = on
+          ? "flex"
+          : "none";
+        document.getElementById("calib-concepto-btn").style.display = on
+          ? ""
+          : "none";
+        document.getElementById("pos-concepto-lbl").style.display = on
+          ? ""
+          : "none";
+        updateStepper();
+      }
+
+      async function generar() {
+        if (!pdfBase64 || !coords.nombre.set) return;
+        let noms =
+          mode === "manual"
+            ? [{ nombre: document.getElementById("f-nom").value }]
+            : XL;
+        GEN = [];
+        document.getElementById("res-list").innerHTML = "⏳ Generando...";
+        document.getElementById("res-card").classList.remove("hidden");
+        const fc = isoToday();
+
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+        );
+        if (!window.jspdf)
+          await loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js",
+          );
+
+        for (let i = 0; i < noms.length; i++) {
+          try {
+            const pdfBytes = await superponerNombreQR(noms[i].nombre, fc);
+            GEN.push({
+              nombre: noms[i].nombre,
+              fc,
+              blobUrl: URL.createObjectURL(
+                new Blob([pdfBytes], { type: "application/pdf" }),
+              ),
+              pdfBytes,
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+        renderResults();
+      }
+
+      async function superponerNombreQR(nombre, fecha) {
+        const binary = atob(pdfBase64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const page = await pdf.getPage(1);
+        const canvas = document.createElement("canvas");
+        canvas.width = pdfPageW * 2;
+        canvas.height = pdfPageH * 2;
+        await page.render({
+          canvasContext: canvas.getContext("2d"),
+          viewport: page.getViewport({ scale: 2 }),
+        }).promise;
+        const ctx = canvas.getContext("2d");
+
+        function drawTextInRect(ctx, text, font, color, rx, ry, rw, rh) {
+          if (!text) return;
+          ctx.save();
+          ctx.fillStyle = color;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          let fs = parseFloat((font.match(/(\d+(?:\.\d+)?)px/) || [0, 12])[1]);
+          const baseFont = font;
+          const setFont = (s) => {
+            ctx.font = baseFont.replace(/(\d+(?:\.\d+)?)px/, s + "px");
+          };
+          setFont(fs);
+          const wrapLines = () => {
+            const words = text.split(" "),
+              lines = [];
+            let cur = "";
+            for (const w of words) {
+              const test = cur ? cur + " " + w : w;
+              if (ctx.measureText(test).width > rw * 0.97 && cur) {
+                lines.push(cur);
+                cur = w;
+              } else {
+                cur = test;
+              }
+            }
+            if (cur) lines.push(cur);
+            return lines;
+          };
+          let lines = wrapLines();
+          while (fs > 7 && lines.length * fs * 1.35 > rh * 0.95) {
+            fs = Math.max(7, fs - 1);
+            setFont(fs);
+            lines = wrapLines();
+          }
+          const lineH = Math.round(fs * 1.35);
+          const startY = ry + (rh - lines.length * lineH) / 2 + lineH / 2;
+          lines.forEach((line, i) =>
+            ctx.fillText(line, rx + rw / 2, startY + i * lineH),
+          );
+          ctx.restore();
+        }
+
+        const fontColor =
+          document.getElementById("f-fontcolor")?.value || "#111";
+        const fontFamily =
+          document.getElementById("f-fontfamily")?.value || "Georgia, serif";
+        const isItalic = document.getElementById("f-italic")?.checked;
+        const isBold = document.getElementById("f-bold")?.checked;
+        const fontSizePt = parseFloat(
+          document.getElementById("f-fontsize")?.value || "60",
+        );
+
+        const fs = fontSizePt * 2;
+        const nombreFont = `${isBold ? "bold " : ""}${isItalic ? "italic " : ""}${fs}px ${fontFamily}`;
+
+        drawTextInRect(
+          ctx,
+          nombre,
+          nombreFont,
+          fontColor,
+          coords.nombre.x * 2,
+          coords.nombre.y * 2,
+          coords.nombre.w * 2,
+          coords.nombre.h * 2,
+        );
+
+        if (
+          document.getElementById("f-concepto-on").checked &&
+          coords.concepto.set
+        ) {
+          drawTextInRect(
+            ctx,
+            document.getElementById("f-concepto-txt").value,
+            "italic 44px Georgia, serif",
+            "#111",
+            coords.concepto.x * 2,
+            coords.concepto.y * 2,
+            coords.concepto.w * 2,
+            coords.concepto.h * 2,
+          );
+        }
+
+        if (document.getElementById("f-qr-on").checked && coords.qr.set) {
+          const maxW = coords.qr.w * 2;
+          const maxH = coords.qr.h * 2;
+
+          // Provide space for two lines of text below the QR code
+          const textSpace = 44;
+
+          const qS = Math.min(maxW, maxH - textSpace);
+          const qOffX = (maxW - qS) / 2;
+          const elementHeight = qS + textSpace;
+          const qOffY = (maxH - elementHeight) / 2;
+
+          const qrX = coords.qr.x * 2 + qOffX;
+          const qrY = coords.qr.y * 2 + qOffY;
+
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = qrUrl(nombre, fecha);
+          await new Promise((r) => (img.onload = r));
+          ctx.drawImage(img, qrX, qrY, qS, qS);
+
+          ctx.textAlign = "center";
+
+          // NUEVO: Verificación + Fecha superpuesta en el PDF (Modificación requerida)
+          ctx.font = "bold 14px sans-serif";
+          ctx.fillStyle = "#8B1A2A";
+          ctx.fillText(
+            `Verificación ITD`,
+            coords.qr.x * 2 + maxW / 2,
+            qrY + qS + 18,
+          );
+          ctx.font = "bold 12px sans-serif";
+          ctx.fillStyle = "#0f172a";
+          ctx.fillText(
+            `${getDisplayDate()}`,
+            coords.qr.x * 2 + maxW / 2,
+            qrY + qS + 36,
+          );
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+          orientation: pdfPageW > pdfPageH ? "l" : "p",
+          unit: "pt",
+          format: [pdfPageW, pdfPageH],
+        });
+        doc.addImage(
+          canvas.toDataURL("image/jpeg", 0.95),
+          "JPEG",
+          0,
+          0,
+          pdfPageW,
+          pdfPageH,
+        );
+        return doc.output("arraybuffer");
+      }
+
+      function renderResults() {
+        const list = document.getElementById("res-list");
+        list.innerHTML = "";
+        document.getElementById("res-title").textContent =
+          `✅ Generadas (${GEN.length})`;
+        document.getElementById("dl-all-btn").style.display =
+          GEN.length > 1 ? "" : "none";
+        document.getElementById("print-all-btn").style.display =
+          GEN.length > 1 ? "" : "none";
+
+        GEN.forEach((g, i) => {
+          list.innerHTML += `<div class="result-item">
       <div class="result-info">
-        <img class="result-qr" src="${qrUrl(g.nombre,g.fc)}" alt="QR"/>
+        <img class="result-qr" src="${qrUrl(g.nombre, g.fc)}" alt="QR"/>
         <div style="min-width:0">
           <div style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.nombre}</div>
-          <div style="font-size:9px;color:#bbb;font-family:monospace;margin-top:1px">${qrData(g.nombre,g.fc)}</div>
+          <div style="font-size:11px;color:#222;font-family:monospace;margin-top:2px;font-weight:600">${qrData(g.nombre, g.fc)}</div>
         </div>
       </div>
-      <div class="result-acts">
-        ${g.blobUrl
-          ?`<a class="btn-sm-blue" href="${g.blobUrl}" target="_blank" style="font-size:10px;padding:3px 8px">👁 Ver</a>
-            <button class="btn-sm-grn" onclick="dlPDF(${i})" style="font-size:10px;padding:3px 8px">⬇ PDF</button>`
-          :`<span style="font-size:11px;color:#e05050">⚠ ${g.error||'Error'}</span>`}
-        <button class="btn-sm-yel" onclick="correo(${i})" style="font-size:10px;padding:3px 8px">📧</button>
-      </div>`;
-    list.appendChild(div);
-  });
-  list.scrollTop=prevScroll;
-  document.getElementById('res-card').classList.remove('hidden');
-}
-
-function dlPDF(i){
-  const g=GEN[i]; if(!g.pdfBytes) return;
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([g.pdfBytes],{type:'application/pdf'}));
-  a.download=`Constancia_${g.nombre.replace(/\s+/g,'_')}.pdf`;
-  a.click();
-}
-
-async function dlTodos(){
-  const ok=GEN.filter(g=>g.pdfBytes);
-  if(!ok.length){ toast('⚠ No hay PDFs para descargar','warn'); return; }
-  const btn=document.getElementById('dl-all-btn');
-  btn.textContent='⏳ Empaquetando ZIP…'; btn.disabled=true;
-  try{
-    // Load JSZip dynamically
-    if(!window.JSZip){
-      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
-    }
-    const zip=new JSZip();
-    const folder=zip.folder('Constancias');
-    ok.forEach(g=>{
-      const fname=`Constancia_${g.nombre.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g,'').trim().replace(/\s+/g,'_')}.pdf`;
-      folder.file(fname, g.pdfBytes);
-    });
-    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
-    const a=document.createElement('a');
-    const evento=document.getElementById('f-evento-nombre').value.trim()||'Constancias';
-    a.download=`${evento.replace(/\s+/g,'_')}_${isoToday()}.zip`;
-    a.href=URL.createObjectURL(blob);
-    a.click();
-    toast(`✅ ZIP con ${ok.length} constancias descargado`,'success');
-  }catch(err){
-    toast('⚠ Error al crear ZIP: '+err.message,'error');
-    console.error(err);
-  }finally{
-    btn.textContent=`⬇ Descargar todos (${ok.length}) ZIP`;
-    btn.disabled=false;
-  }
-}
-
-function correo(i){
-  const g=GEN[i];
-  const s=`Constancia ITD — ${g.nombre}`;
-  const b=`Estimado/a ${g.nombre},\n\nAdjunto encontrará su constancia de participación.\n\nAtentamente,\nDr. Alejandro Calderón Rentería\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
-  window.location.href=`mailto:${g.correo||''}?subject=${encodeURIComponent(s)}&body=${encodeURIComponent(b)}`;
-}
-
-/* ═══ UTILS ═══════════════════════════════════════ */
-function loadImage(src){
-  return new Promise((res,rej)=>{
-    const img=new Image(); img.crossOrigin='anonymous';
-    img.onload=()=>res(img); img.onerror=rej; img.src=src;
-  });
-}
-function loadScript(src){
-  return new Promise((res,rej)=>{
-    if(document.querySelector(`script[src="${src}"]`)){res();return;}
-    const s=document.createElement('script'); s.src=src;
-    s.onload=res; s.onerror=rej; document.head.appendChild(s);
-  });
-}
-function waitLibs(ms=12000){
-  return new Promise((res,rej)=>{
-    const t=Date.now();
-    const chk=()=>{
-      if(window.jspdf) return res();
-      if(Date.now()-t>ms) return rej(new Error('jsPDF no cargó. Recarga la página.'));
-      setTimeout(chk,200);
-    };chk();
-  });
-}
-/* ═══ CASE MODE ══════════════════════════════════════
-   'title' → Dra. Gerardina de las Maravillas Valenciano
-   'upper' → DRA. GERARDINA DE LAS MARAVILLAS VALENCIANO
-══════════════════════════════════════════════════ */
-let caseMode='title';
-
-function setCaseMode(m){
-  caseMode=m;
-  document.getElementById('cb-title').classList.toggle('active',m==='title');
-  document.getElementById('cb-upper').classList.toggle('active',m==='upper');
-  const inp=document.getElementById('f-nom');
-  if(inp.value.trim()) inp.value=applyCase(inp.value);
-}
-
-function applyCase(str){
-  if(!str.trim()) return str;
-  return caseMode==='upper' ? str.toUpperCase() : toTitleCase(str);
-}
-
-function toTitleCase(str){
-  const PREP=new Set(['de','del','la','las','los','y','e','a','al','con','en','por','sin','sobre']);
-  return str.trim().toLowerCase().split(/\s+/).map((w,i)=>{
-    if(i>0 && PREP.has(w)) return w;
-    return w.replace(/^./,c=>c.toUpperCase());
-  }).join(' ');
-}
-
-/* ═══ ORTOGRAFÍA ════════════════════════════════════
-   Detecta errores comunes en nombres propios:
-   - Acento en mayúsculas faltante  (JOSE → JOSÉ)
-   - Preposiciones mal capitalizadas (DE, DEL, LAS → de, del, las)
-   - Abreviaturas de título mal escritas (DR., DRA., ING., etc.)
-   - Doble espacio, espacios inicio/fin
-   No intenta "corregir" apellidos desconocidos.
-══════════════════════════════════════════════════ */
-
-// Palabras que deben ir en minúscula en nombre propio compuesto
-const PREPOS = new Set(['DE','DEL','DE LA','DE LAS','DE LOS','Y','E','MC','MAC']);
-
-// Correcciones de acentuación comunes en nombres hispanohablantes
-const ACENTO_MAP = {
-  'JOSE':'JOSÉ','MARIA':'MARÍA','JESUS':'JESÚS','RAUL':'RAÚL',
-  'RUBEN':'RUBÉN','CESAR':'CÉSAR','ANGEL':'ÁNGEL','MONICA':'MÓNICA',
-  'VERONICA':'VERÓNICA','ANDRES':'ANDRÉS','RENE':'RENÉ','HECTOR':'HÉCTOR',
-  'VICTOR':'VÍCTOR','MARTIN':'MARTÍN','BELEN':'BELÉN','IVAN':'IVÁN',
-  'SEBASTIAN':'SEBASTIÁN','DARIO':'DARÍO','TOMAS':'TOMÁS','ADRIAN':'ADRIÁN',
-  'VALENTIN':'VALENTÍN','GERMAN':'GERMÁN','RAMON':'RAMÓN','SIMON':'SIMÓN',
-  'SERGIO':'SERGIO','CARLOS':'CARLOS','EDGAR':'EDGAR','OSCAR':'ÓSCAR',
-  'LAZARO':'LÁZARO','MOISES':'MOISÉS','NICOLAS':'NICOLÁS','FELIX':'FÉLIX',
-  'AGUSTIN':'AGUSTÍN','RUFINO':'RUFINO','BRIGIDA':'BRÍGIDA','CANDIDA':'CÁNDIDA',
-  'AURORA':'AURORA','LORENA':'LORENA','VERONICA':'VERÓNICA','PATRICIA':'PATRICIA',
-};
-
-// Títulos que deben ir con punto y mayúscula inicial
-const TITULOS = {
-  'DR':'Dr.','DRA':'Dra.','ING':'Ing.','INGA':'Ing.','LIC':'Lic.',
-  'LICA':'Lic.','MTR':'Mtr.','MTRA':'Mtra.','DR.':'Dr.','DRA.':'Dra.',
-  'ING.':'Ing.','LIC.':'Lic.',
-};
-
-function detectarErrores(texto){
-  if(!texto.trim()) return [];
-  const errores=[];
-  const upper=texto.toUpperCase().trim();
-
-  // 1. Espacios dobles o al inicio/fin
-  if(/\s{2,}/.test(texto)){
-    errores.push({tipo:'espacios', msg:'Espacios dobles detectados',
-      fix: ()=>{ return texto.replace(/\s{2,}/g,' ').trim(); }, global:true});
-  }
-
-  // 2. Tokenizar por palabras (respetando posición)
-  const tokens=texto.trim().split(/\s+/);
-  tokens.forEach((tok,idx)=>{
-    const up=tok.toUpperCase().replace(/[.,]/g,'');
-
-    // Acentuación
-    if(ACENTO_MAP[up] && tok.toUpperCase()!==tok){
-      // solo aplica si ya está en mayúsculas (all-caps)
-    }
-    if(ACENTO_MAP[up]){
-      const correcto = ACENTO_MAP[up];
-      if(tok !== correcto && tok.toUpperCase() === tok){
-        errores.push({tipo:'acento', palabra:tok, sugerencia:correcto, idx,
-          msg:`"${tok}" → debería ser "${correcto}"`,
-          fix:()=>aplicarCorreccion(idx, correcto)});
+      <div style="display:flex;gap:6px;"><a class="btn-sm-blue" target="_blank" href="${g.blobUrl}">👁 Ver PDF</a></div>
+    </div>`;
+        });
       }
-    }
 
-    // Títulos
-    if(TITULOS[up] || TITULOS[tok.toUpperCase()]){
-      const correcto=TITULOS[up]||TITULOS[tok.toUpperCase()];
-      if(tok!==correcto){
-        errores.push({tipo:'titulo', palabra:tok, sugerencia:correcto, idx,
-          msg:`Título: "${tok}" → "${correcto}"`,
-          fix:()=>aplicarCorreccion(idx, correcto)});
+      function loadScript(src) {
+        return new Promise((r) => {
+          const s = document.createElement("script");
+          s.src = src;
+          s.onload = r;
+          document.head.appendChild(s);
+        });
       }
-    }
-  });
 
-  return errores;
-}
+      async function dlTodos() {
+        if (GEN.length === 0) return;
 
-function aplicarCorreccion(tokenIdx, correcto){
-  const inp=document.getElementById('f-nom');
-  const tokens=inp.value.trim().split(/\s+/);
-  tokens[tokenIdx]=correcto;
-  inp.value=tokens.join(' ');
-  ortografiaManual();
-}
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
+        );
+        const zip = new JSZip();
 
-function aplicarCorreccionExcel(nombreOriginal, correcto, idx){
-  // Reemplaza en el array XL
-  if(XL[idx]) XL[idx].nombre=correcto;
-  // Refresca el panel
-  ortografiaExcel();
-  // También actualiza la vista del excel preview
-  const pv=document.getElementById('xl-prev');
-  pv.innerHTML=XL.slice(0,6).map(n=>`<span>• ${n.nombre}${n.correo?' — '+n.correo:''}</span>`).join('');
-  if(XL.length>6) pv.innerHTML+=`<span style="color:#888">…y ${XL.length-6} más</span>`;
-}
+        GEN.forEach((g, i) => {
+          const safeName = g.nombre.replace(/[^a-z0-9]/gi, "_").toLowerCase();
+          zip.file(`constancia_${safeName}_${i + 1}.pdf`, g.pdfBytes);
+        });
 
-function renderErrores(errores, containerId, onFix){
-  const el=document.getElementById(containerId);
-  if(!errores.length){el.innerHTML='';return;}
-  el.innerHTML=errores.map((e,i)=>`
-    <div class="orto-item">
-      <div style="flex:1">
-        <span class="orto-word">${e.palabra||'⚠'}</span>
-        <span class="orto-sug"> — ${e.msg}</span>
-      </div>
-      ${e.fix?`<button class="orto-fix" onclick="(${onFix})(${i})">✔ Aplicar</button>`:''}
-    </div>`).join('');
-}
+        const zipBlob = await zip.generateAsync({ type: "blob" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(zipBlob);
+        a.download = `Constancias_Lote_${new Date().toISOString().split("T")[0]}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
 
-// Guardamos los errores detectados para poder referenciarlos por índice
-let _errManual=[], _errExcel=[];
+      async function printTodos() {
+        if (GEN.length === 0) return;
 
-function ortografiaManual(){
-  const val=document.getElementById('f-nom').value;
-  _errManual=detectarErrores(val);
-  renderErrores(_errManual,'orto-manual','(i)=>{ _errManual[i].fix&&_errManual[i].fix(); }');
-}
+        const okEl = document.getElementById("print-all-btn");
+        const oldText = okEl.innerHTML;
+        okEl.innerHTML = "⏳ Generando...";
+        okEl.disabled = true;
 
-function ortografiaExcel(){
-  if(!XL.length){document.getElementById('orto-excel').innerHTML='';return;}
-  // Revisa todos los nombres y agrupa errores
-  _errExcel=[];
-  XL.forEach((item,xi)=>{
-    const errs=detectarErrores(item.nombre);
-    errs.forEach(e=>{
-      _errExcel.push({...e,
-        xlIdx:xi,
-        msg:`Fila ${xi+1} "${item.nombre}" — ${e.msg}`,
-        fix:e.fix?()=>{
-          // Calcula el nuevo nombre aplicando la corrección
-          const tokens=item.nombre.trim().split(/\s+/);
-          if(e.idx!==undefined) tokens[e.idx]=e.sugerencia;
-          aplicarCorreccionExcel(item.nombre, tokens.join(' '), xi);
-        }:null
-      });
-    });
-  });
-  if(!_errExcel.length){
-    document.getElementById('orto-excel').innerHTML=
-      '<div class="orto-item ok">✅ Sin errores ortográficos detectados en los nombres</div>';
-    return;
-  }
-  renderErrores(_errExcel,'orto-excel','(i)=>{ _errExcel[i].fix&&_errExcel[i].fix(); }');
-}
+        try {
+          await loadScript(
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js",
+          );
+          const { PDFDocument } = window.PDFLib;
 
-/* ═══ USUARIOS (via Apps Script) ═══════════════════════════════════════ */
-async function renderUsers(){
-  const list=document.getElementById('usr-list'), empty=document.getElementById('usr-empty');
-  list.innerHTML='<div style="padding:20px;text-align:center;color:#aaa">Cargando…</div>';
-  try{
-    const resp=await fetch(`${SCRIPT_URL}?action=listUsers`);
-    const data=await resp.json();
-    if(!data.ok) throw new Error(data.error);
-    const users=data.users;
-    document.getElementById('usr-cnt').textContent=`${users.length} usuario(s) registrado(s)`;
-    if(!users.length){list.innerHTML='';empty.classList.remove('hidden');return;}
-    empty.classList.add('hidden');
-    list.innerHTML=users.map(u=>`
-      <div class="usr-row" style="${!u.active?'opacity:.6;background:#fafafa':''}">
-        <div><div style="font-weight:700;font-size:14px">${u.name}</div><div style="font-size:10px;color:#bbb">${new Date(u.createdAt).toLocaleDateString('es-MX')}</div></div>
-        <div class="hide-sm" style="font-size:12px;color:#666;word-break:break-all">${u.email}</div>
-        <div><span class="badge ${u.isAdmin?'badge-red':'badge-blue'}">${u.isAdmin?'Admin':'Usuario'}</span></div>
-        <div><button class="tog-btn ${u.active?'tog-on':'tog-off'}" onclick="toggleU('${u.id}')">${u.active?'Activo':'Inactivo'}</button></div>
-        <div style="text-align:right">${u.email!==CU.email?'<button class="btn-sm-red" onclick="delUser(\''+u.id+'\')">🗑</button>':''}</div>
-      </div>`).join('');
-  }catch(err){
-    list.innerHTML=`<div style="padding:20px;text-align:center;color:#e05050">⚠ Error al cargar usuarios: ${err.message}</div>`;
-  }
-}
-function toggleUF(hide){
-  const c=document.getElementById('uf-card'), b=document.getElementById('nw-btn');
-  if(hide||!c.classList.contains('hidden')){c.classList.add('hidden');b.textContent='+ Nuevo usuario';b.className='btn btn-primary';}
-  else{c.classList.remove('hidden');b.textContent='✕ Cancelar';b.className='btn btn-ghost';document.getElementById('uf-err').classList.add('hidden');}
-}
-async function crearUsuario(){
-  const name=document.getElementById('uf-nm').value.trim();
-  const _ue=document.getElementById('uf-em').value.trim().toLowerCase();
-  const email=_ue.includes('@')?_ue:_ue+'@itdurango.edu.mx';
-  const pass=document.getElementById('uf-pw').value.trim();
-  const isAdm=document.getElementById('uf-adm').checked;
-  const errEl=document.getElementById('uf-err'), btn=document.getElementById('uf-sv');
-  errEl.classList.add('hidden');
-  if(!name||!email||!pass){errEl.textContent='⚠ Todos los campos son requeridos.';errEl.classList.remove('hidden');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){errEl.textContent='⚠ Correo inválido.';errEl.classList.remove('hidden');return;}
-  btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Guardando…';
-  try{
-    const hash=await h256(pass);
-    const resp=await fetch(SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'createUser',name,email,hash,isAdmin:isAdm})
-    });
-    const data=await resp.json();
-    if(!data.ok) throw new Error(data.error||'Error al crear usuario');
-    toggleUF(true); renderUsers();
-    ['uf-nm','uf-em','uf-pw'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('uf-adm').checked=false;
-    toast(`✅ Usuario ${email} creado`,'success');
-  }catch(err){
-    errEl.textContent='⚠ '+err.message;
-    errEl.classList.remove('hidden');
-  }finally{btn.disabled=false;btn.innerHTML='💾 Crear usuario';}
-}
-async function toggleU(id){
-  try{
-    const resp=await fetch(`${SCRIPT_URL}?action=toggleUser&id=${encodeURIComponent(id)}`);
-    const data=await resp.json();
-    if(!data.ok) throw new Error(data.error);
-    renderUsers(); toast('Estado actualizado','info');
-  }catch(err){ toast('❌ '+err.message,'error'); }
-}
-async function delUser(id){
-  if(!confirm('&#191;Eliminar este usuario?')) return;
-  try{
-    const resp=await fetch(`${SCRIPT_URL}?action=deleteUser&id=${encodeURIComponent(id)}`);
-    const data=await resp.json();
-    if(!data.ok) throw new Error(data.error);
-    renderUsers(); toast('Usuario eliminado','info');
-  }catch(err){ toast('❌ '+err.message,'error'); }
-}
+          const mergedPdf = await PDFDocument.create();
+          for (const g of GEN) {
+            const pdfDoc = await PDFDocument.load(g.pdfBytes);
+            const copiedPages = await mergedPdf.copyPages(
+              pdfDoc,
+              pdfDoc.getPageIndices(),
+            );
+            copiedPages.forEach((page) => mergedPdf.addPage(page));
+          }
 
-</script>
+          const mergedPdfFile = await mergedPdf.save();
+          const blob = new Blob([mergedPdfFile], { type: "application/pdf" });
+          const blobUrl = URL.createObjectURL(blob);
 
-<!-- jsPDF y html2canvas: carga diferida para no bloquear la página -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-</body>
+          const win = window.open(blobUrl, "_blank");
+          if (win) {
+            win.focus();
+          } else {
+            alert("Por favor, permite las ventanas emergentes para imprimir.");
+          }
+        } catch (e) {
+          console.error(e);
+          alert("Error al generar vista de impresión");
+        } finally {
+          okEl.innerHTML = oldText;
+          okEl.disabled = false;
+        }
+      }
+      function doLogin() {
+        document.getElementById("page-login").style.display = "none";
+        document.getElementById("page-app").classList.remove("hidden");
+      }
+      function doLogout() {
+        document.getElementById("page-login").style.display = "flex";
+        document.getElementById("page-app").classList.add("hidden");
+      }
+    </script>
+  </body>
 </html>
