@@ -25,12 +25,6 @@
       @keyframes spin      { to{transform:rotate(360deg)} }
     </style>
     
-    <!-- Babel para JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
     <script>
       tailwind.config = {
         theme: {
@@ -49,15 +43,17 @@
         }
       }
     </script>
-    
-    <!-- IMPORT MAP: LIMPIO Y CON VERSIONES DE REACT ALINEADAS -->
+
+    <!-- Babel para JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- IMPORT MAP: LIMPIO Y ESTABILIZADO (Estricto a React 18) -->
     <script type="importmap">
     {
       "imports": {
         "react": "https://esm.sh/react@18.2.0",
         "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "react-dom": "https://esm.sh/react-dom@18.2.0",
-        "lucide-react": "https://esm.sh/lucide-react@0.303.0"
+        "lucide-react": "https://esm.sh/lucide-react@0.303.0?external=react"
       }
     }
     </script>
