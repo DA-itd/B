@@ -2,12 +2,13 @@
 <html lang="es">
   <head>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V2V4CT2C69"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-V2V4CT2C69');
-    </script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-V2V4CT2C69');
+  
+</script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Portal oficial para la descarga de constancias y reconocimientos del Instituto Tecnológico de Durango.">
@@ -25,6 +26,12 @@
       @keyframes spin      { to{transform:rotate(360deg)} }
     </style>
     
+    <!-- Babel para JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     <script>
       tailwind.config = {
         theme: {
@@ -43,20 +50,18 @@
         }
       }
     </script>
-
-    <!-- Babel para JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
-    <!-- IMPORT MAP: LIMPIO Y ESTABILIZADO (Estricto a React 18) -->
+    
+    <!-- IMPORT MAP CORREGIDO PARA EVITAR ERRORES DE VERSIÓN -->
     <script type="importmap">
-    {
-      "imports": {
-        "react": "https://esm.sh/react@18.2.0",
-        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-        "lucide-react": "https://esm.sh/lucide-react@0.303.0?external=react"
-      }
-    }
-    </script>
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.2.0",
+    "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.303.0?external=react,react-dom",
+    "react-dom/": "https://esm.sh/react-dom@18.2.0/"
+  }
+}
+</script>
   </head>
   <body class="bg-gray-50 text-gray-900 antialiased">
     <!-- Botón de salida -->
