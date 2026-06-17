@@ -81,8 +81,11 @@
     const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com";
     const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
     
-    const CONSTANCIAS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAe4dmVN4CArjEy_lvI5qrXf16naxZLO1lAxGm2Pj4TrdnoebBg03Vv4-DCXciAkHJFiZaBMKletUs/pub?gid=0&single=true&output=csv';
-    
+    const CONSTANCIAS_URLS = {
+  '2024': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=1498092717&single=true&output=csv',
+  '2025': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=763823969&single=true&output=csv',
+  '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=2076074898&single=true&output=csv'
+};
     const ADMIN_EMAILS = ['alejandro.calderon@itdurango.edu.mx', 'coord_actualizaciondocente@itdurango.edu.mx'];
     const ADMIN_PASSWORD = "X987ela";
     const GENERAR_CONSTANCIA_URL = "https://script.google.com/macros/s/AKfycbxRpN34MVIg3XVJYfV80WOzNilDpVJEMSw9RuMc7PI49zH1Wl-z2Si8hLxCzOMiJaQSpA/exec";
@@ -260,10 +263,16 @@
     // ============================================================
     // 6. FUNCIÓN PARA OBTENER CONSTANCIAS
     // ============================================================
-    const getConstancias = async (year) => {
-      try {
-        const response = await fetch(`${CONSTANCIAS_CSV_URL}&_=${Date.now()}`);
-        if (!response.ok) throw new Error('Error al cargar constancias');
+   const getConstancias = async (year) => {
+  try {
+    const url = CONSTANCIAS_URLS[year];  // ← Esto usa las URLs
+    if (!url) {
+      console.warn('⚠️ No hay URL para el año:', year);
+      return [];
+    }
+    // ... resto de la función
+  }
+}
         
         const csvText = await response.text();
         const lines = csvText.trim().split(/\r?\n/);
