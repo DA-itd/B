@@ -63,29 +63,21 @@
   </script>
 </head>
 <body>
-  <a href="https://da-itd.github.io/A/index.html"
-     style="position:fixed;top:16px;right:16px;z-index:9999;display:inline-flex;align-items:center;gap:7px;background:#1B396A;color:#fff;font-family:Inter,sans-serif;font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,0.18);transition:background 0.2s;"
-     onmouseover="this.style.background='#B32032'" onmouseout="this.style.background='#1B396A'">
-    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-    Salir
-  </a>
-  
   <div id="root"></div>
   
   <script>
     // ============================================================
-    // 1. CONFIGURACIÓN
+    // 1. CONFIGURACIÓN - CON LAS 3 URLS PUBLICADAS
     // ============================================================
     const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com";
     const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
     
     const CONSTANCIAS_URLS = {
-  '2024': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=1498092717&single=true&output=csv',
-  '2025': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=763823969&single=true&output=csv',
-  '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=2076074898&single=true&output=csv'
-};
+      '2024': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=1498092717&single=true&output=csv',
+      '2025': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=763823969&single=true&output=csv',
+      '2026': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=2076074898&single=true&output=csv'
+    };
+    
     const ADMIN_EMAILS = ['alejandro.calderon@itdurango.edu.mx', 'coord_actualizaciondocente@itdurango.edu.mx'];
     const ADMIN_PASSWORD = "X987ela";
     const GENERAR_CONSTANCIA_URL = "https://script.google.com/macros/s/AKfycbxRpN34MVIg3XVJYfV80WOzNilDpVJEMSw9RuMc7PI49zH1Wl-z2Si8hLxCzOMiJaQSpA/exec";
@@ -261,25 +253,37 @@
     };
     
     // ============================================================
-    // 6. FUNCIÓN PARA OBTENER CONSTANCIAS
+    // 6. FUNCIÓN getConstancias - CON URLs POR AÑO
     // ============================================================
-   const getConstancias = async (year) => {
-  try {
-    const url = CONSTANCIAS_URLS[year];  // ← Esto usa las URLs
-    if (!url) {
-      console.warn('⚠️ No hay URL para el año:', year);
-      return [];
-    }
-    // ... resto de la función
-  }
-}
+    const getConstancias = async (year) => {
+      try {
+        const url = CONSTANCIAS_URLS[year];
+        if (!url) {
+          console.warn('⚠️ No hay URL para el año:', year);
+          return [];
+        }
+        
+        console.log('📥 Cargando constancias para el año:', year);
+        console.log('🔗 URL:', url);
+        
+        const response = await fetch(`${url}&_=${Date.now()}`);
+        if (!response.ok) throw new Error('Error al cargar constancias');
         
         const csvText = await response.text();
-        const lines = csvText.trim().split(/\r?\n/);
+        console.log('📄 CSV cargado, longitud:', csvText.length);
+        console.log('📄 Primeras 200 caracteres:', csvText.substring(0, 200));
         
-        if (lines.length < 2) return [];
+        const lines = csvText.trim().split(/\r?\n/);
+        console.log('📊 Líneas totales:', lines.length);
+        
+        if (lines.length < 2) {
+          console.warn('⚠️ El CSV tiene menos de 2 líneas');
+          return [];
+        }
         
         const headers = parseCSVLine(lines[0]);
+        console.log('📋 Encabezados:', headers);
+        
         const findCol = (keywords) => headers.findIndex(h => keywords.some(k => normalize(h).includes(normalize(k))));
         
         const idx = {
@@ -291,8 +295,17 @@
           link: findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
         };
         
+        console.log('🔍 Índices encontrados:', {
+          nombre: idx.nombre,
+          correo: idx.correo,
+          curso: idx.curso,
+          fecha: idx.fecha,
+          status: idx.status,
+          link: idx.link
+        });
+        
         if (idx.correo === -1) {
-          console.error('No se encontró la columna de correo. Encabezados:', headers);
+          console.error('❌ No se encontró la columna de correo. Encabezados:', headers);
           return [];
         }
         
@@ -302,34 +315,29 @@
             const values = parseCSVLine(line);
             if (values.length < 2) return null;
             
-            const fechaRaw = idx.fecha !== -1 ? cleanCSVValue(values[idx.fecha]) : '';
-            const fechaNormalizada = fechaRaw.replace(/\s*-\s*/g, '').trim();
-            
-            return {
+            const item = {
               id: Math.random().toString(36).substr(2, 9),
               nombre: idx.nombre !== -1 ? cleanCSVValue(values[idx.nombre]) : 'Usuario ITD',
               correo: cleanCSVValue(values[idx.correo]).toLowerCase(),
               curso: idx.curso !== -1 ? cleanCSVValue(values[idx.curso]) : 'Documento ITD',
-              fecha: fechaRaw || year,
-              fechaNormalizada: fechaNormalizada,
+              fecha: idx.fecha !== -1 ? cleanCSVValue(values[idx.fecha]) : year,
               status: idx.status !== -1 ? cleanCSVValue(values[idx.status]).toUpperCase().trim() : 'ENVIADO',
               link: idx.link !== -1 ? cleanCSVValue(values[idx.link]) : '',
               year: year
             };
+            
+            return item;
           })
           .filter(item => item && item.correo);
         
-        if (year) {
-          return data.filter(item => {
-            const yearMatch = item.fecha.match(/\d{4}/);
-            const itemYear = yearMatch ? yearMatch[0] : '';
-            return itemYear === year || item.fechaNormalizada === year;
-          });
+        console.log('📊 Datos procesados:', data.length, 'registros');
+        if (data.length > 0) {
+          console.log('📊 Primer registro:', data[0]);
         }
         
         return data;
       } catch (error) {
-        console.error("Error al obtener constancias:", error);
+        console.error("❌ Error al obtener constancias:", error);
         return [];
       }
     };
@@ -485,7 +493,7 @@
             )
           ),
           
-          // Tarjeta 2 - Generar Constancia (CORREGIDA)
+          // Tarjeta 2 - Generar Constancia
           h('div', { style: { ...S.card('rgba(26,58,92,.1)'), opacity: estaActiva ? 1 : 0.55, transition: 'opacity .3s' } },
             h('div', { style: S.stripe(estaActiva 
               ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)'
@@ -848,7 +856,7 @@
     const root = createRoot(document.getElementById('root'));
     root.render(h(App, null));
     
-    console.log('✅ App iniciada correctamente');
+    console.log('✅ App iniciada correctamente - Con URLs por año');
   </script>
 </body>
 </html>
