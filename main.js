@@ -1,7 +1,35 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import ReactDOM from 'react-dom/client';
-import { ArrowRight, FileDown, LogOut, Search, ShieldCheck, AlertCircle, FileText, Download, AlertTriangle, Database, Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, ExternalLink } from 'lucide-react';
-const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
+// ==========================================
+// CONFIGURACIÓN PARA SCRIPT NORMAL (SIN MÓDULOS)
+// ==========================================
+
+// Obtener React y ReactDOM desde el objeto window
+const React = window.React;
+const ReactDOM = window.ReactDOM;
+
+// Destructurar hooks de React
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const { createRoot } = ReactDOM;
+
+// Obtener iconos de lucide-react
+const lucideReact = window.lucideReact || {};
+const { 
+    Mail, ArrowRight, FileDown, LogOut, Search, ShieldCheck, 
+    AlertCircle, FileText, Download, AlertTriangle, Database, 
+    Lock, Calendar, CheckCircle, Send, Share2, Clock, Award, 
+    ExternalLink 
+} = lucideReact;
+
+// ==========================================
+// CONFIGURACIÓN DE LA APLICACIÓN
+// ==========================================
+
+// El resto de tu código main.js continúa igual...
+// (GOOGLE_CLIENT_ID, LOGO_URL, DATA_SOURCES, etc.)
+console.log('✅ main.js cargado correctamente');
+console.log('📦 React:', React ? 'Cargado' : 'No cargado');
+console.log('📦 ReactDOM:', ReactDOM ? 'Cargado' : 'No cargado');
+console.log('📦 lucideReact:', window.lucideReact ? 'Cargado' : 'No cargado');
+console.log('📦 Iconos:', Mail ? 'Cargados' : 'No cargados');const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com"; 
 
 const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
 
