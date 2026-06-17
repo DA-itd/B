@@ -86,8 +86,6 @@
     const ADMIN_EMAILS = ['alejandro.calderon@itdurango.edu.mx', 'coord_actualizaciondocente@itdurango.edu.mx'];
     const ADMIN_PASSWORD = "X987ela";
     const GENERAR_CONSTANCIA_URL = "https://script.google.com/macros/s/AKfycbxRpN34MVIg3XVJYfV80WOzNilDpVJEMSw9RuMc7PI49zH1Wl-z2Si8hLxCzOMiJaQSpA/exec";
-    
-    // Fecha de apertura: 29 de junio de 2026
     const FECHA_APERTURA = new Date('2026-06-29T00:00:00');
     
     // ============================================================
@@ -97,11 +95,10 @@
     const ReactDOM = window.ReactDOM;
     const { useState, useEffect, useMemo, useRef } = React;
     const { createRoot } = ReactDOM;
-    
     const h = React.createElement;
     
     // ============================================================
-    // 3. ICONOS INLINE
+    // 3. ICONOS
     // ============================================================
     const Icon = (props, children) => h('svg', {
       xmlns: "http://www.w3.org/2000/svg",
@@ -214,7 +211,7 @@
     };
     
     // ============================================================
-    // 5. UTILIDADES - LECTURA DE GOOGLE SHEETS
+    // 5. UTILIDADES
     // ============================================================
     const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
     
@@ -341,11 +338,7 @@
         try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
       });
       const googleIntencion = useRef('login');
-      
-      // Cuenta regresiva
       const countdown = useCountdown(FECHA_APERTURA);
-      
-      // Determinar si la tarjeta debe estar activa
       const estaActiva = constActivada || countdown.abierto;
       
       const abrirConstancia = () => {
@@ -483,16 +476,13 @@
             )
           ),
           
-          // ============================================================
-          // TARJETA 2 - GENERAR CONSTANCIA (COMPLETAMENTE RESTAURADA)
-          // ============================================================
+          // Tarjeta 2 - Generar Constancia (CORREGIDA)
           h('div', { style: { ...S.card('rgba(26,58,92,.1)'), opacity: estaActiva ? 1 : 0.55, transition: 'opacity .3s' } },
             h('div', { style: S.stripe(estaActiva 
               ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)'
               : 'linear-gradient(90deg,#999 0%,#bbb 50%,#999 100%)'
             ) }),
             h('div', { style: S.cardBody },
-              // Encabezado
               h('div', { style: { display: 'flex', alignItems: 'center', gap: '.85rem', marginBottom: '.2rem' } },
                 h('div', { style: S.iconWrap(
                   estaActiva ? 'linear-gradient(135deg,#1B396A,#2B5580)' : 'linear-gradient(135deg,#999,#bbb)',
@@ -505,18 +495,13 @@
                   h('div', { style: S.cardSub }, estaActiva ? 'Cursos Junio–Agosto 2026' : 'Disponible próximamente')
                 )
               ),
-              
-              // Descripción
               h('p', { style: S.desc }, 
                 estaActiva 
                   ? 'Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.'
                   : 'Este servicio estará disponible a partir del 29 de junio de 2026, al concluir el periodo de actualización docente.'
               ),
-              
               estaActiva ? (
-                // === MODO ACTIVO ===
                 h('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', gap: '.55rem' } },
-                  // Campo de usuario
                   h('div', { style: { display: 'flex', borderRadius: 12, overflow: 'hidden', border: '1.5px solid #d1d5db', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.06)' } },
                     h('input', { 
                       id: 'inputUsuarioConstancia',
@@ -529,52 +514,40 @@
                     }),
                     h('span', { style: { display: 'flex', alignItems: 'center', padding: '.72rem .75rem .72rem 0', fontSize: '.78rem', color: '#9090A0', fontFamily: "'DM Sans','Inter',sans-serif", whiteSpace: 'nowrap', userSelect: 'none' } }, '@itdurango.edu.mx')
                   ),
-                  
-                  // Botón generar
                   h('button', { 
                     onClick: abrirConstancia,
                     style: { width: '100%', padding: '.82rem 1rem', background: 'linear-gradient(135deg,#1B396A,#2B5580)', color: '#F5E4A8', border: 'none', borderRadius: 12, fontFamily: "'DM Sans','Inter',sans-serif", fontWeight: 700, fontSize: '.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', boxShadow: '0 4px 14px rgba(26,58,92,.30)' } },
                     h(AwardIcon, { size: 16, color: '#F5E4A8' }), 
                     ' Generar mi Constancia'
                   ),
-                  
-                  // Mensaje de seguridad
                   h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', fontSize: '.7rem', color: '#A0A0B0' } },
                     h(LockIcon, { size: 11 }), 
                     ' Acceso con tu usuario institucional'
                   )
                 )
               ) : (
-                // === MODO INACTIVO - CUENTA REGRESIVA ===
                 h('div', { style: { display: 'flex', flexDirection: 'column', gap: '.65rem' } },
-                  // Cuenta regresiva
                   h('div', { style: { display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: '.5rem', padding: '.75rem', borderRadius: 12, background: 'rgba(26,58,92,.04)', border: '1px solid rgba(26,58,92,.09)' } },
-                    // Días
                     h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
                       h('div', { className: 'countdown-box' }, String(countdown.dias).padStart(2, '0')),
                       h('span', { className: 'countdown-label' }, 'Días')
                     ),
                     h('span', { style: { color: '#C8C8D0', fontWeight: 300, fontSize: '1rem', marginTop: '.35rem', lineHeight: 1 } }, ':'),
-                    // Horas
                     h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
                       h('div', { className: 'countdown-box' }, String(countdown.horas).padStart(2, '0')),
                       h('span', { className: 'countdown-label' }, 'Horas')
                     ),
                     h('span', { style: { color: '#C8C8D0', fontWeight: 300, fontSize: '1rem', marginTop: '.35rem', lineHeight: 1 } }, ':'),
-                    // Minutos
                     h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
                       h('div', { className: 'countdown-box' }, String(countdown.minutos).padStart(2, '0')),
                       h('span', { className: 'countdown-label' }, 'Min')
                     ),
                     h('span', { style: { color: '#C8C8D0', fontWeight: 300, fontSize: '1rem', marginTop: '.35rem', lineHeight: 1 } }, ':'),
-                    // Segundos
                     h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
                       h('div', { className: 'countdown-box', style: { animation: 'pulse 1s ease-in-out infinite' } }, String(countdown.segundos).padStart(2, '0')),
                       h('span', { className: 'countdown-label' }, 'Seg')
                     )
                   ),
-                  
-                  // Mensaje de espera
                   h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '.5rem', borderRadius: 8, background: '#f8f4ec', color: '#6B6B7B', fontSize: '.75rem', fontWeight: 500 } },
                     h(ClockIcon, { size: 14, color: '#6B6B7B' }), 
                     ' Apertura: 29 de junio de 2026'
@@ -866,7 +839,7 @@
     const root = createRoot(document.getElementById('root'));
     root.render(h(App, null));
     
-    console.log('✅ App iniciada - Tarjeta "Generar Constancia" completamente restaurada');
+    console.log('✅ App iniciada correctamente');
   </script>
 </body>
 </html>
