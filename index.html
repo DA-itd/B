@@ -19,9 +19,32 @@
     @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
     @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
     @keyframes ringPulse { 0%{transform:scale(1);opacity:.55} 100%{transform:scale(1.55);opacity:0} }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     * { box-sizing: border-box; }
     body { font-family:'DM Sans','Inter',sans-serif; background:#f8f4ec; min-height:100vh; margin:0; }
     #googleSignInDiv { min-height:44px; width:100%; }
+    .countdown-box { 
+      background: #1B396A; 
+      color: #fff; 
+      border-radius: 9px; 
+      width: 44px; 
+      height: 44px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-weight: 700; 
+      font-size: 1.1rem; 
+      font-variant-numeric: tabular-nums;
+      box-shadow: 0 2px 8px rgba(26,58,92,.22);
+    }
+    .countdown-label {
+      font-size: 0.5rem;
+      color: #9090A0;
+      margin-top: 0.2rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+    }
   </style>
   
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
@@ -53,18 +76,19 @@
   
   <script>
     // ============================================================
-    // 1. CONFIGURACIÓN - GOOGLE SHEETS
+    // 1. CONFIGURACIÓN
     // ============================================================
     const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com";
     const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
     
-    // URLs de Google Sheets para CONSTANCIAS (no cursos)
-    // Esta hoja contiene: Nombre, EmailAddress, Codigo, Año, Status, FileAttachments
     const CONSTANCIAS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAe4dmVN4CArjEy_lvI5qrXf16naxZLO1lAxGm2Pj4TrdnoebBg03Vv4-DCXciAkHJFiZaBMKletUs/pub?gid=0&single=true&output=csv';
     
     const ADMIN_EMAILS = ['alejandro.calderon@itdurango.edu.mx', 'coord_actualizaciondocente@itdurango.edu.mx'];
     const ADMIN_PASSWORD = "X987ela";
     const GENERAR_CONSTANCIA_URL = "https://script.google.com/macros/s/AKfycbxRpN34MVIg3XVJYfV80WOzNilDpVJEMSw9RuMc7PI49zH1Wl-z2Si8hLxCzOMiJaQSpA/exec";
+    
+    // Fecha de apertura: 29 de junio de 2026
+    const FECHA_APERTURA = new Date('2026-06-29T00:00:00');
     
     // ============================================================
     // 2. REACT Y UTILIDADES
@@ -163,7 +187,34 @@
     ]);
     
     // ============================================================
-    // 4. UTILIDADES - LECTURA DE GOOGLE SHEETS
+    // 4. HOOK: CUENTA REGRESIVA
+    // ============================================================
+    const useCountdown = (targetDate) => {
+      const calcular = () => {
+        const ahora = new Date();
+        const diff = targetDate - ahora;
+        if (diff <= 0) return { dias: 0, horas: 0, minutos: 0, segundos: 0, abierto: true };
+        return {
+          dias: Math.floor(diff / (1000 * 60 * 60 * 24)),
+          horas: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          minutos: Math.floor((diff / (1000 * 60)) % 60),
+          segundos: Math.floor((diff / 1000) % 60),
+          abierto: false
+        };
+      };
+      
+      const [tiempo, setTiempo] = useState(calcular);
+      
+      useEffect(() => {
+        const intervalo = setInterval(() => setTiempo(calcular()), 1000);
+        return () => clearInterval(intervalo);
+      }, [targetDate]);
+      
+      return tiempo;
+    };
+    
+    // ============================================================
+    // 5. UTILIDADES - LECTURA DE GOOGLE SHEETS
     // ============================================================
     const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
     
@@ -210,9 +261,8 @@
     };
     
     // ============================================================
-    // 5. FUNCIÓN PARA OBTENER CONSTANCIAS DESDE GOOGLE SHEETS
+    // 6. FUNCIÓN PARA OBTENER CONSTANCIAS
     // ============================================================
-    
     const getConstancias = async (year) => {
       try {
         const response = await fetch(`${CONSTANCIAS_CSV_URL}&_=${Date.now()}`);
@@ -223,7 +273,6 @@
         
         if (lines.length < 2) return [];
         
-        // Detectar encabezados
         const headers = parseCSVLine(lines[0]);
         const findCol = (keywords) => headers.findIndex(h => keywords.some(k => normalize(h).includes(normalize(k))));
         
@@ -264,10 +313,8 @@
           })
           .filter(item => item && item.correo);
         
-        // Filtrar por año si se especifica
         if (year) {
           return data.filter(item => {
-            // Buscar el año en la fecha
             const yearMatch = item.fecha.match(/\d{4}/);
             const itemYear = yearMatch ? yearMatch[0] : '';
             return itemYear === year || item.fechaNormalizada === year;
@@ -282,7 +329,7 @@
     };
     
     // ============================================================
-    // 6. COMPONENTE LOGIN
+    // 7. COMPONENTE LOGIN
     // ============================================================
     const Login = ({ onLogin }) => {
       const [error, setError] = useState('');
@@ -294,6 +341,12 @@
         try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
       });
       const googleIntencion = useRef('login');
+      
+      // Cuenta regresiva
+      const countdown = useCountdown(FECHA_APERTURA);
+      
+      // Determinar si la tarjeta debe estar activa
+      const estaActiva = constActivada || countdown.abierto;
       
       const abrirConstancia = () => {
         const input = document.getElementById('inputUsuarioConstancia');
@@ -430,33 +483,108 @@
             )
           ),
           
-          // Tarjeta 2 - Generar Constancia
-          h('div', { style: { ...S.card('rgba(26,58,92,.1)'), opacity: constActivada ? 1 : 0.55, transition: 'opacity .3s' } },
-            h('div', { style: S.stripe(constActivada ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)' : 'linear-gradient(90deg,#999 0%,#bbb 50%,#999 100%)') }),
+          // ============================================================
+          // TARJETA 2 - GENERAR CONSTANCIA (COMPLETAMENTE RESTAURADA)
+          // ============================================================
+          h('div', { style: { ...S.card('rgba(26,58,92,.1)'), opacity: estaActiva ? 1 : 0.55, transition: 'opacity .3s' } },
+            h('div', { style: S.stripe(estaActiva 
+              ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)'
+              : 'linear-gradient(90deg,#999 0%,#bbb 50%,#999 100%)'
+            ) }),
             h('div', { style: S.cardBody },
+              // Encabezado
               h('div', { style: { display: 'flex', alignItems: 'center', gap: '.85rem', marginBottom: '.2rem' } },
-                h('div', { style: S.iconWrap(constActivada ? 'linear-gradient(135deg,#1B396A,#2B5580)' : 'linear-gradient(135deg,#999,#bbb)', constActivada ? '0 3px 14px rgba(26,58,92,.25)' : 'none' }), 
-                  constActivada ? h(AwardIcon, { size: 21, color: '#F5E4A8' }) : h(LockIcon, { size: 21, color: '#fff' }),
+                h('div', { style: S.iconWrap(
+                  estaActiva ? 'linear-gradient(135deg,#1B396A,#2B5580)' : 'linear-gradient(135deg,#999,#bbb)',
+                  estaActiva ? '0 3px 14px rgba(26,58,92,.25)' : 'none'
+                ) }, 
+                  estaActiva ? h(AwardIcon, { size: 21, color: '#F5E4A8' }) : h(LockIcon, { size: 21, color: '#fff' })
+                ),
                 h('div', null,
                   h('div', { style: S.cardTitle }, 'Generar Constancia'),
-                  h('div', { style: S.cardSub }, constActivada ? 'Cursos Junio–Agosto 2026' : 'Disponible próximamente')
+                  h('div', { style: S.cardSub }, estaActiva ? 'Cursos Junio–Agosto 2026' : 'Disponible próximamente')
                 )
               ),
-              h('p', { style: S.desc }, constActivada ? 'Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.' : 'Este servicio estará disponible a partir del 29 de junio de 2026, al concluir el periodo de actualización docente.'),
-              constActivada ?
+              
+              // Descripción
+              h('p', { style: S.desc }, 
+                estaActiva 
+                  ? 'Genera el PDF de tu constancia o reconocimiento de los cursos de actualización docente del periodo actual.'
+                  : 'Este servicio estará disponible a partir del 29 de junio de 2026, al concluir el periodo de actualización docente.'
+              ),
+              
+              estaActiva ? (
+                // === MODO ACTIVO ===
                 h('div', { style: { flex: 1, display: 'flex', flexDirection: 'column', gap: '.55rem' } },
+                  // Campo de usuario
                   h('div', { style: { display: 'flex', borderRadius: 12, overflow: 'hidden', border: '1.5px solid #d1d5db', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,.06)' } },
-                    h('input', { id: 'inputUsuarioConstancia', type: 'text', placeholder: 'tu.usuario', autoComplete: 'off', autoCapitalize: 'none', onKeyDown: (e) => { if (e.key === 'Enter') abrirConstancia(); }, style: { flex: 1, padding: '.72rem .9rem', border: 'none', outline: 'none', fontSize: '.88rem', fontFamily: "'DM Sans','Inter',sans-serif", color: '#1A1720', background: 'transparent' } }),
+                    h('input', { 
+                      id: 'inputUsuarioConstancia',
+                      type: 'text', 
+                      placeholder: 'tu.usuario', 
+                      autoComplete: 'off',
+                      autoCapitalize: 'none',
+                      onKeyDown: (e) => { if (e.key === 'Enter') abrirConstancia(); },
+                      style: { flex: 1, padding: '.72rem .9rem', border: 'none', outline: 'none', fontSize: '.88rem', fontFamily: "'DM Sans','Inter',sans-serif", color: '#1A1720', background: 'transparent' }
+                    }),
                     h('span', { style: { display: 'flex', alignItems: 'center', padding: '.72rem .75rem .72rem 0', fontSize: '.78rem', color: '#9090A0', fontFamily: "'DM Sans','Inter',sans-serif", whiteSpace: 'nowrap', userSelect: 'none' } }, '@itdurango.edu.mx')
                   ),
-                  h('button', { onClick: abrirConstancia, style: { width: '100%', padding: '.82rem 1rem', background: 'linear-gradient(135deg,#1B396A,#2B5580)', color: '#F5E4A8', border: 'none', borderRadius: 12, fontFamily: "'DM Sans','Inter',sans-serif", fontWeight: 700, fontSize: '.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', boxShadow: '0 4px 14px rgba(26,58,92,.30)' } }, h(AwardIcon, { size: 16, color: '#F5E4A8' }), ' Generar mi Constancia'),
-                  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', fontSize: '.7rem', color: '#A0A0B0' } }, h(LockIcon, { size: 11 }), ' Acceso con tu usuario institucional')
-                ) :
-                h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '.82rem 1rem', borderRadius: 12, background: '#f0f0f0', color: '#999', fontSize: '.83rem', fontWeight: 500 } }, h(ClockIcon, { size: 15, color: '#bbb' }), ' Próximamente — 29 Jun 2026')
+                  
+                  // Botón generar
+                  h('button', { 
+                    onClick: abrirConstancia,
+                    style: { width: '100%', padding: '.82rem 1rem', background: 'linear-gradient(135deg,#1B396A,#2B5580)', color: '#F5E4A8', border: 'none', borderRadius: 12, fontFamily: "'DM Sans','Inter',sans-serif", fontWeight: 700, fontSize: '.9rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', boxShadow: '0 4px 14px rgba(26,58,92,.30)' } },
+                    h(AwardIcon, { size: 16, color: '#F5E4A8' }), 
+                    ' Generar mi Constancia'
+                  ),
+                  
+                  // Mensaje de seguridad
+                  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.35rem', fontSize: '.7rem', color: '#A0A0B0' } },
+                    h(LockIcon, { size: 11 }), 
+                    ' Acceso con tu usuario institucional'
+                  )
+                )
+              ) : (
+                // === MODO INACTIVO - CUENTA REGRESIVA ===
+                h('div', { style: { display: 'flex', flexDirection: 'column', gap: '.65rem' } },
+                  // Cuenta regresiva
+                  h('div', { style: { display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: '.5rem', padding: '.75rem', borderRadius: 12, background: 'rgba(26,58,92,.04)', border: '1px solid rgba(26,58,92,.09)' } },
+                    // Días
+                    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
+                      h('div', { className: 'countdown-box' }, String(countdown.dias).padStart(2, '0')),
+                      h('span', { className: 'countdown-label' }, 'Días')
+                    ),
+                    h('span', { style: { color: '#C8C8D0', fontWeight: 300, fontSize: '1rem', marginTop: '.35rem', lineHeight: 1 } }, ':'),
+                    // Horas
+                    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
+                      h('div', { className: 'countdown-box' }, String(countdown.horas).padStart(2, '0')),
+                      h('span', { className: 'countdown-label' }, 'Horas')
+                    ),
+                    h('span', { style: { color: '#C8C8D0', fontWeight: 300, fontSize: '1rem', marginTop: '.35rem', lineHeight: 1 } }, ':'),
+                    // Minutos
+                    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
+                      h('div', { className: 'countdown-box' }, String(countdown.minutos).padStart(2, '0')),
+                      h('span', { className: 'countdown-label' }, 'Min')
+                    ),
+                    h('span', { style: { color: '#C8C8D0', fontWeight: 300, fontSize: '1rem', marginTop: '.35rem', lineHeight: 1 } }, ':'),
+                    // Segundos
+                    h('div', { style: { display: 'flex', flexDirection: 'column', alignItems: 'center' } },
+                      h('div', { className: 'countdown-box', style: { animation: 'pulse 1s ease-in-out infinite' } }, String(countdown.segundos).padStart(2, '0')),
+                      h('span', { className: 'countdown-label' }, 'Seg')
+                    )
+                  ),
+                  
+                  // Mensaje de espera
+                  h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '.5rem', borderRadius: 8, background: '#f8f4ec', color: '#6B6B7B', fontSize: '.75rem', fontWeight: 500 } },
+                    h(ClockIcon, { size: 14, color: '#6B6B7B' }), 
+                    ' Apertura: 29 de junio de 2026'
+                  )
+                )
+              )
             )
           ),
           
-          // Tarjeta 3
+          // Tarjeta 3 - Desarrollo Académico
           h('a', { href: './otras-constancias.html', style: { ...S.card('rgba(107,26,42,.1)'), cursor: 'pointer', textDecoration: 'none', transition: 'transform .2s, box-shadow .2s' }, onMouseEnter: (e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(107,26,42,.15)'; }, onMouseLeave: (e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; } },
             h('div', { style: S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)') }),
             h('div', { style: S.cardBody },
@@ -486,7 +614,7 @@
     };
     
     // ============================================================
-    // 7. COMPONENTE DASHBOARD - CON SELECTOR DE AÑO Y FILTROS
+    // 8. COMPONENTE DASHBOARD
     // ============================================================
     const Dashboard = ({ user, onLogout }) => {
       const [year, setYear] = useState('2025');
@@ -495,10 +623,8 @@
       const [loading, setLoading] = useState(true);
       const [error, setError] = useState(null);
       
-      // Años disponibles
       const YEARS = ['2024', '2025', '2026'];
       
-      // Cargar datos al cambiar de año
       useEffect(() => {
         const fetchData = async () => {
           setLoading(true);
@@ -519,26 +645,16 @@
         fetchData();
       }, [year]);
       
-      // Filtrar datos según el usuario
       const filteredData = useMemo(() => {
         if (allData.length === 0) return [];
-        
         return allData.filter(item => {
-          // Si es admin, ve todo
-          if (user.isAdmin) {
-            return true;
-          }
-          
-          // Si no es admin, solo ve sus propias constancias
+          if (user.isAdmin) return true;
           const isOwner = item.correo === user.email;
           const isStatusOk = item.status === 'ENVIADO';
-          
-          // Solo mostrar si es dueño y está enviado
           return isOwner && isStatusOk;
         });
       }, [allData, user]);
       
-      // Filtrar por búsqueda
       const searchFiltered = useMemo(() => {
         if (!search) return filteredData;
         const term = normalize(search);
@@ -549,7 +665,6 @@
         );
       }, [filteredData, search]);
       
-      // Descargar reporte (solo admin)
       const downloadReport = () => {
         if (!searchFiltered.length) return;
         const csvContent = "data:text/csv;charset=utf-8,"
@@ -563,7 +678,6 @@
         link.click();
       };
       
-      // Enviar por correo
       const handleShareEmail = (item) => {
         const subject = `Constancia: ${item.curso}`;
         const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu constancia: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
@@ -571,7 +685,6 @@
       };
       
       return h('div', { className: 'min-h-screen bg-gray-50 font-sans flex flex-col' },
-        // Navbar
         h('nav', { className: 'bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm' },
           h('div', { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' },
             h('div', { className: 'flex justify-between h-16 items-center' },
@@ -606,9 +719,7 @@
           )
         ),
         
-        // Main
         h('main', { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full' },
-          // Filtros
           h('div', { className: 'bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center' },
             h('div', { className: 'flex gap-4 w-full md:w-auto items-center' },
               h('span', { className: 'text-sm font-bold text-gray-500 uppercase' }, 'Año:'),
@@ -638,13 +749,11 @@
             )
           ),
           
-          // Estado de la carga
           loading && h('div', { className: 'flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-100' },
             h('div', { className: 'animate-spin rounded-full h-10 w-10 border-4 border-itd-blue border-t-transparent mb-4' }),
             h('p', { className: 'text-gray-500 font-medium' }, 'Cargando constancias del ', year, '...')
           ),
           
-          // Error
           error && !loading && h('div', { className: 'bg-red-50 border-l-4 border-red-500 p-6 rounded-r-xl shadow-sm mb-8' },
             h('div', { className: 'flex items-start' },
               h(AlertIcon, { className: 'w-8 h-8 text-red-600 mr-4 mt-1 flex-shrink-0' }),
@@ -655,7 +764,6 @@
             )
           ),
           
-          // Lista de constancias
           !loading && !error && searchFiltered.length > 0 && 
             h('div', { className: 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden' },
               h('div', { className: 'hidden md:grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider' },
@@ -723,7 +831,6 @@
               )
             ),
           
-          // Sin resultados
           !loading && !error && searchFiltered.length === 0 && 
             h('div', { className: 'text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200' },
               h(ShieldIcon, { className: 'mx-auto h-16 w-16 text-gray-200 mb-4' }),
@@ -740,7 +847,6 @@
             )
         ),
         
-        // Footer
         h('footer', { className: 'bg-itd-red text-white py-6 mt-auto' },
           h('div', { className: 'max-w-7xl mx-auto px-4 text-center' },
             h('p', { className: 'text-sm font-medium' }, '© ', new Date().getFullYear(), ' Dr. Alejandro Calderón Rentería - Coordinación Docente')
@@ -750,7 +856,7 @@
     };
     
     // ============================================================
-    // 8. APP Y MONTAJE
+    // 9. APP Y MONTAJE
     // ============================================================
     const App = () => {
       const [user, setUser] = useState(null);
@@ -760,7 +866,7 @@
     const root = createRoot(document.getElementById('root'));
     root.render(h(App, null));
     
-    console.log('✅ App iniciada - Leyendo constancias desde Google Sheets');
+    console.log('✅ App iniciada - Tarjeta "Generar Constancia" completamente restaurada');
   </script>
 </body>
 </html>
