@@ -9,7 +9,7 @@
     gtag('config', 'G-V2V4CT2C69');
   </script>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
   <title>Constancias y Reconocimientos | ITD</title>
   
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,7 +21,7 @@
     @keyframes ringPulse { 0%{transform:scale(1);opacity:.55} 100%{transform:scale(1.55);opacity:0} }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     * { box-sizing: border-box; }
-    body { font-family:'DM Sans','Inter',sans-serif; background:#f8f4ec; min-height:100vh; margin:0; }
+    body { font-family:'DM Sans','Inter',sans-serif; background:#f8f4ec; min-height:100vh; margin:0; -webkit-font-smoothing:antialiased; }
     #googleSignInDiv { min-height:44px; width:100%; }
     .countdown-box { 
       background: #1B396A; 
@@ -45,6 +45,10 @@
       text-transform: uppercase;
       text-align: center;
     }
+    @media (max-width: 480px) {
+      .countdown-box { width: 36px; height: 36px; font-size: 0.9rem; }
+      .countdown-label { font-size: 0.4rem; }
+    }
   </style>
   
   <script crossorigin src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
@@ -67,7 +71,7 @@
   
   <script>
     // ============================================================
-    // 1. CONFIGURACIÓN - CON LAS 3 URLS PUBLICADAS
+    // 1. CONFIGURACIÓN
     // ============================================================
     const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com";
     const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
@@ -93,7 +97,7 @@
     const h = React.createElement;
     
     // ============================================================
-    // 3. ICONOS
+    // 3. ICONOS (VERSIÓN COMPACTA)
     // ============================================================
     const Icon = (props, children) => h('svg', {
       xmlns: "http://www.w3.org/2000/svg",
@@ -253,7 +257,7 @@
     };
     
     // ============================================================
-    // 6. FUNCIÓN getConstancias - CON URLs POR AÑO
+    // 6. FUNCIÓN getConstancias
     // ============================================================
     const getConstancias = async (year) => {
       try {
@@ -264,17 +268,12 @@
         }
         
         console.log('📥 Cargando constancias para el año:', year);
-        console.log('🔗 URL:', url);
         
         const response = await fetch(`${url}&_=${Date.now()}`);
         if (!response.ok) throw new Error('Error al cargar constancias');
         
         const csvText = await response.text();
-        console.log('📄 CSV cargado, longitud:', csvText.length);
-        console.log('📄 Primeras 200 caracteres:', csvText.substring(0, 200));
-        
         const lines = csvText.trim().split(/\r?\n/);
-        console.log('📊 Líneas totales:', lines.length);
         
         if (lines.length < 2) {
           console.warn('⚠️ El CSV tiene menos de 2 líneas');
@@ -282,7 +281,6 @@
         }
         
         const headers = parseCSVLine(lines[0]);
-        console.log('📋 Encabezados:', headers);
         
         const findCol = (keywords) => headers.findIndex(h => keywords.some(k => normalize(h).includes(normalize(k))));
         
@@ -294,15 +292,6 @@
           status: findCol(['status', 'estatus', 'estado']),
           link: findCol(['fileattachments', 'link', 'url', 'pdf', 'descarga', 'archivo', 'constancia'])
         };
-        
-        console.log('🔍 Índices encontrados:', {
-          nombre: idx.nombre,
-          correo: idx.correo,
-          curso: idx.curso,
-          fecha: idx.fecha,
-          status: idx.status,
-          link: idx.link
-        });
         
         if (idx.correo === -1) {
           console.error('❌ No se encontró la columna de correo. Encabezados:', headers);
@@ -330,11 +319,6 @@
           })
           .filter(item => item && item.correo);
         
-        console.log('📊 Datos procesados:', data.length, 'registros');
-        if (data.length > 0) {
-          console.log('📊 Primer registro:', data[0]);
-        }
-        
         return data;
       } catch (error) {
         console.error("❌ Error al obtener constancias:", error);
@@ -343,7 +327,7 @@
     };
     
     // ============================================================
-    // 7. COMPONENTE LOGIN
+    // 7. COMPONENTE LOGIN (CORREGIDO - CON REINTENTOS)
     // ============================================================
     const Login = ({ onLogin }) => {
       const [error, setError] = useState('');
@@ -355,6 +339,7 @@
         try { return localStorage.getItem('constActivada') === 'true'; } catch(e) { return false; }
       });
       const googleIntencion = useRef('login');
+      const googleInitialized = useRef(false);
       const countdown = useCountdown(FECHA_APERTURA);
       const estaActiva = constActivada || countdown.abierto;
       
@@ -396,18 +381,87 @@
         }
       };
       
+      // ============================================================
+      // useEffect CORREGIDO - CON MÚLTIPLES REINTENTOS
+      // ============================================================
       useEffect(() => {
-        if (window.google && GOOGLE_CLIENT_ID !== "TU_CLIENT_ID_AQUI.apps.googleusercontent.com") {
-          try {
-            window.google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleCredentialResponse });
-            window.google.accounts.id.renderButton(
-              document.getElementById("googleSignInDiv"),
-              { theme: "outline", size: "large", width: "100%", text: "continue_with" }
-            );
-          } catch(err) {
-            setError("Error al cargar servicios de Google.");
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        const renderGoogleButton = () => {
+          if (googleInitialized.current) return;
+          attempts++;
+          
+          if (!window.google) {
+            if (attempts < maxAttempts) {
+              setTimeout(renderGoogleButton, 400);
+            }
+            return;
           }
+          
+          try {
+            const container = document.getElementById("googleSignInDiv");
+            if (!container) {
+              if (attempts < maxAttempts) {
+                setTimeout(renderGoogleButton, 300);
+              }
+              return;
+            }
+            
+            if (container.hasChildNodes()) {
+              googleInitialized.current = true;
+              return;
+            }
+            
+            window.google.accounts.id.initialize({ 
+              client_id: GOOGLE_CLIENT_ID, 
+              callback: handleCredentialResponse 
+            });
+            
+            window.google.accounts.id.renderButton(container, { 
+              theme: "outline", 
+              size: "large", 
+              width: "100%", 
+              text: "continue_with" 
+            });
+            
+            googleInitialized.current = true;
+            console.log('✅ Botón de Google renderizado correctamente');
+          } catch(err) {
+            console.error("Error al renderizar botón:", err);
+            if (attempts < maxAttempts) {
+              setTimeout(renderGoogleButton, 500);
+            }
+          }
+        };
+        
+        // Intentar renderizar inmediatamente
+        renderGoogleButton();
+        
+        // Respaldo: cada 1 segundo por si falla
+        const intervalId = setInterval(() => {
+          if (!googleInitialized.current) {
+            renderGoogleButton();
+          } else {
+            clearInterval(intervalId);
+          }
+        }, 1000);
+        
+        // Observador de mutaciones para detectar cuando el DOM cambie
+        let observer;
+        if (typeof MutationObserver !== 'undefined') {
+          observer = new MutationObserver(() => {
+            if (document.getElementById("googleSignInDiv") && !googleInitialized.current) {
+              renderGoogleButton();
+            }
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
         }
+        
+        return () => {
+          clearInterval(intervalId);
+          if (observer) observer.disconnect();
+        };
       }, []);
       
       const S = {
@@ -420,7 +474,7 @@
         logoImg: { width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%', background: '#fff', padding: 8, boxShadow: '0 4px 22px rgba(107,26,42,.2), 0 0 0 2.5px rgba(196,154,53,.65)' },
         h1: { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 'clamp(1.55rem,5vw,2.1rem)', fontWeight: 900, color: '#3D0A14', margin: '0 0 .35rem', letterSpacing: '-.015em', lineHeight: 1.15 },
         sub: { fontSize: '.83rem', color: '#6B6B7B', margin: 0 },
-        grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(288px, 1fr))', gap: '1.1rem', width: '100%', maxWidth: 760, animation: 'fadeUp .55s .1s cubic-bezier(.22,.68,0,1.2) both' },
+        grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.1rem', width: '100%', maxWidth: 760, animation: 'fadeUp .55s .1s cubic-bezier(.22,.68,0,1.2) both' },
         card: (accent) => ({ background: '#fff', borderRadius: 22, overflow: 'hidden', boxShadow: `0 4px 8px rgba(0,0,0,.04), 0 24px 52px ${accent}, 0 0 0 1px rgba(196,154,53,.12)`, display: 'flex', flexDirection: 'column' }),
         stripe: (g) => ({ height: 5, backgroundSize: '200% 100%', animation: 'shimmer 4s linear infinite', background: g }),
         cardBody: { padding: '1.7rem 1.9rem', flex: 1, display: 'flex', flexDirection: 'column' },
@@ -604,7 +658,7 @@
     };
     
     // ============================================================
-    // 8. COMPONENTE DASHBOARD
+    // 8. COMPONENTE DASHBOARD (RESPONSIVO)
     // ============================================================
     const Dashboard = ({ user, onLogout }) => {
       const [year, setYear] = useState('2025');
@@ -856,7 +910,7 @@
     const root = createRoot(document.getElementById('root'));
     root.render(h(App, null));
     
-    console.log('✅ App iniciada correctamente - Con URLs por año');
+    console.log('✅ App iniciada correctamente - Con URLs por año y botón Google corregido');
   </script>
 </body>
 </html>
