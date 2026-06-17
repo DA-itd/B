@@ -53,17 +53,14 @@
   
   <script>
     // ============================================================
-    // 1. CONFIGURACIÓN
+    // 1. CONFIGURACIÓN - GOOGLE SHEETS (como tu código original)
     // ============================================================
     const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com";
     const LOGO_URL = "https://github.com/DA-itd/web/blob/main/logo_itdurango.png?raw=true";
     
-    // CAMBIA ESTO con tu usuario y repositorio
-    const DATA_SOURCES = {
-      '2026': 'https://raw.githubusercontent.com/TU-USUARIO/TU-REPOSITORIO/main/db_2026.csv',
-      '2025': 'https://raw.githubusercontent.com/TU-USUARIO/TU-REPOSITORIO/main/db_2025.csv',
-      '2024': 'https://raw.githubusercontent.com/TU-USUARIO/TU-REPOSITORIO/main/db_2024.csv'
-    };
+    // URLs de Google Sheets (como en tu código original)
+    const COURSES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAe4dmVN4CArjEy_lvI5qrXf16naxZLO1lAxGm2Pj4TrdnoebBg03Vv4-DCXciAkHJFiZaBMKletUs/pub?gid=0&single=true&output=csv';
+    const TEACHERS_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAe4dmVN4CArjEy_lvI5qrXf16naxZLO1lAxGm2Pj4TrdnoebBg03Vv4-DCXciAkHJFiZaBMKletUs/pub?gid=987931491&single=true&output=csv';
     
     const ADMIN_EMAILS = ['alejandro.calderon@itdurango.edu.mx', 'coord_actualizaciondocente@itdurango.edu.mx'];
     const ADMIN_PASSWORD = "X987ela";
@@ -77,10 +74,9 @@
     const { useState, useEffect, useMemo, useRef } = React;
     const { createRoot } = ReactDOM;
     
-    // Helper para crear elementos
     const h = React.createElement;
     
-    // Iconos como funciones
+    // Iconos inline
     const Icon = (props, children) => h('svg', {
       xmlns: "http://www.w3.org/2000/svg",
       width: 24, height: 24, viewBox: "0 0 24 24",
@@ -165,34 +161,41 @@
     ]);
     
     // ============================================================
-    // 3. UTILIDADES DE DATOS
+    // 3. UTILIDADES - LECTURA DE GOOGLE SHEETS
     // ============================================================
     const normalize = (str) => str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() : "";
     
-    const detectDelimiter = (text) => {
-      if (!text) return ',';
-      const firstLine = text.split('\n')[0] || '';
-      return (firstLine.match(/;/g) || []).length > (firstLine.match(/,/g) || []).length ? ';' : ',';
+    const parseCSVLine = (line) => {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim());
+      return result;
     };
     
-    const parseCSV = (text) => {
-      if (!text) return [];
-      const delimiter = detectDelimiter(text);
-      const rows = [];
-      let currentRow = [], currentField = '', inQuotes = false;
-      
-      for (let i = 0; i < text.length; i++) {
-        const char = text[i];
-        if (char === '"' && text[i+1] === '"') { currentField += '"'; i++; }
-        else if (char === '"') { inQuotes = !inQuotes; }
-        else if (char === delimiter && !inQuotes) { currentRow.push(currentField); currentField = ''; }
-        else if ((char === '\r' || char === '\n') && !inQuotes) {
-          if (char === '\r' && text[i+1] === '\n') i++;
-          currentRow.push(currentField); rows.push(currentRow); currentRow = []; currentField = '';
-        } else { currentField += char; }
+    const cleanCSVValue = (val) => {
+      let cleaned = val.trim();
+      if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+        cleaned = cleaned.substring(1, cleaned.length - 1).replace(/""/g, '"');
       }
-      if (currentField || currentRow.length > 0) { currentRow.push(currentField); rows.push(currentRow); }
-      return rows;
+      return cleaned;
     };
     
     const decodeJwtResponse = (token) => {
@@ -204,51 +207,74 @@
       } catch(e) { return null; }
     };
     
-    const fetchLocalData = async (year) => {
-      const fileUrl = DATA_SOURCES[year];
-      if (!fileUrl) return { data: [] };
+    // ============================================================
+    // 4. FUNCIONES PARA OBTENER DATOS DE GOOGLE SHEETS
+    // ============================================================
+    
+    // Obtener docentes desde Google Sheets
+    const getTeachers = async () => {
       try {
-        const response = await fetch(fileUrl);
-        if (!response.ok) throw new Error('Error');
-        const text = await response.text();
-        const rows = parseCSV(text);
-        if (rows.length < 2) return { data: [] };
+        const response = await fetch(`${TEACHERS_CSV_URL}&_=${Date.now()}`);
+        if (!response.ok) throw new Error('Error al cargar docentes');
         
-        const headers = rows[0].map(h => normalize(h));
-        const findCol = (keywords) => headers.findIndex(h => keywords.some(k => h.includes(normalize(k))));
+        const csvText = await response.text();
+        const lines = csvText.trim().split(/\r?\n/);
         
-        const idx = {
-          nombre: findCol(['nombre', 'participante', 'docente']),
-          correo: findCol(['emailaddress', 'correo', 'email']),
-          curso: findCol(['codigo', 'curso', 'taller']),
-          fecha: findCol(['año', 'fecha', 'periodo']),
-          status: findCol(['status', 'estatus']),
-          link: findCol(['fileattachments', 'link', 'url', 'pdf'])
-        };
+        return lines.slice(1)
+          .filter(line => line.trim())
+          .map(line => {
+            const values = parseCSVLine(line);
+            if (values.length < 3) return null;
+            return {
+              nombreCompleto: cleanCSVValue(values[0]),
+              curp: cleanCSVValue(values[1]),
+              email: cleanCSVValue(values[2])
+            };
+          })
+          .filter(t => t !== null);
+      } catch (error) {
+        console.error("Error al obtener docentes:", error);
+        return [];
+      }
+    };
+    
+    // Obtener cursos desde Google Sheets
+    const getCourses = async () => {
+      try {
+        const response = await fetch(`${COURSES_CSV_URL}&_=${Date.now()}`);
+        if (!response.ok) throw new Error('Error al cargar cursos');
         
-        if (idx.correo === -1) return { data: [] };
+        const csvText = await response.text();
+        const lines = csvText.trim().split(/\r?\n/);
         
-        const cleanData = rows.slice(1).map((r, i) => {
-          if (r.length <= 1) return null;
-          return {
-            id: i,
-            nombre: idx.nombre !== -1 ? r[idx.nombre] : 'Usuario',
-            correo: (r[idx.correo] || '').trim().toLowerCase(),
-            curso: idx.curso !== -1 ? r[idx.curso] : 'Documento',
-            fecha: idx.fecha !== -1 ? r[idx.fecha] : year,
-            status: idx.status !== -1 ? (r[idx.status] || 'PENDIENTE').toUpperCase().trim() : 'ENVIADO',
-            link: idx.link !== -1 ? r[idx.link] : ''
-          };
-        }).filter(item => item && item.correo);
-        
-        return { data: cleanData };
-      } catch(error) {
-        return { data: [] };
+        return lines.slice(1)
+          .filter(line => line.trim())
+          .map(line => {
+            const values = parseCSVLine(line);
+            if (values.length < 8) return null;
+            
+            const hours = parseInt(cleanCSVValue(values[4]), 10);
+            
+            return {
+              id: cleanCSVValue(values[0]),
+              name: cleanCSVValue(values[1]),
+              dates: cleanCSVValue(values[2]),
+              period: cleanCSVValue(values[3]),
+              hours: isNaN(hours) ? 30 : hours,
+              location: cleanCSVValue(values[5]),
+              schedule: cleanCSVValue(values[6]),
+              type: cleanCSVValue(values[7])
+            };
+          })
+          .filter(c => c !== null);
+      } catch (error) {
+        console.error("Error al obtener cursos:", error);
+        return [];
       }
     };
     
     // ============================================================
-    // 4. COMPONENTE LOGIN (SIN JSX)
+    // 5. COMPONENTE LOGIN
     // ============================================================
     const Login = ({ onLogin }) => {
       const [error, setError] = useState('');
@@ -338,7 +364,7 @@
       return h('div', { style: S.page },
         h('div', { style: S.bgDeco }),
         
-        // Modal
+        // Modal (igual que antes)
         showModal && h('div', { style: { position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }, onClick: (e) => { if (e.target === e.currentTarget) { setShowModal(false); setAdminPass(''); setAdminError(''); } } },
           h('div', { style: { background: '#fff', borderRadius: 18, overflow: 'hidden', width: '100%', maxWidth: 320, boxShadow: '0 24px 60px rgba(0,0,0,.25)', animation: 'fadeUp .3s cubic-bezier(.22,.68,0,1.2) both' } },
             h('div', { style: { height: 4, background: 'linear-gradient(90deg,#3D0A14,#6B1A2A,#C49A35,#6B1A2A,#3D0A14)', backgroundSize: '200% 100%', animation: 'shimmer 3s linear infinite' } }),
@@ -372,9 +398,9 @@
           h('p', { style: S.sub }, 'Instituto Tecnológico de Durango — Portal ITD')
         ),
         
-        // Grid
+        // Grid (igual que antes)
         h('div', { style: S.grid },
-          // Tarjeta 1
+          // Tarjeta 1 - Mis Constancias
           h('div', { style: S.card('rgba(107,26,42,.12)') },
             h('div', { style: S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)') }),
             h('div', { style: S.cardBody },
@@ -396,7 +422,7 @@
             )
           ),
           
-          // Tarjeta 2
+          // Tarjeta 2 - Generar Constancia (igual)
           h('div', { style: { ...S.card('rgba(26,58,92,.1)'), opacity: constActivada ? 1 : 0.55, transition: 'opacity .3s' } },
             h('div', { style: S.stripe(constActivada ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)' : 'linear-gradient(90deg,#999 0%,#bbb 50%,#999 100%)') }),
             h('div', { style: S.cardBody },
@@ -423,7 +449,7 @@
             )
           ),
           
-          // Tarjeta 3
+          // Tarjeta 3 (igual)
           h('a', { href: './otras-constancias.html', style: { ...S.card('rgba(107,26,42,.1)'), cursor: 'pointer', textDecoration: 'none', transition: 'transform .2s, box-shadow .2s' }, onMouseEnter: (e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(107,26,42,.15)'; }, onMouseLeave: (e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; } },
             h('div', { style: S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)') }),
             h('div', { style: S.cardBody },
@@ -453,32 +479,61 @@
     };
     
     // ============================================================
-    // 5. COMPONENTE DASHBOARD (SIMPLIFICADO)
+    // 6. COMPONENTE DASHBOARD - USANDO GOOGLE SHEETS
     // ============================================================
     const Dashboard = ({ user, onLogout }) => {
-      const [year, setYear] = useState('2025');
-      const [allData, setAllData] = useState([]);
+      const [teachers, setTeachers] = useState([]);
+      const [courses, setCourses] = useState([]);
       const [search, setSearch] = useState('');
-      const [loading, setLoading] = useState(false);
+      const [loading, setLoading] = useState(true);
       
+      // Cargar datos desde Google Sheets
       useEffect(() => {
-        setLoading(true);
-        fetchLocalData(year).then(res => {
-          setAllData(res.data);
-          setLoading(false);
-        });
-      }, [year]);
-      
-      const filteredData = useMemo(() => {
-        return allData.filter(item => {
-          if (item.correo !== user.email && !user.isAdmin) return false;
-          if (search) {
-            const term = normalize(search);
-            return normalize(item.nombre).includes(term) || normalize(item.curso).includes(term);
+        const fetchData = async () => {
+          setLoading(true);
+          try {
+            const [teachersData, coursesData] = await Promise.all([
+              getTeachers(),
+              getCourses()
+            ]);
+            setTeachers(teachersData);
+            setCourses(coursesData);
+          } catch (err) {
+            console.error("Error al cargar datos:", err);
+          } finally {
+            setLoading(false);
           }
-          return true;
-        });
-      }, [allData, user, search]);
+        };
+        fetchData();
+      }, []);
+      
+      // Filtrar cursos (solo los del usuario o todos si es admin)
+      const filteredCourses = useMemo(() => {
+        // Buscar el email del usuario en la lista de docentes
+        const teacher = teachers.find(t => t.email === user.email);
+        
+        if (user.isAdmin) {
+          return courses;
+        }
+        
+        // Si el usuario es instructor, mostrar sus cursos
+        if (teacher) {
+          return courses;
+        }
+        
+        return [];
+      }, [courses, teachers, user]);
+      
+      // Filtrar por búsqueda
+      const searchFiltered = useMemo(() => {
+        if (!search) return filteredCourses;
+        const term = normalize(search);
+        return filteredCourses.filter(c => 
+          normalize(c.name).includes(term) ||
+          normalize(c.period).includes(term) ||
+          normalize(c.location).includes(term)
+        );
+      }, [filteredCourses, search]);
       
       return h('div', { className: 'min-h-screen bg-gray-50 font-sans flex flex-col' },
         h('nav', { className: 'bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm' },
@@ -504,44 +559,59 @@
         ),
         
         h('main', { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full' },
+          // Búsqueda
           h('div', { className: 'bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex flex-col md:flex-row gap-4 justify-between items-center' },
-            h('div', { className: 'flex gap-4 w-full md:w-auto items-center' },
-              h('span', { className: 'text-sm font-bold text-gray-500 uppercase' }, 'Año:'),
-              h('select', { value: year, onChange: (e) => setYear(e.target.value), className: 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full md:w-48 p-2.5' },
-                Object.keys(DATA_SOURCES).map(k => h('option', { key: k, value: k }, k))
-              )
-            ),
-            h('div', { className: 'relative w-full md:w-96' },
+            h('div', { className: 'relative w-full' },
               h('div', { className: 'absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none' }, h(SearchIcon, { className: 'w-4 h-4 text-gray-400' })),
-              h('input', { type: 'text', value: search, onChange: (e) => setSearch(e.target.value), className: 'bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5', placeholder: 'Buscar...' })
+              h('input', { 
+                type: 'text', 
+                value: search, 
+                onChange: (e) => setSearch(e.target.value),
+                className: 'bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-itd-blue focus:border-itd-blue block w-full pl-10 p-2.5', 
+                placeholder: 'Buscar cursos...' 
+              })
             )
           ),
           
+          // Lista de cursos
           loading ? 
-            h('div', { className: 'text-center py-20' }, 'Cargando...') :
-            filteredData.length === 0 ?
+            h('div', { className: 'text-center py-20' }, 'Cargando datos desde Google Sheets...') :
+            searchFiltered.length === 0 ?
               h('div', { className: 'text-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200' },
                 h(ShieldIcon, { className: 'mx-auto h-16 w-16 text-gray-200 mb-4' }),
-                h('h3', { className: 'text-xl font-bold text-gray-900' }, 'Sin resultados'),
-                h('p', { className: 'text-gray-500 mt-2' }, 'No tienes documentos disponibles.')
+                h('h3', { className: 'text-xl font-bold text-gray-900' }, 'Sin cursos disponibles'),
+                h('p', { className: 'text-gray-500 mt-2' }, search ? 'No hay coincidencias para tu búsqueda.' : 'No tienes cursos asignados o no hay cursos disponibles.')
               ) :
               h('div', { className: 'bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden' },
-                filteredData.map((item, idx) => 
-                  h('div', { key: item.id, className: `grid grid-cols-1 md:grid-cols-12 gap-4 p-4 items-center ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 border-b border-gray-100 last:border-0` },
-                    h('div', { className: 'col-span-1 md:col-span-6' },
-                      h('p', { className: 'font-bold text-gray-900' }, item.nombre),
-                      h('p', { className: 'text-xs text-gray-500' }, item.correo),
-                      h('p', { className: 'text-xs text-gray-400' }, item.fecha)
+                h('div', { className: 'grid grid-cols-12 gap-4 p-4 border-b bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider' },
+                  h('div', { className: 'col-span-5' }, 'Curso'),
+                  h('div', { className: 'col-span-3' }, 'Periodo'),
+                  h('div', { className: 'col-span-2' }, 'Horas'),
+                  h('div', { className: 'col-span-2 text-right' }, 'Acción')
+                ),
+                searchFiltered.map((course, idx) => 
+                  h('div', { key: course.id, className: `grid grid-cols-12 gap-4 p-4 items-center ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 border-b border-gray-100 last:border-0` },
+                    h('div', { className: 'col-span-5' },
+                      h('p', { className: 'font-bold text-gray-900 text-sm' }, course.name),
+                      h('p', { className: 'text-xs text-gray-500' }, course.schedule || '')
                     ),
-                    h('div', { className: 'col-span-1 md:col-span-4' },
-                      h('p', { className: 'text-sm font-medium text-gray-800' }, item.curso)
+                    h('div', { className: 'col-span-3' },
+                      h('p', { className: 'text-sm text-gray-700' }, course.period || ''),
+                      h('p', { className: 'text-xs text-gray-400' }, course.dates || '')
                     ),
-                    h('div', { className: 'col-span-1 md:col-span-2 flex justify-end' },
-                      item.link && item.link !== '#' ? 
-                        h('a', { href: item.link, target: '_blank', className: 'flex items-center gap-2 px-4 py-2 bg-itd-blue hover:bg-itd-blue/80 text-white text-xs font-bold rounded-lg transition-colors' },
-                          h(FileDownIcon, { className: 'w-4 h-4' }), 'Descargar'
-                        ) :
-                        h('span', { className: 'text-xs text-gray-400' }, 'No disponible')
+                    h('div', { className: 'col-span-2' },
+                      h('span', { className: 'text-sm font-bold text-itd-blue' }, course.hours || 0, ' hrs')
+                    ),
+                    h('div', { className: 'col-span-2 flex justify-end' },
+                      h('button', { 
+                        className: 'flex items-center gap-2 px-4 py-2 bg-itd-blue hover:bg-itd-blue/80 text-white text-xs font-bold rounded-lg transition-colors',
+                        onClick: () => {
+                          // Aquí puedes generar la constancia para este curso
+                          alert(`Generando constancia para: ${course.name}`);
+                        }
+                      },
+                        h(DownloadIcon, { className: 'w-4 h-4' }), 'Constancia'
+                      )
                     )
                   )
                 )
@@ -557,7 +627,7 @@
     };
     
     // ============================================================
-    // 6. APP Y MONTAJE
+    // 7. APP Y MONTAJE
     // ============================================================
     const App = () => {
       const [user, setUser] = useState(null);
@@ -567,7 +637,7 @@
     const root = createRoot(document.getElementById('root'));
     root.render(h(App, null));
     
-    console.log('✅ App iniciada correctamente');
+    console.log('✅ App iniciada - Leyendo datos desde Google Sheets');
   </script>
 </body>
 </html>
