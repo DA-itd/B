@@ -1272,7 +1272,37 @@
                       id="f-concepto-txt"
                       rows="3"
                       oninput="updateStepper()"
+                      placeholder="Escribe el concepto aquí..."
                     ></textarea>
+                  </div>
+                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; border: 1.5px solid var(--border);">
+                    <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
+                      <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Fuente</label>
+                      <select id="f-concepto-fontfamily" style="flex: 1; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; outline: none;">
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="'Times New Roman', serif">Times New Roman</option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                        <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                        <option value="'Playfair Display', serif">Playfair Display</option>
+                      </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px">
+                      <label style="font-size: 11px; font-weight: 700; color: var(--t2);" title="Tamaño máximo que se ajustará si el texto es muy largo">Tam. Max</label>
+                      <input type="number" id="f-concepto-fontsize" value="44" min="10" max="150" style="width: 52px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;" />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px">
+                      <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Color</label>
+                      <input type="color" id="f-concepto-fontcolor" value="#1a1a1a" style="width: 32px; height: 28px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; outline: none;" />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px">
+                      <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                        <input type="checkbox" id="f-concepto-italic" checked /> <em>I</em>
+                      </label>
+                      <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                        <input type="checkbox" id="f-concepto-bold" /> <strong>B</strong>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1334,8 +1364,13 @@
                     flex-direction: column;
                     gap: 8px;
                     margin-bottom: 8px;
+                    background: var(--surface-2);
+                    padding: 10px;
+                    border-radius: 8px;
+                    border: 1.5px solid var(--border);
                   "
                 >
+                  <div style="font-size: 11px; font-weight: 800; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em;">Formato del Nombre</div>
                   <div
                     style="
                       display: flex;
@@ -1824,6 +1859,11 @@
           fontColor: document.getElementById("f-fontcolor").value,
           italic: document.getElementById("f-italic").checked,
           bold: document.getElementById("f-bold").checked,
+          cFontFamily: document.getElementById("f-concepto-fontfamily")?.value || "Georgia, serif",
+          cFontSize: document.getElementById("f-concepto-fontsize")?.value || "44",
+          cFontColor: document.getElementById("f-concepto-fontcolor")?.value || "#1a1a1a",
+          cItalic: document.getElementById("f-concepto-italic")?.checked ?? true,
+          cBold: document.getElementById("f-concepto-bold")?.checked ?? false,
           qrOn: document.getElementById("f-qr-on").checked,
           conceptoOn: document.getElementById("f-concepto-on").checked,
           conceptoTxt: document.getElementById("f-concepto-txt").value,
@@ -1867,6 +1907,15 @@
         document.getElementById("f-fontcolor").value = tpl.fontColor || "#1a1a1a";
         document.getElementById("f-italic").checked = !!tpl.italic;
         document.getElementById("f-bold").checked = tpl.bold !== false; // default true
+        
+        if (document.getElementById("f-concepto-fontfamily")) {
+          document.getElementById("f-concepto-fontfamily").value = tpl.cFontFamily || "Georgia, serif";
+          document.getElementById("f-concepto-fontsize").value = tpl.cFontSize || "44";
+          document.getElementById("f-concepto-fontcolor").value = tpl.cFontColor || "#1a1a1a";
+          document.getElementById("f-concepto-italic").checked = tpl.cItalic !== false;
+          document.getElementById("f-concepto-bold").checked = !!tpl.cBold;
+        }
+        
         document.getElementById("f-qr-on").checked = !!tpl.qrOn;
         document.getElementById("f-concepto-on").checked = !!tpl.conceptoOn;
         if(tpl.conceptoTxt) document.getElementById("f-concepto-txt").value = tpl.conceptoTxt;
@@ -2416,11 +2465,20 @@
           document.getElementById("f-concepto-on").checked &&
           coords.concepto.set
         ) {
+          const cFontColor = document.getElementById("f-concepto-fontcolor")?.value || "#1a1a1a";
+          const cFontFamily = document.getElementById("f-concepto-fontfamily")?.value || "Georgia, serif";
+          const cIsItalic = document.getElementById("f-concepto-italic")?.checked;
+          const cIsBold = document.getElementById("f-concepto-bold")?.checked;
+          const cFontSizePt = parseFloat(document.getElementById("f-concepto-fontsize")?.value || "44");
+
+          const cFs = cFontSizePt * 2;
+          const cFont = `${cIsBold ? "bold " : ""}${cIsItalic ? "italic " : ""}${cFs}px ${cFontFamily}`;
+
           drawTextInRect(
             ctx,
             document.getElementById("f-concepto-txt").value,
-            "italic 44px Georgia, serif",
-            "#111",
+            cFont,
+            cFontColor,
             coords.concepto.x * 2,
             coords.concepto.y * 2,
             coords.concepto.w * 2,
