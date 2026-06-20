@@ -805,6 +805,14 @@
       #mk-concepto-rect .mk-rect-lbl {
         background: #4c1d95;
       }
+      #overlay-fecha,
+      #mk-fecha-rect {
+        border: 2px solid #ea580c;
+        background: rgba(234, 88, 12, 0.06);
+      }
+      #mk-fecha-rect .mk-rect-lbl {
+        background: #ea580c;
+      }
       #calib-modo-tag {
         position: absolute;
         top: 10px;
@@ -864,6 +872,11 @@
         background: #ede9fe;
         color: #4c1d95;
         border-color: #a78bfa;
+      }
+      .pos-lbl-fecha {
+        background: #ffedd5;
+        color: #9a3412;
+        border-color: #fdba74;
       }
       .usr-hdr,
       .usr-row {
@@ -1117,7 +1130,7 @@
               </div>
               <div class="step-item" id="st-3">
                 <div class="step-circle"><span>3</span></div>
-                <div class="step-lbl">Concepto</div>
+                <div class="step-lbl">Textos Adc.</div>
               </div>
               <div class="step-item" id="st-4">
                 <div class="step-circle"><span>4</span></div>
@@ -1240,68 +1253,137 @@
               <div class="step-card" id="sc-3">
                 <div class="step-card-header">
                   <div class="step-num-badge">3</div>
-                  <div class="step-card-title">📝 Concepto</div>
+                  <div class="step-card-title">📝 Textos Adicionales</div>
                 </div>
-                <label
-                  style="
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    cursor: pointer;
-                  "
-                  ><input
-                    type="checkbox"
-                    id="f-concepto-on"
-                    onchange="toggleConcepto()"
-                  />
-                  <span style="font-size: 13px; font-weight: 700"
-                    >Incluir concepto (opcional)</span
-                  ></label
-                >
-                <div
-                  id="pnl-concepto"
-                  style="
-                    display: none;
-                    flex-direction: column;
-                    gap: 10px;
-                    margin-top: 10px;
-                  "
-                >
-                  <div class="field">
-                    <textarea
-                      id="f-concepto-txt"
-                      rows="3"
-                      oninput="updateStepper()"
-                      placeholder="Escribe el concepto aquí..."
-                    ></textarea>
+                
+                <div style="flex-direction: column; display: flex; gap: 16px;">
+                  <div>
+                    <label
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                      "
+                      ><input
+                        type="checkbox"
+                        id="f-concepto-on"
+                        onchange="toggleConcepto()"
+                      />
+                      <span style="font-size: 13px; font-weight: 700"
+                        >Incluir concepto</span
+                      ></label
+                    >
+                    <div
+                      id="pnl-concepto"
+                      style="
+                        display: none;
+                        flex-direction: column;
+                        gap: 10px;
+                        margin-top: 10px;
+                      "
+                    >
+                      <div class="field">
+                        <textarea
+                          id="f-concepto-txt"
+                          rows="3"
+                          oninput="updateStepper()"
+                          placeholder="Escribe el concepto aquí..."
+                        ></textarea>
+                      </div>
+                      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; border: 1.5px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Fuente</label>
+                          <select id="f-concepto-fontfamily" style="flex: 1; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; outline: none;">
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                          </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);" title="Tamaño máximo que se ajustará si el texto es muy largo">Max</label>
+                          <input type="number" id="f-concepto-fontsize" value="44" min="10" max="150" style="width: 52px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <input type="color" id="f-concepto-fontcolor" value="#1a1a1a" style="width: 32px; height: 28px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-concepto-italic" checked /> <em>I</em>
+                          </label>
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-concepto-bold" /> <strong>B</strong>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; border: 1.5px solid var(--border);">
-                    <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
-                      <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Fuente</label>
-                      <select id="f-concepto-fontfamily" style="flex: 1; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; outline: none;">
-                        <option value="Georgia, serif">Georgia</option>
-                        <option value="'Times New Roman', serif">Times New Roman</option>
-                        <option value="Arial, sans-serif">Arial</option>
-                        <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                        <option value="'Century Gothic', sans-serif">Century Gothic</option>
-                        <option value="'Playfair Display', serif">Playfair Display</option>
-                      </select>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 4px">
-                      <label style="font-size: 11px; font-weight: 700; color: var(--t2);" title="Tamaño máximo que se ajustará si el texto es muy largo">Tam. Max</label>
-                      <input type="number" id="f-concepto-fontsize" value="44" min="10" max="150" style="width: 52px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;" />
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 4px">
-                      <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Color</label>
-                      <input type="color" id="f-concepto-fontcolor" value="#1a1a1a" style="width: 32px; height: 28px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; outline: none;" />
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 6px">
-                      <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
-                        <input type="checkbox" id="f-concepto-italic" checked /> <em>I</em>
-                      </label>
-                      <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
-                        <input type="checkbox" id="f-concepto-bold" /> <strong>B</strong>
-                      </label>
+
+                  <div>
+                    <label
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                      "
+                      ><input
+                        type="checkbox"
+                        id="f-fecha-on"
+                        onchange="toggleFecha()"
+                      />
+                      <span style="font-size: 13px; font-weight: 700"
+                        >Incluir fecha movible</span
+                      ></label
+                    >
+                    <div
+                      id="pnl-fecha"
+                      style="
+                        display: none;
+                        flex-direction: column;
+                        gap: 10px;
+                        margin-top: 10px;
+                      "
+                    >
+                      <div class="field">
+                        <textarea
+                          id="f-fecha-txt"
+                          rows="2"
+                          oninput="updateStepper()"
+                          placeholder="Victoria de Durango, Durango, a 26 de Junio de 2026"
+                        ></textarea>
+                      </div>
+                      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; border: 1.5px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Fuente</label>
+                          <select id="f-fecha-fontfamily" style="flex: 1; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; outline: none;">
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                          </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);" title="Tamaño máximo que se ajustará si el texto es muy largo">Max</label>
+                          <input type="number" id="f-fecha-fontsize" value="32" min="10" max="150" style="width: 52px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <input type="color" id="f-fecha-fontcolor" value="#1a1a1a" style="width: 32px; height: 28px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-fecha-italic" /> <em>I</em>
+                          </label>
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-fecha-bold" /> <strong>B</strong>
+                          </label>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1356,6 +1438,14 @@
                     style="display: none"
                   >
                     ¶ Concepto
+                  </button>
+                  <button
+                    class="btn-sm-yel"
+                    id="calib-fecha-btn"
+                    onclick="setCalibMode('fecha')"
+                    style="display: none"
+                  >
+                    📅 Fecha
                   </button>
                 </div>
                 <div
@@ -1528,6 +1618,7 @@
                   <div id="overlay-nombre" class="calib-rect-overlay"></div>
                   <div id="overlay-qr" class="calib-rect-overlay"></div>
                   <div id="overlay-concepto" class="calib-rect-overlay"></div>
+                  <div id="overlay-fecha" class="calib-rect-overlay"></div>
                   <div id="mk-nombre-rect" class="mk-rect">
                     <div class="mk-rect-lbl">NOMBRE</div>
                   </div>
@@ -1536,6 +1627,9 @@
                   </div>
                   <div id="mk-concepto-rect" class="mk-rect">
                     <div class="mk-rect-lbl">CONCEPTO</div>
+                  </div>
+                  <div id="mk-fecha-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">FECHA</div>
                   </div>
                   <div
                     id="calib-placeholder"
@@ -1566,6 +1660,12 @@
                     id="pos-concepto-lbl"
                     style="display: none"
                     >¶ Concepto: —</span
+                  >
+                  <span
+                    class="pos-lbl pos-lbl-fecha no-set"
+                    id="pos-fecha-lbl"
+                    style="display: none"
+                    >📅 Fecha: —</span
                   >
                 </div>
               </div>
@@ -1803,6 +1903,7 @@
         nombre: { set: false },
         qr: { set: false },
         concepto: { set: false },
+        fecha: { set: false },
       };
 
       // NUEVO: Fecha con hora local
@@ -1864,9 +1965,16 @@
           cFontColor: document.getElementById("f-concepto-fontcolor")?.value || "#1a1a1a",
           cItalic: document.getElementById("f-concepto-italic")?.checked ?? true,
           cBold: document.getElementById("f-concepto-bold")?.checked ?? false,
+          fFontFamily: document.getElementById("f-fecha-fontfamily")?.value || "Georgia, serif",
+          fFontSize: document.getElementById("f-fecha-fontsize")?.value || "32",
+          fFontColor: document.getElementById("f-fecha-fontcolor")?.value || "#1a1a1a",
+          fItalic: document.getElementById("f-fecha-italic")?.checked ?? false,
+          fBold: document.getElementById("f-fecha-bold")?.checked ?? false,
           qrOn: document.getElementById("f-qr-on").checked,
           conceptoOn: document.getElementById("f-concepto-on").checked,
           conceptoTxt: document.getElementById("f-concepto-txt").value,
+          fechaOn: document.getElementById("f-fecha-on").checked,
+          fechaTxt: document.getElementById("f-fecha-txt").value,
           lastUsed: Date.now()
         };
         const idx = tpls.findIndex(t => t.nombre.toLowerCase() === nombreEvento.toLowerCase());
@@ -1888,7 +1996,7 @@
           // Reset to default
           document.getElementById("f-evento-nombre").value = "";
           pdfBase64 = ""; pdfPageW = 0; pdfPageH = 0;
-          coords = { nombre: { set: false }, qr: { set: false }, concepto: { set: false } };
+          coords = { nombre: { set: false }, qr: { set: false }, concepto: { set: false }, fecha: { set: false } };
           document.getElementById("pdf-ok").classList.add("hidden");
           const canvas = document.getElementById("calib-canvas");
           canvas.getContext("2d").clearRect(0,0, canvas.width, canvas.height);
@@ -1915,10 +2023,21 @@
           document.getElementById("f-concepto-italic").checked = tpl.cItalic !== false;
           document.getElementById("f-concepto-bold").checked = !!tpl.cBold;
         }
+
+        if (document.getElementById("f-fecha-fontfamily")) {
+          document.getElementById("f-fecha-fontfamily").value = tpl.fFontFamily || "Georgia, serif";
+          document.getElementById("f-fecha-fontsize").value = tpl.fFontSize || "32";
+          document.getElementById("f-fecha-fontcolor").value = tpl.fFontColor || "#1a1a1a";
+          document.getElementById("f-fecha-italic").checked = !!tpl.fItalic;
+          document.getElementById("f-fecha-bold").checked = !!tpl.fBold;
+        }
         
         document.getElementById("f-qr-on").checked = !!tpl.qrOn;
         document.getElementById("f-concepto-on").checked = !!tpl.conceptoOn;
         if(tpl.conceptoTxt) document.getElementById("f-concepto-txt").value = tpl.conceptoTxt;
+
+        document.getElementById("f-fecha-on").checked = !!tpl.fechaOn;
+        if(tpl.fechaTxt) document.getElementById("f-fecha-txt").value = tpl.fechaTxt;
         
         // Show PDF OK state
         const okBadge = document.getElementById("pdf-ok");
@@ -1940,8 +2059,8 @@
           ? XL.length > 0
           : document.getElementById("f-nom").value.trim());
         const s3done =
-          !document.getElementById("f-concepto-on").checked ||
-          coords.concepto.set;
+          (!document.getElementById("f-concepto-on").checked || coords.concepto.set) &&
+          (!document.getElementById("f-fecha-on").checked || coords.fecha.set);
         const s4done = !!coords.nombre.set;
         const s5ready = s1done && s2done && s3done && s4done;
         const s5done = GEN.length > 0;
@@ -2124,7 +2243,7 @@
         const ox = cRect.left - r.left;
         const oy = cRect.top - r.top;
 
-        ["nombre", "qr", "concepto"].forEach((m) => {
+        ["nombre", "qr", "concepto", "fecha"].forEach((m) => {
           const el = document.getElementById("mk-" + m + "-rect");
           const lbl = document.getElementById("pos-" + m + "-lbl");
           if (coords[m] && coords[m].set) {
@@ -2268,15 +2387,17 @@
 
       function toggleConcepto() {
         const on = document.getElementById("f-concepto-on").checked;
-        document.getElementById("pnl-concepto").style.display = on
-          ? "flex"
-          : "none";
-        document.getElementById("calib-concepto-btn").style.display = on
-          ? ""
-          : "none";
-        document.getElementById("pos-concepto-lbl").style.display = on
-          ? ""
-          : "none";
+        document.getElementById("pnl-concepto").style.display = on ? "flex" : "none";
+        document.getElementById("calib-concepto-btn").style.display = on ? "" : "none";
+        document.getElementById("pos-concepto-lbl").style.display = on ? "" : "none";
+        updateStepper();
+      }
+
+      function toggleFecha() {
+        const on = document.getElementById("f-fecha-on").checked;
+        document.getElementById("pnl-fecha").style.display = on ? "flex" : "none";
+        document.getElementById("calib-fecha-btn").style.display = on ? "" : "none";
+        document.getElementById("pos-fecha-lbl").style.display = on ? "" : "none";
         updateStepper();
       }
 
@@ -2483,6 +2604,31 @@
             coords.concepto.y * 2,
             coords.concepto.w * 2,
             coords.concepto.h * 2,
+          );
+        }
+
+        if (
+          document.getElementById("f-fecha-on").checked &&
+          coords.fecha.set
+        ) {
+          const fFontColor = document.getElementById("f-fecha-fontcolor")?.value || "#1a1a1a";
+          const fFontFamily = document.getElementById("f-fecha-fontfamily")?.value || "Georgia, serif";
+          const fIsItalic = document.getElementById("f-fecha-italic")?.checked;
+          const fIsBold = document.getElementById("f-fecha-bold")?.checked;
+          const fFontSizePt = parseFloat(document.getElementById("f-fecha-fontsize")?.value || "32");
+
+          const fFs = fFontSizePt * 2;
+          const fFont = `${fIsBold ? "bold " : ""}${fIsItalic ? "italic " : ""}${fFs}px ${fFontFamily}`;
+
+          drawTextInRect(
+            ctx,
+            document.getElementById("f-fecha-txt").value,
+            fFont,
+            fFontColor,
+            coords.fecha.x * 2,
+            coords.fecha.y * 2,
+            coords.fecha.w * 2,
+            coords.fecha.h * 2,
           );
         }
 
