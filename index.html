@@ -525,14 +525,15 @@
         
         // Grid
         h('div', { style: S.grid },
-          // Tarjeta 1 - Mis Constancias
+          // Tarjeta 1 - Mis Constancias (MODIFICADO)
           h('div', { style: S.card('rgba(107,26,42,.12)') },
             h('div', { style: S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)') }),
             h('div', { style: S.cardBody },
               h('div', { style: { display: 'flex', alignItems: 'center', gap: '.85rem', marginBottom: '.2rem' } },
                 h('div', { style: S.iconWrap('linear-gradient(135deg,#3D0A14,#922438)', '0 3px 14px rgba(107,26,42,.28)') }, h(FileTextIcon, { size: 21, color: '#F5E4A8' })),
                 h('div', null,
-                  h('div', { style: S.cardTitle }, 'Mis Constancias'),
+                  // TÍTULO MODIFICADO
+                  h('div', { style: S.cardTitle }, 'Mis Constancias del 2025 y Enero 2026'),
                   h('div', { style: S.cardSub }, 'Descarga tus documentos')
                 )
               ),
@@ -547,7 +548,7 @@
             )
           ),
           
-          // Tarjeta 2 - Generar Constancia
+          // Tarjeta 2 - Generar Constancia (MODIFICADO)
           h('div', { style: { ...S.card('rgba(26,58,92,.1)'), opacity: estaActiva ? 1 : 0.55, transition: 'opacity .3s' } },
             h('div', { style: S.stripe(estaActiva 
               ? 'linear-gradient(90deg,#1B396A 0%,#2B5580 35%,#C49A35 55%,#2B5580 75%,#1B396A 100%)'
@@ -563,7 +564,8 @@
                 ),
                 h('div', null,
                   h('div', { style: S.cardTitle }, 'Generar Constancia'),
-                  h('div', { style: S.cardSub }, estaActiva ? 'Cursos Junio–Agosto 2026' : 'Disponible próximamente')
+                  // SUBTÍTULO MODIFICADO - AÑADIDO "Cursos Junio–Agosto 2026"
+                  h('div', { style: { ...S.cardSub, fontWeight: 700, color: '#1B396A' } }, 'Cursos Junio–Agosto 2026')
                 )
               ),
               h('p', { style: S.desc }, 
