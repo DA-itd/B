@@ -458,6 +458,35 @@
                 )
               )
             )
+          ),
+          
+          // Tarjeta 3 - Desarrollo Académico (Uso Interno)
+          h('a', { 
+            href: './otras-constancias.html', 
+            style: { ...S.card('rgba(107,26,42,.1)'), cursor: 'pointer', textDecoration: 'none', transition: 'transform .2s, box-shadow .2s' }, 
+            onMouseEnter: (e) => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,.07),0 32px 64px rgba(107,26,42,.15)'; }, 
+            onMouseLeave: (e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; } 
+          },
+            h('div', { style: S.stripe('linear-gradient(90deg,#3D0A14 0%,#6B1A2A 28%,#C49A35 50%,#6B1A2A 72%,#3D0A14 100%)') }),
+            h('div', { style: S.cardBody },
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: '.85rem', marginBottom: '.2rem' } },
+                h('div', { style: S.iconWrap('linear-gradient(135deg,#3D0A14,#922438)', '0 3px 14px rgba(107,26,42,.28)') },
+                  h('svg', { xmlns: 'http://www.w3.org/2000/svg', viewBox: '0 0 38 38', width: 22, height: 22 },
+                    h('path', { d: 'M19 2 L36 2 L36 28 Q27.5 36 19 31 Q10.5 36 2 28 L2 2 Z', fill: 'rgba(255,255,255,0.15)', stroke: '#F5E4A8', strokeWidth: '1.8', opacity: '0.9' }),
+                    h('circle', { cx: 19, cy: 18, r: 5.5, fill: 'none', stroke: '#F5E4A8', strokeWidth: '1.5', opacity: '0.85' }),
+                    h('circle', { cx: 19, cy: 18, r: 2, fill: '#F5E4A8', opacity: '0.95' }),
+                    h('line', { x1: 19, y1: 6, x2: 19, y2: 29, stroke: '#F5E4A8', strokeWidth: '1', opacity: '0.4' }),
+                    h('line', { x1: 5, y1: 18, x2: 33, y2: 18, stroke: '#F5E4A8', strokeWidth: '1', opacity: '0.4' })
+                  )
+                ),
+                h('div', null,
+                  h('div', { style: S.cardTitle }, 'Desarrollo Académico'),
+                  h('div', { style: S.cardSub }, 'Uso Interno')
+                )
+              ),
+              h('p', { style: S.desc }, 'Genera constancias y reconocimientos personalizados con la plantilla oficial ITD. Ingresa nombres manualmente o carga un Excel. Incluye QR de verificación.'),
+              h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', padding: '.85rem 1rem', borderRadius: 12, background: 'linear-gradient(135deg,#3D0A14,#922438)', color: '#F5E4A8', fontWeight: 700, fontSize: '.84rem', boxShadow: '0 4px 18px rgba(107,26,42,.30)' } }, '📜 Acceder')
+            )
           )
         ),
         
@@ -514,6 +543,12 @@
         );
       }, [filteredData, search]);
       
+      const handleShareEmail = (item) => {
+        const subject = `Constancia ITD: ${item.curso}`;
+        const body = `Hola ${item.nombre},\n\nAdjunto encontrarás el enlace para descargar tu constancia: "${item.curso}".\n\nEnlace de descarga: ${item.link}\n\nAtentamente,\nCoordinación de Actualización Docente\nInstituto Tecnológico de Durango`;
+        window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      };
+
       const downloadReport = () => {
         if (!searchFiltered.length) return;
         const csvContent = "data:text/csv;charset=utf-8,"
@@ -603,17 +638,24 @@
                     h('p', { className: 'font-bold text-gray-900 text-sm' }, item.curso),
                     h('p', { className: 'text-xs text-gray-500 mt-0.5' }, `${item.nombre} · ${item.fecha} · ${item.status}`)
                   ),
-                  item.link ? 
-                    h('a', { 
-                      href: item.link, 
-                      target: '_blank', 
-                      rel: 'noopener noreferrer',
-                      className: 'inline-flex items-center gap-1.5 px-4 py-2 bg-itd-blue text-white rounded-lg text-xs font-bold hover:bg-opacity-90'
-                    }, 
-                      h(DownloadIcon, { className: 'w-3.5 h-3.5' }),
-                      'Descargar PDF'
-                    ) :
-                    h('span', { className: 'text-xs text-gray-400 italic' }, 'Documento en trámite')
+                  h('div', { className: 'flex items-center gap-2' },
+                    item.link ? 
+                      h('a', { 
+                        href: item.link, 
+                        target: '_blank', 
+                        rel: 'noopener noreferrer',
+                        className: 'inline-flex items-center gap-1.5 px-4 py-2 bg-itd-blue text-white rounded-lg text-xs font-bold hover:bg-opacity-90'
+                      }, 
+                        h(DownloadIcon, { className: 'w-3.5 h-3.5' }),
+                        'Descargar PDF'
+                      ) :
+                      h('span', { className: 'text-xs text-gray-400 italic' }, 'Documento en trámite'),
+                    item.link && h('button', {
+                      onClick: () => handleShareEmail(item),
+                      className: 'p-2 text-gray-500 hover:text-itd-blue hover:bg-gray-100 rounded-lg transition-colors',
+                      title: 'Enviar por correo'
+                    }, h(MailIcon, { className: 'w-4 h-4' }))
+                  )
                 )
               )
             )
