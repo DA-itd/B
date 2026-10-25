@@ -75,8 +75,8 @@
     // ============================================================
     const GOOGLE_CLIENT_ID = "916349562772-n5pib46levgf06pagh80hanbmdb6cg2c.apps.googleusercontent.com";
     
-    // Logo institucional en SVG embebido para que jamás falle con 404 ni dependa de GitHub
-    const LOGO_URL = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="56" fill="%236B1A2A" stroke="%23C49A35" stroke-width="4"/><circle cx="60" cy="60" r="46" fill="%23ffffff"/><text x="60" y="58" text-anchor="middle" font-family="Georgia, serif" font-weight="bold" font-size="22" fill="%236B1A2A">ITD</text><text x="60" y="76" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="9" letter-spacing="1.5" fill="%231B396A">DURANGO</text></svg>');
+    // Logo oficial institucional del Instituto Tecnológico de Durango (GitHub público / local)
+    const LOGO_URL = "https://raw.githubusercontent.com/DA-itd/web/main/logo_itdurango.png";
     
     const CONSTANCIAS_URLS = {
       '2024': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRPv6H23fdWHrV524E1utHZdSWnT5DgovAScE2cFKH8b3gGxycnB7FJ1R-e1hxqyKYEXMmSGZnoNuv3/pub?gid=1498092717&single=true&output=csv',
@@ -348,10 +348,10 @@
         page: { minHeight: '100vh', background: 'linear-gradient(150deg, #f8f4ec 0%, #efe7d5 45%, #e8f0f8 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem', fontFamily: "'DM Sans','Inter',sans-serif", position: 'relative', overflow: 'hidden' },
         bgDeco: { position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse 70% 50% at 15% 5%, rgba(107,26,42,.08) 0%, transparent 55%), radial-gradient(ellipse 50% 40% at 85% 95%, rgba(26,58,92,.08) 0%, transparent 50%)' },
         header: { textAlign: 'center', marginBottom: '2rem', position: 'relative', animation: 'fadeUp .5s cubic-bezier(.22,.68,0,1.2) both' },
-        logoWrap: { position: 'relative', width: 84, height: 84, margin: '0 auto 1rem', cursor: 'pointer' },
-        logoRing: { position: 'absolute', inset: -8, borderRadius: '50%', border: '1.5px solid rgba(196,154,53,.5)', animation: 'ringPulse 2.8s ease-out infinite' },
-        logoRing2: { position: 'absolute', inset: -8, borderRadius: '50%', border: '1.5px solid rgba(196,154,53,.3)', animation: 'ringPulse 2.8s 1.4s ease-out infinite' },
-        logoImg: { width: '100%', height: '100%', objectFit: 'contain', borderRadius: '50%', background: '#fff', padding: 8, boxShadow: '0 4px 22px rgba(107,26,42,.2), 0 0 0 2.5px rgba(196,154,53,.65)' },
+        logoWrap: { position: 'relative', width: 96, height: 114, margin: '0 auto 1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+        logoRing: { position: 'absolute', width: 84, height: 84, top: 4, borderRadius: '50%', border: '1.5px solid rgba(196,154,53,.45)', animation: 'ringPulse 2.8s ease-out infinite', pointerEvents: 'none' },
+        logoRing2: { position: 'absolute', width: 84, height: 84, top: 4, borderRadius: '50%', border: '1.5px solid rgba(196,154,53,.25)', animation: 'ringPulse 2.8s 1.4s ease-out infinite', pointerEvents: 'none' },
+        logoImg: { width: '100%', height: '100%', objectFit: 'contain', display: 'block', margin: '0 auto', filter: 'drop-shadow(0 4px 16px rgba(107,26,42,.22))' },
         h1: { fontFamily: "'Playfair Display','Georgia',serif", fontSize: 'clamp(1.55rem,5vw,2.1rem)', fontWeight: 900, color: '#3D0A14', margin: '0 0 .35rem', letterSpacing: '-.015em', lineHeight: 1.15 },
         sub: { fontSize: '.83rem', color: '#6B6B7B', margin: 0 },
         grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.1rem', width: '100%', maxWidth: 760, animation: 'fadeUp .55s .1s cubic-bezier(.22,.68,0,1.2) both' },
@@ -389,10 +389,22 @@
         
         // Header
         h('div', { style: S.header },
-          h('div', { style: S.logoWrap, onClick: () => { setShowModal(true); setAdminPass(''); setAdminError(''); } },
+          h('div', { 
+            style: S.logoWrap, 
+            title: 'Instituto Tecnológico de Durango',
+            onClick: () => { setShowModal(true); setAdminPass(''); setAdminError(''); } 
+          },
             h('div', { style: S.logoRing }),
             h('div', { style: S.logoRing2 }),
-            h('img', { src: LOGO_URL, alt: 'ITD', style: S.logoImg })
+            h('img', { 
+              src: LOGO_URL, 
+              alt: 'Logo ITD', 
+              style: S.logoImg,
+              onError: (e) => {
+                e.currentTarget.onerror = null;
+                e.currentTarget.src = './logo_itdurango.png';
+              }
+            })
           ),
           h('h1', { style: S.h1 }, 'Constancias y ', h('em', { style: { fontStyle: 'italic', color: '#922438' } }, 'Reconocimientos')),
           h('p', { style: S.sub }, 'Instituto Tecnológico de Durango — Portal ITD')
@@ -566,8 +578,15 @@
         h('nav', { className: 'bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm' },
           h('div', { className: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' },
             h('div', { className: 'flex justify-between h-16 items-center' },
-              h('div', { className: 'flex items-center gap-3' },
-                h('img', { src: LOGO_URL, className: 'h-10 w-auto', alt: 'ITD' }),
+                h('img', { 
+                  src: LOGO_URL, 
+                  className: 'h-11 w-auto object-contain', 
+                  alt: 'ITD',
+                  onError: (e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = './logo_itdurango.png';
+                  }
+                }),
                 h('div', { className: 'h-8 w-px bg-gray-300 hidden sm:block mx-1' }),
                 h('span', { className: 'text-base md:text-lg font-bold text-itd-blue leading-tight' }, 'Descarga de Constancias y Reconocimientos')
               ),
