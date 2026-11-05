@@ -1,3 +1,1974 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Otras Constancias — ITD</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      :root {
+        --navy: #4f46e5;
+        --navy-dk: #3730a3;
+        --navy-lt: #6366f1;
+        --navy-ghost: rgba(79, 70, 229, 0.08);
+        --gold: #0ea5e9;
+        --cream: #ffffff;
+        --ok: #10b981;
+        --ok-bg: #ecfdf5;
+        --ok-border: #6ee7b7;
+        --bg: #f1f5f9;
+        --surface: #ffffff;
+        --surface-2: #f8fafc;
+        --border: #e2e8f0;
+        --border-dk: #cbd5e1;
+        --t1: #0f172a;
+        --t2: #475569;
+        --t3: #64748b;
+        --warn-bg: #fffbeb;
+        --warn-bdr: #fcd34d;
+        --err-bg: #fef2f2;
+        --err-bdr: #fca5a5;
+        --err-txt: #991b1b;
+        --font: ui-sans-serif, system-ui, sans-serif;
+        --radius-sm: 8px;
+        --radius: 12px;
+        --radius-lg: 16px;
+        --sh-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --sh-md:
+          0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        --sh-lg:
+          0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: var(--font);
+        background: var(--bg);
+        color: var(--t1);
+        min-height: 100vh;
+        font-size: 14px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .hidden {
+        display: none !important;
+      }
+      ::-webkit-scrollbar {
+        width: 5px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #c0cad8;
+        border-radius: 3px;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateY(4px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes toastIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .stripe {
+        height: 4px;
+        background: linear-gradient(90deg, #4f46e5, #0ea5e9, #4f46e5);
+        background-size: 200% 100%;
+        animation: shimmer 4s linear infinite;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 22px;
+        border-radius: var(--radius-sm);
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        border: none;
+        transition: all 0.15s;
+        outline: none;
+        white-space: nowrap;
+      }
+      .btn:active {
+        transform: scale(0.975);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: var(--navy);
+        color: var(--cream);
+        box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+      }
+      .btn-primary:hover {
+        background: var(--navy-lt);
+        box-shadow: 0 5px 16px rgba(79, 70, 229, 0.38);
+      }
+      .btn-ghost {
+        background: var(--surface);
+        color: var(--t2);
+        border: 1.5px solid var(--border-dk);
+      }
+      .btn-ghost:hover {
+        border-color: var(--navy);
+        color: var(--navy);
+        background: #f0f4ff;
+      }
+      .btn-full {
+        width: 100%;
+      }
+      .btn-sm {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+        white-space: nowrap;
+        border: 1.5px solid;
+      }
+      .btn-sm:hover {
+        filter: brightness(0.93);
+        transform: translateY(-1px);
+      }
+      .btn-sm-blue {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border-color: #60a5fa;
+      }
+      .btn-sm-grn {
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #4ade80;
+      }
+      .btn-sm-yel {
+        background: #fef9c3;
+        color: #78350f;
+        border-color: #fbbf24;
+      }
+      .btn-sm-prp {
+        background: #ede9fe;
+        color: #4c1d95;
+        border-color: #a78bfa;
+        text-decoration: none;
+      }
+      .btn-sm-red {
+        background: #fee2e2;
+        color: var(--err-txt);
+        border-color: #f87171;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 11px;
+        font-weight: 800;
+        color: var(--t2);
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+      }
+      .field input,
+      .field select,
+      .field textarea {
+        padding: 10px 14px;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        border: 2px solid var(--border);
+        outline: none;
+        background: var(--surface);
+        color: var(--t1);
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+        width: 100%;
+      }
+      .field input:focus,
+      .field select:focus,
+      .field textarea:focus {
+        border-color: var(--navy);
+        box-shadow: 0 0 0 3px var(--navy-ghost);
+      }
+      .pass-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .pass-wrap input {
+        padding-right: 44px !important;
+        width: 100%;
+      }
+      .pass-toggle {
+        position: absolute;
+        right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: #9ca3af;
+        padding: 0;
+        transition: color 0.15s;
+      }
+      .pass-toggle:hover {
+        color: var(--navy);
+      }
+      .case-btn {
+        flex: 1;
+        padding: 7px 10px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 2px solid var(--border);
+        transition: all 0.15s;
+        background: var(--surface-2);
+        color: var(--t2);
+      }
+      .case-btn.active {
+        background: var(--navy);
+        color: var(--cream);
+        border-color: var(--navy);
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .badge-blue {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 1.5px solid #93c5fd;
+      }
+      .badge-red {
+        background: #fee2e2;
+        color: var(--err-txt);
+        border: 1.5px solid #fca5a5;
+      }
+      .prog-wrap {
+        background: #e2e8f0;
+        border-radius: 20px;
+        height: 9px;
+        overflow: hidden;
+        margin-top: 10px;
+      }
+      .prog-bar {
+        height: 100%;
+        background: linear-gradient(90deg, var(--navy), var(--gold));
+        border-radius: 20px;
+        transition: width 0.35s ease;
+      }
+      .prog-lbl {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--t2);
+        margin-top: 6px;
+        text-align: center;
+      }
+      .orto-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        background: var(--warn-bg);
+        border: 1.5px solid var(--warn-bdr);
+        border-radius: var(--radius-sm);
+        padding: 8px 11px;
+        font-size: 12px;
+      }
+      .orto-item.ok {
+        background: var(--ok-bg);
+        border-color: var(--ok-border);
+      }
+      .orto-word {
+        font-weight: 700;
+        color: #92400e;
+        text-decoration: underline wavy #f59e0b;
+      }
+      .orto-sug {
+        color: var(--t2);
+        font-size: 11px;
+      }
+      .orto-fix {
+        background: var(--navy);
+        color: var(--cream);
+        border: none;
+        border-radius: 6px;
+        padding: 3px 10px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .spinner {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border: 2.5px solid rgba(27, 57, 106, 0.15);
+        border-top-color: var(--navy);
+        animation: spin 0.7s linear infinite;
+      }
+      #toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        padding: 13px 18px;
+        border-radius: var(--radius);
+        box-shadow: var(--sh-lg);
+        font-size: 14px;
+        font-weight: 600;
+        max-width: 360px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: toastIn 0.25s ease both;
+      }
+      #toast.info {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 2px solid #60a5fa;
+      }
+      #toast.success {
+        background: var(--ok-bg);
+        color: #14532d;
+        border: 2px solid var(--ok-border);
+      }
+      #toast.error {
+        background: var(--err-bg);
+        color: var(--err-txt);
+        border: 2px solid #f87171;
+      }
+      #toast.warn {
+        background: var(--warn-bg);
+        color: #78350f;
+        border: 2px solid var(--warn-bdr);
+      }
+      .tab-btn {
+        padding: 8px 18px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        color: var(--t3);
+      }
+      .tab-btn.active {
+        background: var(--navy);
+        color: var(--cream);
+      }
+      .mode-btn {
+        flex: 1;
+        padding: 10px;
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 2px solid var(--border);
+        background: var(--surface-2);
+        color: var(--t2);
+      }
+      .mode-btn.active {
+        background: var(--navy);
+        color: var(--cream);
+        border-color: var(--navy);
+      }
+      .err-box {
+        padding: 10px 14px;
+        background: var(--err-bg);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        color: var(--err-txt);
+        border: 1.5px solid #fca5a5;
+        font-weight: 600;
+      }
+      .card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--sh-sm);
+        padding: 22px;
+        border: 1px solid var(--border);
+      }
+      .card-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--t1);
+        margin-bottom: 16px;
+      }
+      #page-login {
+        min-height: 100vh;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .login-wrap {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        animation: fadeUp 0.5s ease both;
+      }
+      .login-logo {
+        text-align: center;
+        margin-bottom: 1.8rem;
+      }
+      .logo-img {
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        object-fit: contain;
+        background: #fff;
+        padding: 6px;
+        box-shadow:
+          0 0 0 3px var(--navy-ghost),
+          var(--sh-lg);
+        border: 1px solid var(--border);
+      }
+      .login-card {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        box-shadow: var(--sh-lg);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+      .login-body {
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      #navbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      }
+      .nav-inner {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        height: 62px;
+        gap: 16px;
+      }
+      .nav-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: contain;
+        padding: 3px;
+        background: #fff;
+        flex-shrink: 0;
+      }
+      .nav-title {
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--navy);
+      }
+      .nav-sub {
+        font-size: 10px;
+        color: var(--t3);
+        font-weight: 600;
+      }
+      .nav-av {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: var(--navy);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cream);
+        font-weight: 800;
+      }
+      .btn-exit {
+        padding: 7px 13px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        background: var(--err-bg);
+        color: var(--err-txt);
+        border: 1.5px solid #fca5a5;
+        margin-left: 4px;
+        transition: all 0.15s;
+      }
+      #main {
+        max-width: 1140px;
+        margin: 0 auto;
+        padding: 28px 24px;
+      }
+      .gen-hdr {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        background: var(--surface);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        box-shadow: var(--sh-sm);
+        border: 1px solid var(--border);
+      }
+      .gen-h2 {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--t1);
+      }
+      .gen-grid {
+        display: grid;
+        grid-template-columns: minmax(310px, 1fr) minmax(290px, 430px);
+        gap: 20px;
+        align-items: start;
+        margin-top: 20px;
+      }
+      @media (max-width: 760px) {
+        .gen-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .form-col,
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .result-item {
+        background: var(--surface-2);
+        border-radius: var(--radius-sm);
+        padding: 13px 16px;
+        border: 1.5px solid #d1e0f5;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        animation: slideIn 0.25s ease both;
+      }
+      .result-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .result-qr {
+        width: 46px;
+        height: 46px;
+        border-radius: 6px;
+        border: 2px solid var(--gold);
+        background: #fff;
+        padding: 2px;
+      }
+      .stepper {
+        display: flex;
+        align-items: flex-start;
+      }
+      .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+      }
+      .step-item:not(:last-child)::after {
+        content: "";
+        position: absolute;
+        top: 19px;
+        left: calc(50% + 20px);
+        right: calc(-50% + 20px);
+        height: 2px;
+        background: var(--border);
+        z-index: 0;
+      }
+      .step-item.done:not(:last-child)::after {
+        background: var(--ok);
+      }
+      .step-circle {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        font-weight: 800;
+        z-index: 1;
+        position: relative;
+        border: 2px solid var(--border);
+        background: var(--surface-2);
+        color: var(--t3);
+      }
+      .step-item.active .step-circle {
+        border-color: var(--navy);
+        background: var(--navy);
+        color: var(--cream);
+        box-shadow: 0 0 0 5px var(--navy-ghost);
+      }
+      .step-item.done .step-circle {
+        border-color: var(--ok);
+        background: var(--ok);
+        color: #fff;
+      }
+      .step-item.done .step-circle::after {
+        content: "✓";
+        font-size: 15px;
+      }
+      .step-item.done .step-circle span {
+        display: none;
+      }
+      .step-lbl {
+        margin-top: 7px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--t3);
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .step-item.active .step-lbl {
+        color: var(--navy);
+        font-weight: 800;
+      }
+      .step-item.done .step-lbl {
+        color: var(--ok);
+      }
+      .step-card {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--sh-sm);
+        padding: 22px;
+        border: 2px solid var(--border);
+      }
+      .step-card.active-step {
+        border-color: var(--navy);
+        box-shadow:
+          0 0 0 4px var(--navy-ghost),
+          var(--sh-md);
+      }
+      .step-card.done-step {
+        opacity: 0.78;
+        border-color: var(--border);
+      }
+      .step-card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .step-num-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--navy);
+        color: var(--cream);
+        font-size: 12px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .step-card.done-step .step-num-badge {
+        background: var(--ok);
+        color: #fff;
+      }
+      .step-card-title {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--t1);
+      }
+      .step-done-badge {
+        margin-left: auto;
+        background: var(--ok-bg);
+        color: #14532d;
+        border: 1.5px solid var(--ok-border);
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 3px 10px;
+        display: none;
+      }
+      .step-card.done-step .step-done-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .calib-wrap {
+        position: relative;
+        border: 2px solid var(--border);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        background: repeating-conic-gradient(#e4e8f0 0% 25%, #eceff5 0% 50%) 0
+          0/18px 18px;
+        min-height: 340px;
+      }
+      .calib-wrap.calibrando {
+        border-color: var(--navy);
+        box-shadow: 0 0 0 4px var(--navy-ghost);
+        cursor: none;
+      }
+      .calib-rect-overlay,
+      .mk-rect {
+        pointer-events: none;
+        position: absolute;
+        z-index: 12;
+        border-radius: 3px;
+        display: none;
+      }
+      .mk-rect-lbl {
+        position: absolute;
+        top: -22px;
+        left: 0;
+        color: #fff;
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+      }
+      #overlay-nombre,
+      #mk-nombre-rect {
+        border: 2px solid #1e3a8a;
+        background: rgba(30, 58, 138, 0.06);
+      }
+      #mk-nombre-rect .mk-rect-lbl {
+        background: #1e3a8a;
+      }
+      #overlay-qr,
+      #mk-qr-rect {
+        border: 2px solid #14532d;
+        background: rgba(20, 83, 45, 0.06);
+      }
+      #mk-qr-rect .mk-rect-lbl {
+        background: #14532d;
+      }
+      #overlay-concepto,
+      #mk-concepto-rect {
+        border: 2px solid #7c3aed;
+        background: rgba(109, 40, 217, 0.06);
+      }
+      #mk-concepto-rect .mk-rect-lbl {
+        background: #4c1d95;
+      }
+      #overlay-fecha,
+      #mk-fecha-rect {
+        border: 2px solid #ea580c;
+        background: rgba(234, 88, 12, 0.06);
+      }
+      #mk-fecha-rect .mk-rect-lbl {
+        background: #ea580c;
+      }
+      #calib-modo-tag {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 800;
+        z-index: 15;
+        display: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      }
+      #calib-modo-tag.visible {
+        display: block;
+      }
+      .calib-hint {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--t2);
+        margin-bottom: 10px;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+      }
+      .calib-hint.activo {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border: 1px solid #93c5fd;
+      }
+      .pos-labels {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .pos-lbl {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 11px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1.5px solid;
+      }
+      .pos-lbl-nombre {
+        background: #dbeafe;
+        color: #1e3a8a;
+        border-color: #60a5fa;
+      }
+      .pos-lbl-qr {
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #4ade80;
+      }
+      .pos-lbl-concepto {
+        background: #ede9fe;
+        color: #4c1d95;
+        border-color: #a78bfa;
+      }
+      .pos-lbl-fecha {
+        background: #ffedd5;
+        color: #9a3412;
+        border-color: #fdba74;
+      }
+      .usr-hdr,
+      .usr-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 90px 90px 50px;
+        gap: 8px;
+        padding: 10px 20px;
+        align-items: center;
+      }
+      .usr-hdr {
+        background: var(--surface-2);
+        border-bottom: 2px solid var(--border);
+        font-size: 10px;
+        font-weight: 800;
+        color: var(--t3);
+        text-transform: uppercase;
+      }
+      .usr-row {
+        border-bottom: 1px solid #edf0f7;
+      }
+      .usr-row:hover {
+        background: var(--surface-2);
+      }
+      @media (max-width: 680px) {
+        .usr-hdr,
+        .usr-row {
+          grid-template-columns: 1fr 65px 50px 30px;
+          padding: 10px 12px;
+          gap: 6px;
+        }
+        .hide-sm {
+          display: none;
+        }
+        .usr-row {
+          font-size: 13px;
+        }
+      }
+      .tog-btn {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1.5px solid;
+      }
+      .tog-on {
+        background: var(--ok-bg);
+        color: #14532d;
+        border-color: var(--ok-border);
+      }
+      .tog-off {
+        background: var(--err-bg);
+        color: var(--err-txt);
+        border-color: #fca5a5;
+      }
+
+      /* ── Tokens de contraseña diaria ─────────────────────────── */
+      .token-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1.5px solid var(--border-dk);
+        background: var(--surface);
+        color: var(--t2);
+        cursor: pointer;
+        transition: all 0.15s;
+        user-select: none;
+      }
+      .token-chip:hover {
+        border-color: var(--navy);
+        color: var(--navy);
+        background: #f0f4ff;
+      }
+      .token-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 800;
+        background: var(--navy-ghost);
+        border: 1.5px solid var(--navy);
+        color: var(--navy);
+      }
+      .token-pill .rm {
+        background: none;
+        border: none;
+        color: var(--navy);
+        font-size: 16px;
+        cursor: pointer;
+        line-height: 1;
+        padding: 0;
+      }
+      .token-pill .rm:hover {
+        color: var(--err-txt);
+      }
+      #pwd-preview {
+        font-family: ui-monospace, monospace;
+        font-size: 18px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: var(--navy);
+        background: #eef2ff;
+        border: 2px dashed var(--navy);
+        border-radius: 10px;
+        padding: 12px 16px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="page-login">
+      <div class="login-wrap">
+        <div class="login-logo">
+          <img
+            id="li"
+            class="logo-img"
+            src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true"
+            alt="ITD"
+          />
+          <h1
+            style="
+              font-size: 26px;
+              font-weight: 900;
+              color: var(--t1);
+              margin: 12px 0 4px;
+              letter-spacing: -0.03em;
+            "
+          >
+            Otras Constancias
+          </h1>
+          <p style="font-size: 13px; color: #888">
+            Instituto Tecnológico de Durango
+          </p>
+        </div>
+        <div class="login-card">
+          <div class="stripe"></div>
+          <div class="login-body">
+            <div class="field">
+              <label>Contraseña del día <span style="color: #e05050">*</span></label>
+              <div class="pass-wrap">
+                <input type="password" id="li-pass" placeholder="••••••••" autocomplete="off" />
+                <button
+                  type="button"
+                  class="pass-toggle"
+                  onclick="togglePass('li-pass', this)"
+                >
+                  👁
+                </button>
+              </div>
+              <div style="font-size:11px;color:var(--t3);margin-top:2px">
+                Ingresa la contraseña diaria proporcionada por el administrador.
+              </div>
+            </div>
+            <div id="li-err" class="err-box hidden"></div>
+            <button
+              class="btn btn-primary btn-full"
+              id="li-btn"
+              onclick="doLogin()"
+            >
+              🔐 Iniciar sesión
+            </button>
+          </div>
+        </div>
+      </div>
+      <p
+        style="
+          margin-top: 2rem;
+          font-size: 11px;
+          color: rgba(80, 65, 55, 0.45);
+          text-align: center;
+        "
+      >
+        © <span id="yr"></span> Dr. Alejandro Calderón - Act. Docente
+      </p>
+    </div>
+
+    <div id="page-app" class="hidden">
+      <nav id="navbar">
+        <div class="nav-inner">
+          <img
+            class="nav-logo"
+            src="https://github.com/DA-itd/B/blob/main/logo_itdurango.png?raw=true"
+            alt=""
+          />
+          <div>
+            <div class="nav-title">Otras Constancias</div>
+            <div class="nav-sub">Instituto Tecnológico de Durango</div>
+          </div>
+          <div style="flex: 1"></div>
+          <div style="display: flex; gap: 4px">
+            <button
+              class="tab-btn active"
+              id="tab-gen-btn"
+              onclick="showTab('generar')"
+            >
+              🏠 Inicio
+            </button>
+            <button
+              class="tab-btn"
+              id="tab-usr-btn"
+              onclick="showTab('usuarios')"
+            >
+              👥 Usuarios
+            </button>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-left: 8px;
+            "
+          >
+            <div
+              style="display: flex; flex-direction: column; line-height: 1.3"
+            >
+              <span
+                style="
+                  font-size: 12px;
+                  font-weight: 700;
+                  color: #333;
+                  display: none;
+                "
+                id="nav-nm"
+                >—</span
+              >
+              <span id="nav-bdg"></span>
+            </div>
+            <a
+              href="#"
+              onclick="doLogout()"
+              class="btn-exit"
+              style="text-decoration: none"
+              >Salir</a
+            >
+          </div>
+        </div>
+      </nav>
+
+      <div id="main">
+        <!-- TAB GENERAR -->
+        <div id="tab-generar">
+          <div class="gen-hdr">
+            <div>
+              <div class="gen-h2">Generar Constancias</div>
+              <div class="gen-sub">
+                Sigue los pasos para generar constancias con nombre y QR
+              </div>
+            </div>
+            <span class="badge badge-blue">📄 PDF + QR</span>
+          </div>
+
+          <div
+            style="
+              background: #fff;
+              border-radius: 14px;
+              padding: 18px 24px 14px;
+              margin-top: 18px;
+              box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <div class="stepper" id="main-stepper">
+              <div class="step-item active" id="st-1">
+                <div class="step-circle"><span>1</span></div>
+                <div class="step-lbl">Plantilla</div>
+              </div>
+              <div class="step-item" id="st-2">
+                <div class="step-circle"><span>2</span></div>
+                <div class="step-lbl">Destinatario</div>
+              </div>
+              <div class="step-item" id="st-3">
+                <div class="step-circle"><span>3</span></div>
+                <div class="step-lbl">Textos Adc.</div>
+              </div>
+              <div class="step-item" id="st-4">
+                <div class="step-circle"><span>4</span></div>
+                <div class="step-lbl">Calibrar</div>
+              </div>
+              <div class="step-item" id="st-5">
+                <div class="step-circle"><span>5</span></div>
+                <div class="step-lbl">Generar</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gen-grid">
+            <div class="form-col">
+              <div class="step-card active-step" id="sc-1">
+                <div class="step-card-header">
+                  <div class="step-num-badge">1</div>
+                  <div class="step-card-title">🖼 Plantilla</div>
+                </div>
+                <div class="field">
+                  <label>Plantilla guardada</label>
+                  <select id="f-evento" onchange="cargarEvento()">
+                    <option value="">— Nueva —</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Nombre del evento *</label
+                  ><input
+                    type="text"
+                    id="f-evento-nombre"
+                    oninput="updateStepper()"
+                  />
+                </div>
+                <div class="field">
+                  <label>PDF de la plantilla *</label>
+                  <input
+                    type="file"
+                    id="pdf-input"
+                    accept=".pdf"
+                    style="display: none"
+                    onchange="cargarPDF(this)"
+                  />
+                  <div style="display: flex; gap: 8px">
+                    <button
+                      class="btn btn-ghost"
+                      style="flex: 1"
+                      onclick="document.getElementById('pdf-input').click()"
+                    >
+                      💾 Local
+                    </button>
+                    <button
+                      class="btn btn-ghost"
+                      style="flex: 1"
+                      id="btn-drive-picker"
+                      onclick="abrirDrivePicker()"
+                    >
+                      ☁ Drive
+                    </button>
+                  </div>
+                  <div
+                    id="pdf-ok"
+                    class="hidden"
+                    style="
+                      margin-top: 6px;
+                      font-size: 12px;
+                      color: #14532d;
+                      font-weight: 700;
+                    "
+                  ></div>
+                </div>
+              </div>
+
+              <div class="step-card" id="sc-2">
+                <div class="step-card-header">
+                  <div class="step-num-badge">2</div>
+                  <div class="step-card-title">👤 Destinatario(s)</div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 14px">
+                  <button
+                    class="mode-btn active"
+                    id="mb-manual"
+                    onclick="setMode('manual')"
+                  >
+                    ✍️ Manual
+                  </button>
+                  <button
+                    class="mode-btn"
+                    id="mb-excel"
+                    onclick="setMode('excel')"
+                  >
+                    📊 Excel
+                  </button>
+                </div>
+                <div id="pnl-manual">
+                  <div class="field">
+                    <label>Nombre completo *</label
+                    ><input type="text" id="f-nom" oninput="updateStepper()" />
+                  </div>
+                </div>
+                <div id="pnl-excel" class="hidden">
+                  <input
+                    type="file"
+                    id="xl-input"
+                    accept=".xlsx,.xls"
+                    style="display: none"
+                    onchange="loadExcel(this)"
+                  />
+                  <button
+                    class="btn btn-ghost btn-full"
+                    onclick="document.getElementById('xl-input').click()"
+                  >
+                    📂 Seleccionar Excel
+                  </button>
+                  <div id="xl-ok" class="hidden" style="margin-top: 10px">
+                    <strong id="xl-cnt" style="color: #14532d"></strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step-card" id="sc-3">
+                <div class="step-card-header">
+                  <div class="step-num-badge">3</div>
+                  <div class="step-card-title">📝 Textos Adicionales</div>
+                </div>
+                
+                <div style="flex-direction: column; display: flex; gap: 16px;">
+                  <div>
+                    <label
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                      "
+                      ><input
+                        type="checkbox"
+                        id="f-concepto-on"
+                        onchange="toggleConcepto()"
+                      />
+                      <span style="font-size: 13px; font-weight: 700"
+                        >Incluir concepto</span
+                      ></label
+                    >
+                    <div
+                      id="pnl-concepto"
+                      style="
+                        display: none;
+                        flex-direction: column;
+                        gap: 10px;
+                        margin-top: 10px;
+                      "
+                    >
+                      <div class="field">
+                        <textarea
+                          id="f-concepto-txt"
+                          rows="3"
+                          oninput="updateStepper()"
+                          placeholder="Escribe el concepto aquí..."
+                        ></textarea>
+                      </div>
+                      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; border: 1.5px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Fuente</label>
+                          <select id="f-concepto-fontfamily" style="flex: 1; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; outline: none;">
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                          </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);" title="Tamaño máximo que se ajustará si el texto es muy largo">Max</label>
+                          <input type="number" id="f-concepto-fontsize" value="44" min="10" max="150" style="width: 52px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <input type="color" id="f-concepto-fontcolor" value="#1a1a1a" style="width: 32px; height: 28px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-concepto-italic" checked /> <em>I</em>
+                          </label>
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-concepto-bold" /> <strong>B</strong>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                      "
+                      ><input
+                        type="checkbox"
+                        id="f-fecha-on"
+                        onchange="toggleFecha()"
+                      />
+                      <span style="font-size: 13px; font-weight: 700"
+                        >Incluir fecha movible</span
+                      ></label
+                    >
+                    <div
+                      id="pnl-fecha"
+                      style="
+                        display: none;
+                        flex-direction: column;
+                        gap: 10px;
+                        margin-top: 10px;
+                      "
+                    >
+                      <div class="field">
+                        <textarea
+                          id="f-fecha-txt"
+                          rows="2"
+                          oninput="updateStepper()"
+                          placeholder="Victoria de Durango, Durango, a 26 de Junio de 2026"
+                        ></textarea>
+                      </div>
+                      <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: var(--surface-2); padding: 10px; border-radius: 8px; border: 1.5px solid var(--border);">
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1; min-width: 140px;">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);">Fuente</label>
+                          <select id="f-fecha-fontfamily" style="flex: 1; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 12px; outline: none;">
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Times New Roman', serif">Times New Roman</option>
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                            <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                            <option value="'Playfair Display', serif">Playfair Display</option>
+                          </select>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2);" title="Tamaño máximo que se ajustará si el texto es muy largo">Max</label>
+                          <input type="number" id="f-fecha-fontsize" value="32" min="10" max="150" style="width: 52px; padding: 4px 8px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 4px">
+                          <input type="color" id="f-fecha-fontcolor" value="#1a1a1a" style="width: 32px; height: 28px; padding: 2px; border: 1.5px solid var(--border); border-radius: 6px; cursor: pointer; outline: none;" />
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px">
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-fecha-italic" /> <em>I</em>
+                          </label>
+                          <label style="font-size: 11px; font-weight: 700; color: var(--t2); cursor: pointer;">
+                            <input type="checkbox" id="f-fecha-bold" /> <strong>B</strong>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                class="step-card"
+                id="sc-5"
+                style="
+                  padding: 0;
+                  border: none;
+                  background: transparent;
+                  box-shadow: none;
+                "
+              >
+                <button
+                  class="btn btn-full"
+                  id="gen-btn"
+                  onclick="generar()"
+                  style="
+                    background: var(--navy);
+                    color: #fff;
+                    padding: 14px;
+                    font-size: 16px;
+                    box-shadow: var(--sh-lg);
+                    border-radius: var(--radius);
+                    transition: all 0.2s;
+                  "
+                >
+                  🚀 Paso 5 — Generar
+                </button>
+              </div>
+            </div>
+
+            <div class="right-col">
+              <div class="step-card" id="sc-4">
+                <div class="step-card-header">
+                  <div class="step-num-badge">4</div>
+                  <div class="step-card-title">📍 Calibrar posición</div>
+                </div>
+                <div style="display: flex; gap: 6px; margin-bottom: 10px">
+                  <button class="btn-sm-blue" onclick="setCalibMode('nombre')">
+                    ✍ Nombre
+                  </button>
+                  <button class="btn-sm-grn" onclick="setCalibMode('qr')">
+                    ▪ QR
+                  </button>
+                  <button
+                    class="btn-sm-prp"
+                    id="calib-concepto-btn"
+                    onclick="setCalibMode('concepto')"
+                    style="display: none"
+                  >
+                    ¶ Concepto
+                  </button>
+                  <button
+                    class="btn-sm-yel"
+                    id="calib-fecha-btn"
+                    onclick="setCalibMode('fecha')"
+                    style="display: none"
+                  >
+                    📅 Fecha
+                  </button>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                    margin-bottom: 8px;
+                    background: var(--surface-2);
+                    padding: 10px;
+                    border-radius: 8px;
+                    border: 1.5px solid var(--border);
+                  "
+                >
+                  <div style="font-size: 11px; font-weight: 800; color: var(--navy); text-transform: uppercase; letter-spacing: 0.05em;">Formato del Nombre</div>
+                  <div
+                    style="
+                      display: flex;
+                      gap: 8px;
+                      align-items: center;
+                      flex-wrap: wrap;
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        flex: 1;
+                        min-width: 160px;
+                      "
+                    >
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                        "
+                        >Fuente</label
+                      >
+                      <select
+                        id="f-fontfamily"
+                        style="
+                          flex: 1;
+                          padding: 4px 8px;
+                          border: 1.5px solid var(--border);
+                          border-radius: 8px;
+                          font-size: 12px;
+                          outline: none;
+                        "
+                      >
+                        <option value="Georgia, serif">Georgia</option>
+                        <option value="'Times New Roman', serif">
+                          Times New Roman
+                        </option>
+                        <option value="Arial, sans-serif">Arial</option>
+                        <option value="'Trebuchet MS', sans-serif">
+                          Trebuchet MS
+                        </option>
+                        <option value="'Century Gothic', sans-serif">
+                          Century Gothic
+                        </option>
+                        <option value="'Playfair Display', serif">
+                          Playfair Display
+                        </option>
+                      </select>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px">
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                        "
+                        title="Tamaño máximo que se ajustará si el texto es muy largo"
+                        >Tam. Max</label
+                      >
+                      <input
+                        type="number"
+                        id="f-fontsize"
+                        value="60"
+                        min="10"
+                        max="150"
+                        style="
+                          width: 52px;
+                          padding: 4px 8px;
+                          border: 1.5px solid var(--border);
+                          border-radius: 8px;
+                          font-size: 13px;
+                          outline: none;
+                        "
+                      />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 4px">
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                        "
+                        >Color</label
+                      >
+                      <input
+                        type="color"
+                        id="f-fontcolor"
+                        value="#1a1a1a"
+                        style="
+                          width: 32px;
+                          height: 28px;
+                          padding: 2px;
+                          border: 1.5px solid var(--border);
+                          border-radius: 6px;
+                          cursor: pointer;
+                          outline: none;
+                        "
+                      />
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px">
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                          cursor: pointer;
+                        "
+                      >
+                        <input type="checkbox" id="f-italic" /> <em>I</em>
+                      </label>
+                      <label
+                        style="
+                          font-size: 11px;
+                          font-weight: 700;
+                          color: var(--t2);
+                          cursor: pointer;
+                        "
+                      >
+                        <input type="checkbox" id="f-bold" checked />
+                        <strong>B</strong>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <label
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                  "
+                >
+                  <input
+                    type="checkbox"
+                    id="f-qr-on"
+                    checked
+                    onchange="toggleQROptions()"
+                  />
+                  Incluir QR
+                </label>
+
+                <div class="calib-wrap" id="calib-wrap">
+                  <canvas
+                    id="calib-canvas"
+                    style="display: block; width: 100%; height: auto"
+                  ></canvas>
+                  <div id="calib-modo-tag"></div>
+                  <div id="overlay-nombre" class="calib-rect-overlay"></div>
+                  <div id="overlay-qr" class="calib-rect-overlay"></div>
+                  <div id="overlay-concepto" class="calib-rect-overlay"></div>
+                  <div id="overlay-fecha" class="calib-rect-overlay"></div>
+                  <div id="mk-nombre-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">NOMBRE</div>
+                  </div>
+                  <div id="mk-qr-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">QR</div>
+                  </div>
+                  <div id="mk-concepto-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">CONCEPTO</div>
+                  </div>
+                  <div id="mk-fecha-rect" class="mk-rect">
+                    <div class="mk-rect-lbl">FECHA</div>
+                  </div>
+                  <div
+                    id="calib-placeholder"
+                    style="
+                      position: absolute;
+                      inset: 0;
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      background: rgba(237, 240, 245, 0.95);
+                    "
+                  >
+                    Selecciona un PDF para calibrar
+                  </div>
+                </div>
+                <div class="pos-labels">
+                  <span
+                    class="pos-lbl pos-lbl-nombre no-set"
+                    id="pos-nombre-lbl"
+                    >✍ Nombre: —</span
+                  >
+                  <span class="pos-lbl pos-lbl-qr no-set" id="pos-qr-lbl"
+                    >▪ QR: —</span
+                  >
+                  <span
+                    class="pos-lbl pos-lbl-concepto no-set"
+                    id="pos-concepto-lbl"
+                    style="display: none"
+                    >¶ Concepto: —</span
+                  >
+                  <span
+                    class="pos-lbl pos-lbl-fecha no-set"
+                    id="pos-fecha-lbl"
+                    style="display: none"
+                    >📅 Fecha: —</span
+                  >
+                </div>
+              </div>
+
+              <div class="card hidden" id="res-card">
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 12px;
+                  "
+                >
+                  <div class="card-title" id="res-title" style="margin: 0">
+                    ✅ Generadas
+                  </div>
+                  <div style="display: flex; gap: 8px">
+                    <button
+                      class="btn btn-ghost"
+                      id="print-all-btn"
+                      onclick="printTodos()"
+                      style="display: none; padding: 4px 12px; font-size: 13px"
+                    >
+                      🖨 Imprimir
+                    </button>
+                    <button
+                      class="btn-sm-grn"
+                      id="dl-all-btn"
+                      onclick="dlTodos()"
+                      style="display: none"
+                    >
+                      ⬇ Descargar Lote
+                    </button>
+                  </div>
+                </div>
+                <div
+                  id="res-list"
+                  style="display: flex; flex-direction: column; gap: 10px"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB USUARIOS -->
+        <div id="tab-usuarios" class="hidden">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 10px;
+              background: #fff;
+              border-radius: 14px;
+              padding: 18px 22px;
+              box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            "
+          >
+            <div>
+              <div class="gen-h2">Gestión de Usuarios</div>
+              <div class="gen-sub" id="usr-cnt">—</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn btn-ghost" id="cl-btn" onclick="limpiarInvitados()" title="Eliminar a todos los invitados" style="color:var(--err-txt);font-weight:600">
+                🧹 Limpiar invitados
+              </button>
+              <button class="btn btn-primary" id="nw-btn" onclick="toggleUF()">
+                + Nuevo usuario
+              </button>
+            </div>
+          </div>
+
+          <!-- Configuración de contraseña diaria -->
+          <div class="card" style="margin-top: 14px; border: 2px solid #1b396a18">
+            <div class="card-title" style="color: #1b396a; display: flex; align-items: center; gap: 8px;">
+              🔑 Contraseña diaria
+              <span class="badge badge-blue" style="font-size:10px">Configuración</span>
+            </div>
+            <p style="font-size:13px; color:var(--t2); margin-bottom:14px">
+              Define el orden y las partes que componen la contraseña de acceso del día. Los usuarios ingresarán únicamente esta contraseña (sin correo).
+            </p>
+
+            <div style="font-size:11px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">
+              Añadir parte
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px">
+              <span class="token-chip" data-token="DD" onclick="addPwdToken('DD')">DD <span style="font-size:10px;color:var(--t3)">(día 2 díg.)</span></span>
+              <span class="token-chip" data-token="D" onclick="addPwdToken('D')">D <span style="font-size:10px;color:var(--t3)">(día 1-2 díg.)</span></span>
+              <span class="token-chip" data-token="MM" onclick="addPwdToken('MM')">MM <span style="font-size:10px;color:var(--t3)">(mes 2 díg.)</span></span>
+              <span class="token-chip" data-token="M" onclick="addPwdToken('M')">M <span style="font-size:10px;color:var(--t3)">(mes 1-2 díg.)</span></span>
+              <span class="token-chip" data-token="YYYY" onclick="addPwdToken('YYYY')">YYYY <span style="font-size:10px;color:var(--t3)">(año 4 díg.)</span></span>
+              <span class="token-chip" data-token="YY" onclick="addPwdToken('YY')">YY <span style="font-size:10px;color:var(--t3)">(año 2 díg.)</span></span>
+              <span class="token-chip" data-token="OC" onclick="addPwdToken('OC')">OC <span style="font-size:10px;color:var(--t3)">(texto fijo)</span></span>
+              <span class="token-chip" data-token="ABC" onclick="addPwdToken('ABC')">ABC <span style="font-size:10px;color:var(--t3)">(texto fijo)</span></span>
+              <span class="token-chip" data-token="ITD" onclick="addPwdToken('ITD')">ITD</span>
+            </div>
+
+            <div style="font-size:11px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px">
+              Secuencia actual
+            </div>
+            <div id="pwd-parts" style="display:flex; flex-wrap:wrap; gap:8px; min-height:40px; align-items:center; padding:8px; background:var(--surface-2); border:1.5px dashed var(--border-dk); border-radius:8px; margin-bottom:12px">
+              <span style="color:var(--t3); font-size:12px; padding:4px 8px">Sin partes — agrega tokens arriba</span>
+            </div>
+
+            <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap">
+              <div class="field" style="flex:1; min-width:200px">
+                <label>Texto personalizado (opcional)</label>
+                <input type="text" id="pwd-custom-txt" placeholder="Ej. Verano2026" maxlength="40" />
+              </div>
+              <button class="btn btn-ghost" onclick="addPwdCustom()" style="padding:10px 16px">+ Añadir texto</button>
+            </div>
+
+            <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap">
+              <div style="flex:1; min-width:220px">
+                <div style="font-size:11px; font-weight:800; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px">Vista previa (hoy)</div>
+                <div id="pwd-preview">—</div>
+              </div>
+              <div style="display:flex; gap:8px">
+                <button class="btn btn-primary" onclick="savePwdConfig()">💾 Guardar contraseña diaria</button>
+                <button class="btn btn-ghost" onclick="resetPwdConfig()">↺ Restablecer</button>
+              </div>
+            </div>
+
+            <!-- Aviso: contraseña del administrador -->
+            <div style="margin-top:14px; padding:12px 14px; background:#fff7ed; border:1.5px dashed #fb923c; border-radius:10px; font-size:12px; color:#7c2d12">
+              👑 <strong>Contraseña del administrador (hoy):</strong>
+              <span id="pwd-admin-preview" style="font-family:ui-monospace, monospace; font-size:15px; font-weight:800; color:#9a3412; margin-left:6px">—</span>
+              <div style="margin-top:4px; color:#9a3412; font-size:11px">
+                Formato fijo: <code>año + 8 + día</code>. Solo tú debes conocerla.
+              </div>
+            </div>
+          </div>
+
+          <div
+            class="card hidden"
+            id="uf-card"
+            style="margin-top: 14px; border: 2px solid #1b396a18"
+          >
+            <div class="card-title" style="color: #1b396a">
+              ➕ Crear usuario
+            </div>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 16px;
+              "
+            >
+              <div class="field">
+                <label>Nombre completo *</label
+                ><input type="text" id="uf-nm" placeholder="Nombre Apellido" />
+              </div>
+              <div class="field">
+                <label>Usuario *</label>
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    border: 1.5px solid #e0e0e0;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    background: #fff;
+                  "
+                  id="uf-wrap"
+                >
+                  <input
+                    type="text"
+                    id="uf-em"
+                    placeholder="usuario"
+                    style="
+                      flex: 1;
+                      padding: 10px 0 10px 14px;
+                      border: none;
+                      outline: none;
+                      font-size: 14px;
+                      font-family: &quot;DM Sans&quot;, sans-serif;
+                      background: transparent;
+                    "
+                    onfocus="
+                      document.getElementById('uf-wrap').style.borderColor =
+                        '#1B396A'
+                    "
+                    onblur="
+                      document.getElementById('uf-wrap').style.borderColor =
+                        '#e0e0e0'
+                    "
+                  />
+                  <span
+                    style="
+                      padding: 10px 14px 10px 4px;
+                      font-size: 14px;
+                      color: #aaa;
+                      white-space: nowrap;
+                    "
+                    >@itdurango.edu.mx</span
+                  >
+                </div>
+              </div>
+              <div class="field">
+                <label>Contraseña *</label>
+                <div class="pass-wrap">
+                  <input
+                    type="password"
+                    id="uf-pw"
+                    placeholder="Mín. 6 caracteres"
+                  />
+                  <button
+                    type="button"
+                    class="pass-toggle"
+                    onclick="togglePass('uf-pw', this)"
+                    title="Mostrar/ocultar"
+                  >
+                    👁
+                  </button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Rol</label>
+                <select
+                  id="uf-adm"
+                  style="
+                    padding: 10px 14px;
+                    border-radius: 10px;
+                    border: 1.5px solid #e0e0e0;
+                    font-size: 14px;
+                    background: #fff;
+                    outline: none;
+                    cursor: pointer;
+                  "
+                >
+                  <option value="false">Invitado</option>
+                  <option value="true">Administrador</option>
+                </select>
+              </div>
+            </div>
+            <div
+              id="uf-err"
+              class="err-box hidden"
+              style="margin-top: 10px"
+            ></div>
+            <div style="display: flex; gap: 8px; margin-top: 14px">
+              <button
+                class="btn btn-primary"
+                id="uf-sv"
+                onclick="crearUsuario()"
+              >
+                💾 Crear usuario
+              </button>
+              <button class="btn btn-ghost" onclick="toggleUF(true)">
+                Cancelar
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="card"
+            style="margin-top: 14px; padding: 0; overflow: hidden"
+          >
+            <div class="usr-hdr">
+              <span>Nombre</span><span class="hide-sm">Correo</span
+              ><span>Rol</span><span>Estado</span><span></span>
+            </div>
+            <div id="usr-list"></div>
+            <div
+              id="usr-empty"
+              class="hidden"
+              style="padding: 40px 24px; text-align: center; color: #aaa"
+            >
+              <div style="font-size: 36px; margin-bottom: 8px">👤</div>
+              <div style="font-weight: 700">Sin usuarios — crea el primero</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="toast" class="hidden"></div>
+
     <script>
       const SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbxMyVFB5HXwxhRCzJBvKczI5GVmzk4Y_3kFNpcOOjxqHZmkVwJH77BJZID6K3WgoAd8_w/exec";
@@ -129,7 +2100,7 @@
           .join("");
       }
 
-      // NUEVO: contraseña del administrador = YYYY + 8 + DD  (ej. 2026805)
+      // Contraseña del administrador = YYYY + 8 + DD  (ej. 2026805)
       function getAdminPwdForDate(d = new Date()) {
         const YYYY = String(d.getFullYear());
         const DD = String(d.getDate()).padStart(2, "0");
@@ -154,7 +2125,7 @@
         }
       }
 
-      // NUEVO: Fecha con hora local
+      // Fecha con hora local
       const isoToday = () => {
         const d = new Date();
         return d
@@ -1094,3 +3065,5 @@
           liPassEl.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
       };
     </script>
+  </body>
+</html>
