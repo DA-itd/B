@@ -870,43 +870,36 @@
       }
 
       // ── LOGIN BLINDADO: maestra → admin → invitado ────────────────────
-       async function doLogin() {
+      function doLogin() {
   const pass = (document.getElementById("li-pass").value || "").trim();
   const errEl = document.getElementById("li-err");
-  const btn = document.getElementById("li-btn");
   errEl.classList.add("hidden");
   if (!pass) {
     errEl.textContent = "⚠ Escribe la contraseña del día.";
     errEl.classList.remove("hidden");
     return;
   }
-  btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Verificando…';
-  try {
-    const resp = await fetch(
-      `${SCRIPT_URL}?action=checkPassword&pass=${encodeURIComponent(pass)}`
-    );
-    const data = await resp.json();
-    if (data.ok) {
-      if (data.role === "admin") {
-        CU = { email: ADM_EMAIL, name: "Administrador", isAdmin: true };
-        toast("👑 Bienvenido, Administrador", "success");
-      } else {
-        CU = { email: "invitado@itdurango.edu.mx", name: "Invitado", isAdmin: false };
-        toast("Bienvenido", "success");
-      }
-      setSS(CU);
-      showApp();
-    } else {
-      errEl.textContent = "⚠ " + (data.error || "Contraseña incorrecta");
-      errEl.classList.remove("hidden");
-    }
-  } catch (err) {
-    errEl.textContent = "⚠ Error de conexión: " + err.message;
+
+  const d = new Date();
+  const YYYY = String(d.getFullYear());
+  const DD = String(d.getDate()).padStart(2, "0");
+
+  const adminPwd = YYYY + "8" + DD;   // Ej: 2026805
+  const guestPwd = DD + "oc" + YYYY;  // Ej: 05oc2026
+
+  if (pass === adminPwd) {
+    CU = { email: ADM_EMAIL, name: "Administrador", isAdmin: true };
+    setSS(CU);
+    showApp();
+    toast("👑 Bienvenido, Administrador", "success");
+  } else if (pass.toLowerCase() === guestPwd.toLowerCase()) {
+    CU = { email: "invitado@itdurango.edu.mx", name: "Invitado", isAdmin: false };
+    setSS(CU);
+    showApp();
+    toast("Bienvenido", "success");
+  } else {
+    errEl.textContent = "⚠ Contraseña incorrecta. Intenta de nuevo.";
     errEl.classList.remove("hidden");
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = "🔐 Iniciar sesión";
   }
 }
 
