@@ -870,78 +870,45 @@
       }
 
       // ── LOGIN BLINDADO: maestra → admin → invitado ────────────────────
-      async function doLogin() {
-        const pass = (document.getElementById("li-pass").value || "").trim();
-        const errEl = document.getElementById("li-err");
-        const btn = document.getElementById("li-btn");
-        if (errEl) errEl.classList.add("hidden");
-
-        if (!pass) {
-          if (errEl) {
-            errEl.textContent = "⚠ Escribe la contraseña del día.";
-            errEl.classList.remove("hidden");
-          }
-          return;
-        }
-
-        if (btn) {
-          btn.disabled = true;
-          btn.innerHTML = '<div class="spinner"></div> Verificando…';
-        }
-
-        try {
-          const today = new Date();
-
-          // 1) Contraseña MAESTRA (siempre funciona)
-          if (pass === MASTER_PWD) {
-            CU = { email: ADM_EMAIL, name: "Administrador", isAdmin: true };
-            setSS(CU);
-            showApp();
-            toast("👑 Acceso maestro concedido", "success");
-            return;
-          }
-
-          // 2) Contraseña del administrador del día: YYYY+8+DD
-          let adminPwd = "";
-          try { adminPwd = getAdminPwdForDate(today); } catch (e) { adminPwd = ""; }
-          if (adminPwd && pass === adminPwd) {
-            CU = { email: ADM_EMAIL, name: "Administrador", isAdmin: true };
-            setSS(CU);
-            showApp();
-            toast("👑 Bienvenido, Administrador", "success");
-            return;
-          }
-
-          // 3) Contraseña diaria de invitados
-          let guestPwd = "";
-          try { guestPwd = getPwdForDate(today); } catch (e) { guestPwd = ""; }
-          if (guestPwd && pass.toLowerCase() === guestPwd.toLowerCase()) {
-            CU = { email: "invitado@itdurango.edu.mx", name: "Invitado", isAdmin: false };
-            setSS(CU);
-            showApp();
-            toast("Bienvenido", "success");
-            return;
-          }
-
-          // 4) Nada coincidió
-          if (errEl) {
-            errEl.textContent =
-              "⚠ Contraseña incorrecta. Verifica la contraseña del día.";
-            errEl.classList.remove("hidden");
-          }
-        } catch (err) {
-          console.error("doLogin error:", err);
-          if (errEl) {
-            errEl.textContent = "⚠ Error: " + err.message;
-            errEl.classList.remove("hidden");
-          }
-        } finally {
-          if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = "🔐 Iniciar sesión";
-          }
-        }
+       async function doLogin() {
+  const pass = (document.getElementById("li-pass").value || "").trim();
+  const errEl = document.getElementById("li-err");
+  const btn = document.getElementById("li-btn");
+  errEl.classList.add("hidden");
+  if (!pass) {
+    errEl.textContent = "⚠ Escribe la contraseña del día.";
+    errEl.classList.remove("hidden");
+    return;
+  }
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Verificando…';
+  try {
+    const resp = await fetch(
+      `${SCRIPT_URL}?action=checkPassword&pass=${encodeURIComponent(pass)}`
+    );
+    const data = await resp.json();
+    if (data.ok) {
+      if (data.role === "admin") {
+        CU = { email: ADM_EMAIL, name: "Administrador", isAdmin: true };
+        toast("👑 Bienvenido, Administrador", "success");
+      } else {
+        CU = { email: "invitado@itdurango.edu.mx", name: "Invitado", isAdmin: false };
+        toast("Bienvenido", "success");
       }
+      setSS(CU);
+      showApp();
+    } else {
+      errEl.textContent = "⚠ " + (data.error || "Contraseña incorrecta");
+      errEl.classList.remove("hidden");
+    }
+  } catch (err) {
+    errEl.textContent = "⚠ Error de conexión: " + err.message;
+    errEl.classList.remove("hidden");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "🔐 Iniciar sesión";
+  }
+}
 
       function doLogout() {
         delSS();
