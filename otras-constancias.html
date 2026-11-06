@@ -1079,14 +1079,11 @@
       }
 
       // Initialize
-      window.addEventListener("load", function () {
-        try { loadPwdConfig(); } catch(e) { console.error(e); }
-        try { renderPwdParts(); } catch(e) { console.error(e); }
-        try { updatePwdPreview(); } catch(e) { console.error(e); }
-        const s = getSS();
-        if (s) { CU = s; showApp(); }
-        const liPassEl = document.getElementById("li-pass");
-        if (liPassEl)
-          liPassEl.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
-      });
+     window.addEventListener("load", function () {
+      const s = getSS();
+          if (s) { CU = s; showApp(); }
+      const liPassEl = document.getElementById("li-pass");
+          if (liPassEl)
+            liPassEl.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
+        });
     </script>
